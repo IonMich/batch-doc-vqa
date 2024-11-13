@@ -85,7 +85,7 @@ def vision_chat_digit_probs(args):
     for file in os.listdir(filepath):
         if not file.endswith(".png"):
             continue
-        # if it doesnt include the word "page-3" then skip
+        # if it doesnt include the pattern then skip
         if args['pattern'] not in file:
             continue
         img = filepath_to_base64(os.path.join(filepath, file))
@@ -119,8 +119,7 @@ def get_digit_probs(responses):
         probs.append(digit_probs)
     return probs
 
-# filepath = "imgs/submission-0-batch-0-page-3-4YPUUIXP.png"
-# filepath = "imgs/sub-page-3.png"
+# example filepath: "imgs/sub-page-3.png"
 
 if __name__ == '__main__':
     # example usage:
