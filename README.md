@@ -4,7 +4,7 @@ This repository uses Large Language Models with vision capabilities to extract i
 
 This repository is a work in progress. The best performing pipeline currently is one that uses Llama3.2-Vision as quantized in the Ollama project and is tested on MacOS with an M2 chip and 16GB of RAM.
 
-## Installation
+## Getting Started
 
 1. First, install Ollama via the official [installation instructions](https://ollama.com/).
 
@@ -14,11 +14,26 @@ This repository is a work in progress. The best performing pipeline currently is
     ollama pull llama3.2-vision
     ```
 
-3. Start the Ollama server. On MacOS this can be done by simply opening the Ollama app. On Linux run `ollama server` in the terminal.
+3. Install the Python Ollama wrapper. You can do this via pip in a dedicated [conda](https://docs.anaconda.com/miniconda/) environment:
 
-4. Check the `SYSTEM_MESSAGES` variable in `llamavision.py`. This are the prompts that the model will use to generate its responses (by default the prompt at index `0`). Leave the prompt unchanged if you want to check the installation on the test images.
+    ```bash
+    conda create -n ollama python=3.11
+    conda activate ollama
+    pip install ollama
+    ```
 
-5. That's it! You're ready to use the pipeline:
+4. Clone this repository. There are no additional dependencies.
+
+    ```bash
+    git clone https://github.com/IonMich/batch-doc-vqa
+    cd batch-doc-vqa
+    ```
+
+5. Start the Ollama server. On MacOS this can be done by simply opening the Ollama app. On Linux run `ollama server` in the terminal.
+
+6. Check the `SYSTEM_MESSAGES` variable in `llamavision.py`. This are the prompts that the model will use to generate its responses (by default the prompt at index `0`). Leave the prompt unchanged if you want to check the installation on the test images. Feel free to add your own images to the `imgs` directory, or to change th `--filepath` command line argument to point to a different directory.
+
+7. That's it! You're ready to use the pipeline:
 
     ```bash
     python llamavision.py --filepath imgs/ --n_trials 10
