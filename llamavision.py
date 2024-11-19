@@ -126,7 +126,7 @@ if __name__ == '__main__':
     # python llamavision.py --filepath imgs/ --includes "page-3" --n_trials 10
     parser = argparse.ArgumentParser()
     parser.add_argument('--filepath', type=str, default='imgs/example.png')
-    parser.add_argument('--pattern', type=int, default='')
+    parser.add_argument('--pattern', type=str, default='')
     parser.add_argument('--n_trials', type=int, default=1)
     parser.add_argument('--system', type=int, default=0)
     parser.add_argument('--model', type=str, default='llama3.2-vision')
