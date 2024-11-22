@@ -41,6 +41,12 @@ This repository is a work in progress. The best performing pipeline currently is
 
 ## Usage
 
+The pipeline is a Python scriptwith the following command line usage:
+
+```bash
+    python llamavision.py [-h] [--filepath FILEPATH] [--pattern PATTERN] [--n_trials N_TRIALS] [--system SYSTEM] [--model MODEL] [--no-stream] [--top_k TOP_K]
+```
+
 The pipeline has the following options:
 
 - `--filepath`: (str) The path to the directory containing the images to be processed. If the path is a PNG file, the pipeline will process that single image. If the path is a directory, the pipeline will process (by default) all images in that directory.
