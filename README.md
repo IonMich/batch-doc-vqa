@@ -31,12 +31,12 @@ This repository is a work in progress. The best performing pipeline currently is
 
 5. Start the Ollama server. On MacOS this can be done by simply opening the Ollama app. On Linux run `ollama server` in the terminal.
 
-6. Check the `SYSTEM_MESSAGES` variable in `llamavision.py`. This are the prompts that the model will use to generate its responses (by default the prompt at index `0`). Leave the prompt unchanged if you want to check the installation on the test images. Feel free to add your own images to the `imgs` directory, or to change th `--filepath` command line argument to point to a different directory.
+6. Check the `SYSTEM_MESSAGES` variable in `llamavision.py`. This are the prompts that the model will use to generate its responses (by default the prompt at index `0`). Leave the prompt unchanged if you want to check the installation on the test images. Feel free to add your own images to the `imgs` directory, or to change the `--filepath` command line argument to point to a different directory.
 
 7. That's it! You're ready to use the pipeline:
 
     ```bash
-    python llamavision.py --filepath imgs/ --n_trials 10
+    python llamavision.py --filepath imgs/sub-page-3.png --n_trials 10
     ```
 
 ## Usage
@@ -56,3 +56,12 @@ The pipeline has the following options:
 - `--top_k`: (int) The number of top answers to return. By default, this is set to 10. Lowering this number decreases creativity and variance in the model's predictions. Note that this is less than the Ollama default of 40.
 
 - `--no-stream`: (flag) If set, the pipeline will not stream the LLM responses in chunks. Instead, the pipeline will wait for the model to finish processing the image before printing the responses. Default (when this flag is omitted) is to stream the responses.
+
+## Motivation
+
+Recent advances in LLM modelling have made it conceivable to build a quantifiably reliable pipeline to extract information in bulk from documents:
+
+- Well formatted JSON can be fully enforced. In fact, using [context-free grammars](https://stackoverflow.com/a/6713333/10119867), precise JSON schemas can be enforced in language models that support structured responses (e.g. see [OpenAI's blog post](https://openai.com/index/introducing-structured-outputs-in-the-api/)).
+- OpenAI's `GPT4 o1-preview` [appears to be well-calibrated](https://openai.com/index/introducing-simpleqa/), i.e. the frequency of its answers to fact-seeking questions is a good proxy for their accuracy. This creates the possibility to sample multiple times from the model to infer probabilities of each distinct answer. It is unclear however how well this calibration generalizes to any open-source models. It is also unclear if the purely textual SimpleQA task is a good proxy for text+vision task.
+- The latest open-source models, such as the (Q4 quantized) Llama3.2-Vision 11B, show good performance on a variety of tasks, including document DocVQA, when compared to closed-source models like GPT-4. The [OCRBench Space](https://huggingface.co/spaces/echo840/ocrbench-leaderboard) on Huggingface has a nice summary of their performance on various OCR tasks.
+- Hardware with acceptable memory bandwidth and large-enough memory capacity for LLM tasks is becoming more affordable.
