@@ -100,7 +100,12 @@ def get_digit_probs(responses):
     UFID_LENGTH = 8
     for response in responses:
         response = json.loads(response)
-        ufid = str(response['ufid'])
+        try:
+            ufid = response['ufid']
+        except KeyError:
+            print("No UFID found.")
+            return None
+        ufid = str(ufid)
         # if ufid is \d{8} then add to list
         if len(ufid) == UFID_LENGTH and ufid.isdigit():
             ufids.append(ufid)
@@ -123,9 +128,9 @@ def get_digit_probs(responses):
 
 if __name__ == '__main__':
     # example usage:
-    # python llamavision.py --filepath imgs/ --includes "page-3" --n_trials 10
+    # python llamavision.py --filepath imgs/sub-page-3.png --n_trials 10 --model minicpm-v
     parser = argparse.ArgumentParser()
-    parser.add_argument('--filepath', type=str, default='imgs/example.png')
+    parser.add_argument('--filepath', type=str)
     parser.add_argument('--pattern', type=str, default='')
     parser.add_argument('--n_trials', type=int, default=1)
     parser.add_argument('--system', type=int, default=0)
