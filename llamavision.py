@@ -1,6 +1,7 @@
 import base64
 import os
 import argparse
+import csv
 
 import ollama
 
@@ -84,15 +85,27 @@ def vision_chat_digit_probs(args):
         print("Invalid path.")
         return None
     results = []
-    for file in os.listdir(filepath):
-        if not file.endswith(".png"):
-            continue
-        # if it doesnt include the pattern then skip
-        if args["pattern"] not in file:
-            continue
+    img_filepaths = os.listdir(filepath)
+    # filter out non-png files
+    img_filepaths = [f for f in img_filepaths if f.endswith(".png")]
+    # filter out the files that do not include the pattern
+    img_filepaths = [f for f in img_filepaths if args["pattern"] in f]
+    img_filepaths.sort(key=lambda x: int(x.split("-")[1]))
+    # reset csv file
+    model_name = args["model"]
+    with open(f"{model_name}_digit_probs.csv", "w") as f:
+        writer = csv.writer(f)
+        writer.writerow([i for i in range(10)])
+    for file in img_filepaths:
         img = filepath_to_base64(os.path.join(filepath, file))
         parse_result = get_img_digit_probs(img, args)
         results.append(parse_result)
+        # append to csv file
+        model_name = args["model"]
+        with open(f"{model_name}_digit_probs.csv", "a") as f:
+            writer = csv.writer(f)
+            for row in parse_result:
+                writer.writerow(row)
     return results
 
 
@@ -104,6 +117,8 @@ def get_digit_probs(responses):
     UFID_LENGTH = 8
     for response in responses:
         response = json.loads(response)
+        # ollama does not support JSON schema enforcement,
+        # so we need to check if the field exists
         try:
             ufid = response["ufid"]
         except KeyError:
