@@ -1,3 +1,4 @@
 .DS_STORE
 imgs/*
 !imgs/sub-page-3.png
+**/__pycache__/
