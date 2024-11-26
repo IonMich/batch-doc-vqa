@@ -25,6 +25,8 @@ def pdf_to_imgs(filepath, pages_i=-1, dpi=150, output_dir="."):
 
     n_docs = n_pages // num_pages_per_doc
     print(f"File metadata: {doc.metadata}")
+    # store also a csv with doc, page, and filename
+    doc_info = []
     for i in range(n_docs):
         print(f"Document {i+1}/{n_docs}", end="\r")
 
@@ -42,8 +44,14 @@ def pdf_to_imgs(filepath, pages_i=-1, dpi=150, output_dir="."):
             pix_bytes = pix.tobytes()
             with open(img_filepath, "wb") as f:
                 f.write(pix_bytes)
+            doc_info.append((i, j+1, img_filename))
 
     doc.close()
+    with open(os.path.join(output_dir, "doc_info.csv"), "w") as f:
+        f.write("doc,page,filename\n")
+        for doc, page, filename in doc_info:
+            f.write(f"{doc},{page},{filename}\n")
+    return doc_info
 
 
 if __name__ == "__main__":

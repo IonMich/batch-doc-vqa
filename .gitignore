@@ -1,4 +1,5 @@
 .DS_STORE
 imgs/*
 !imgs/sub-page-3.png
+!imgs/quiz11-presidents.pdf
 **/__pycache__/
