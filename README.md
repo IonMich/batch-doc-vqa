@@ -1,5 +1,7 @@
 # Vision LLM - Batch Document VQA with structured responses
 
+![Probability calibration curves for OpenCV+CNN and for LLama3.2-Vision 11B](./calibration_curves.png)
+
 This repository uses Large Language Models with vision capabilities to extract information from collections of documents. The goal is to create a fully local pipeline that runs on a single machine, and can be used to extract information from document collections for usage in downstream tasks.
 
 This repository is a work in progress. The best performing pipeline currently is one that uses Llama3.2-Vision as quantized in the Ollama project and is tested on MacOS with an M2 chip and 16GB of RAM.
