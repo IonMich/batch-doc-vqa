@@ -53,10 +53,11 @@ def get_histogram(pred_filename, label):
     """
     df_probs = pd.read_csv(pred_filename)
     df_probs = df_probs.values.flatten()
-    hist = plt.hist(df_probs, bins=20)
+    hist = plt.hist(df_probs, bins=20, label=label)
     plt.xlabel("Probability")
     plt.ylabel("Frequency")
     plt.title("Predicted digit probabilities")
+    plt.legend()
     plt.savefig(f"tests/output/prob_hist_{label}.png")
     return hist
 
@@ -67,9 +68,10 @@ def get_max_prob_histogram(pred_filename, label):
     df_probs = pd.read_csv(pred_filename)
     df_probs = df_probs.max(axis=1)
     print(df_probs)
-    hist = plt.hist(df_probs, bins=20)
+    hist = plt.hist(df_probs, bins=20, label=label)
     plt.xlabel("Probability")
     plt.ylabel("Frequency")
     plt.title("Max predicted digit probabilities")
+    plt.legend()
     plt.savefig(f"tests/output/max_prob_hist_{label}.png")
     return hist
