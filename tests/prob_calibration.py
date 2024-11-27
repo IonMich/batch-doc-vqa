@@ -1,6 +1,9 @@
 import numpy as np
 import pandas as pd
 
+import matplotlib.pyplot as plt
+
+
 def get_prob_calibration(pred_filename, ids_filename):
     df_probs = pd.read_csv(pred_filename)
     df_ids = pd.read_csv(ids_filename)
@@ -33,8 +36,6 @@ def get_prob_calibration(pred_filename, ids_filename):
     return new_df
 
 def plot_calibration_curves(list_dfs, list_labels, save_path):
-    import matplotlib.pyplot as plt
-
     for i, new_df in enumerate(list_dfs):
         plt.plot(new_df.index, new_df.values, marker="o", label=list_labels[i])
     plt.plot([0, 1], [0, 1], "--", color="gray")
@@ -45,3 +46,30 @@ def plot_calibration_curves(list_dfs, list_labels, save_path):
     plt.legend()
     plt.grid()
     plt.savefig(save_path)
+
+def get_histogram(pred_filename, label):
+    """
+    Get histograms of predicted probabilities
+    """
+    df_probs = pd.read_csv(pred_filename)
+    df_probs = df_probs.values.flatten()
+    hist = plt.hist(df_probs, bins=20)
+    plt.xlabel("Probability")
+    plt.ylabel("Frequency")
+    plt.title("Predicted digit probabilities")
+    plt.savefig(f"tests/output/prob_hist_{label}.png")
+    return hist
+
+def get_max_prob_histogram(pred_filename, label):
+    """
+    Get histograms of max predicted probabilities
+    """
+    df_probs = pd.read_csv(pred_filename)
+    df_probs = df_probs.max(axis=1)
+    print(df_probs)
+    hist = plt.hist(df_probs, bins=20)
+    plt.xlabel("Probability")
+    plt.ylabel("Frequency")
+    plt.title("Max predicted digit probabilities")
+    plt.savefig(f"tests/output/max_prob_hist_{label}.png")
+    return hist
