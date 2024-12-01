@@ -2,4 +2,7 @@
 imgs/*
 !imgs/sub-page-3.png
 !imgs/quiz11-presidents.pdf
+tests/output/*
+!tests/output/public/
+
 **/__pycache__/

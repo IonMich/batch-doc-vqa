@@ -1,6 +1,6 @@
 # Vision LLM - Batch Document VQA with structured responses
 
-![Probability calibration curves for OpenCV+CNN and for LLama3.2-Vision 11B](tests/output/calibration_curves.png)
+![Probability calibration curves for OpenCV+CNN and for LLama3.2-Vision 11B](tests/output/public/calibration_curves.png)
 
 > [!NOTE]  
 > See details in the associated [wiki](https://github.com/IonMich/batch-doc-vqa/wiki/Row-of-Digits-OCR:-OpenCV-CNN-versus-LLMs) article.
