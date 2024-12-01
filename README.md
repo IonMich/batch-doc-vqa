@@ -7,9 +7,29 @@
 
 This repository uses Large Language Models with vision capabilities to extract information from collections of documents. The goal is to create a fully local pipeline that runs on a single machine, and can be used to extract information from document collections for usage in downstream tasks.
 
-This repository is a work in progress. The best performing pipeline currently is one that uses Llama3.2-Vision as quantized in the Ollama project and is tested on MacOS with an M2 chip and 16GB of RAM.
+This repository is a work in progress. The best performing pipeline currently is one that uses Outlines to enforce JSON schemas on the model's responses, and the Qwen2-VL (AWQ) series of models. See [here](./outlines_quiz.py). The pipeline has been tested on Ubuntu 22.04 with an RTX 3060 Ti and 8GB of VRAM.
 
-## Getting Started
+## [NEW] Outlines + Qwen2-VL (AWQ)
+
+### Installation
+
+1. Install `outlines` (Structured Generation) and `transformers_vision` (Vission LLM backbone) via the official installation instructions in the `outlines` Wiki [here](https://dottxt-ai.github.io/outlines/latest/installation/) and [here](https://dottxt-ai.github.io/outlines/latest/reference/models/transformers_vision/).
+
+### Example Usage
+
+The pipeline is split into multiple Python Scripts with the following command line usage:
+
+```bash
+    python pdf_to_imgs.py --filepath imgs/quiz11-presidents.pdf --pages_i 4 --dpi 300 --output_dir imgs/q11/
+    python outlines_quiz.py
+    python string_matching.py
+```
+
+Use `--help` to see the full list of options for each script.
+
+## [OLD] Ollama + Llama3.2-Vision 11B
+
+### Ollama Installation
 
 1. First, install Ollama via the official [installation instructions](https://ollama.com/).
 
@@ -44,9 +64,9 @@ This repository is a work in progress. The best performing pipeline currently is
     python llamavision.py --filepath imgs/sub-page-3.png --n_trials 10
     ```
 
-## Usage
+### Usage
 
-The pipeline is a Python scriptwith the following command line usage:
+The Ollama pipeline is a Python scriptwith the following command line usage:
 
 ```bash
     python llamavision.py [-h] [--filepath FILEPATH] [--pattern PATTERN] [--n_trials N_TRIALS] [--system SYSTEM] [--model MODEL] [--no-stream] [--top_k TOP_K]
@@ -68,7 +88,7 @@ The pipeline has the following options:
 
 - `--no-stream`: (flag) If set, the pipeline will not stream the LLM responses in chunks. Instead, the pipeline will wait for the model to finish processing the image before printing the responses. Default (when this flag is omitted) is to stream the responses.
 
-## Motivation
+## Motivations
 
 Recent advances in LLM modelling have made it conceivable to build a quantifiably reliable pipeline to extract information in bulk from documents:
 
