@@ -178,7 +178,7 @@ def outlines_qwen():
         print("\n")
 
     # save the results
-    json_save_results(results, filepath="qwen2-VL-2B-results.json")
+    json_save_results(results, filepath="tests/output/qwen2-VL-2B-results.json")
 
 
 def json_save_results(results, filepath):
