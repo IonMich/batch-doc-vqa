@@ -50,8 +50,17 @@ def get_llm_ids_and_fullnames(results_filename):
     return df
 
 
-def get_llm_distances(df_llm, ids_filename):
+def get_llm_distances(df_llm, doc_info_filename, ids_filename):
+    pages = [1, 3]
+    df_filenames = pd.read_csv(doc_info_filename)
+    # TODO: fix filepaths
+    df_filenames["filename"] = "imgs/q11/" + df_filenames["filename"]
+    query_str = " or ".join([f"page == {i}" for i in pages])
+    df_filenames = df_filenames.query(query_str)
+    df_llm = df_llm.merge(df_filenames, on="filename")
+
     df_test = pd.read_csv(ids_filename)
+    #TODO: doc column should be removed from ids_filename file
     df_test = df_test.drop(columns=["doc"])
     df_test = df_llm.merge(df_test, how="cross")
     # compare IDs
@@ -79,9 +88,7 @@ def get_matches(df_test, id_d_cutoff=D_CUTOFF):
     df = df_test[
         (df_test["id_distance"] <= id_d_cutoff) | (df_test["lastname_distance"] == 0)
     ].copy()
-    # TODO: get doc directly from results.json
-    df["doc"] = df["filename"].str.extract(r".*doc-(\d+)-.*").astype(int)
-
+    
     df_matching = df.groupby(["doc", "student_id"]).agg(
         {
             "filename": "first",
@@ -101,12 +108,13 @@ def get_matches(df_test, id_d_cutoff=D_CUTOFF):
 
 def parse_llm_pipe(
     results_filename,
+    doc_info_filename,
     ids_filename,
     store_filename,
     id_d_cutoff=D_CUTOFF,
 ):
     df_llm = get_llm_ids_and_fullnames(results_filename)
-    df_test = get_llm_distances(df_llm, ids_filename)
+    df_test = get_llm_distances(df_llm, doc_info_filename, ids_filename)
     df_matching = get_matches(df_test, id_d_cutoff)
     df_matching.to_csv(store_filename, index=False)
     return df_matching
@@ -119,6 +127,12 @@ if __name__ == "__main__":
         type=str,
         default="tests/output/qwen2-VL-2B-results.json",
         help="Filename of the results JSON file",
+    )
+    parser.add_argument(
+        "--doc_info_fname",
+        type=str,
+        default="imgs/q11/doc_info.csv",
+        help="Filename of the document info CSV file",
     )
     parser.add_argument(
         "--ids_fname",
@@ -136,6 +150,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     df_matching = parse_llm_pipe(
         args.results_fname,
+        args.doc_info_fname,
         args.ids_fname,
         args.store_fname,
     )
