@@ -50,15 +50,10 @@ def get_llm_ids_and_fullnames(results_filename):
     return df
 
 
-def get_llm_distances(df_llm, doc_info_filename, ids_filename):
-    pages = [1, 3]
-    df_filenames = pd.read_csv(doc_info_filename)
-    df_test_ids = pd.read_csv(ids_filename)
-    query_str = " or ".join([f"page == {i}" for i in pages])
-    df_test = pd.merge(df_filenames, df_test_ids, on="doc").query(query_str)
-    # TODO: fix filepaths
-    df_test["filename"] = "imgs/q11/" + df_test["filename"]
-    df_test = pd.merge(df_test, df_llm, on="filename")
+def get_llm_distances(df_llm, ids_filename):
+    df_test = pd.read_csv(ids_filename)
+    df_test = df_test.drop(columns=["doc"])
+    df_test = df_llm.merge(df_test, how="cross")
     # compare IDs
     df_test["llm_id"] = df_test["llm_id"].astype(str)
     df_test["student_id"] = df_test["student_id"].astype(str)
@@ -75,14 +70,19 @@ def get_llm_distances(df_llm, doc_info_filename, ids_filename):
     )
     n_id_correct = df_test["id_distance"].eq(0).sum()
     n_lastname_correct = df_test["lastname_distance"].eq(0).sum()
-    print(f"Number of correct ID matches: {n_id_correct}/{len(df_test)}")
-    print(f"Number of correct last name matches: {n_lastname_correct}/{len(df_test)}")
-
+    print(f"Number of perfect ID matches: {n_id_correct}/{len(df_test)}")
+    print(f"Number of perfect last name matches: {n_lastname_correct}/{len(df_test)}")
     return df_test
 
 
 def get_matches(df_test, id_d_cutoff=D_CUTOFF):
-    df_matching = df_test.groupby("doc").agg(
+    df = df_test[
+        (df_test["id_distance"] <= id_d_cutoff) | (df_test["lastname_distance"] == 0)
+    ].copy()
+    # TODO: get doc directly from results.json
+    df["doc"] = df["filename"].str.extract(r".*doc-(\d+)-.*").astype(int)
+
+    df_matching = df.groupby(["doc", "student_id"]).agg(
         {
             "filename": "first",
             "student_id": "first",
@@ -101,13 +101,12 @@ def get_matches(df_test, id_d_cutoff=D_CUTOFF):
 
 def parse_llm_pipe(
     results_filename,
-    doc_info_filename,
     ids_filename,
     store_filename,
     id_d_cutoff=D_CUTOFF,
 ):
     df_llm = get_llm_ids_and_fullnames(results_filename)
-    df_test = get_llm_distances(df_llm, doc_info_filename, ids_filename)
+    df_test = get_llm_distances(df_llm, ids_filename)
     df_matching = get_matches(df_test, id_d_cutoff)
     df_matching.to_csv(store_filename, index=False)
     return df_matching
@@ -120,12 +119,6 @@ if __name__ == "__main__":
         type=str,
         default="tests/output/qwen2-VL-2B-results.json",
         help="Filename of the results JSON file",
-    )
-    parser.add_argument(
-        "--doc_info_fname",
-        type=str,
-        default="imgs/q11/doc_info.csv",
-        help="Filename of the document info CSV file",
     )
     parser.add_argument(
         "--ids_fname",
@@ -143,7 +136,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     df_matching = parse_llm_pipe(
         args.results_fname,
-        args.doc_info_fname,
         args.ids_fname,
         args.store_fname,
     )
