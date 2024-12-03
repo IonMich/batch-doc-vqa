@@ -163,8 +163,8 @@ def outlines_qwen():
         QuizSubmissionSummary,
         # Greedy sampling is a good idea for numeric
         # data extraction -- no randomness.
-        # sampler=outlines.samplers.greedy(),
-        sampler=outlines.samplers.multinomial(temperature=0.5),
+        sampler=outlines.samplers.greedy(),
+        # sampler=outlines.samplers.multinomial(temperature=0.5),
     )
 
     # Generate the quiz submission summary
