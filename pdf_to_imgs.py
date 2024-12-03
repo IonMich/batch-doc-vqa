@@ -6,8 +6,7 @@ import fitz
 
 
 def pdf_to_imgs(filepath, pages_i=-1, dpi=150, output_dir="."):
-    """Converts a pdf file to images.
-    """
+    """Converts a pdf file to images."""
     doc = fitz.open(filepath)
 
     n_pages = doc.page_count
@@ -19,7 +18,7 @@ def pdf_to_imgs(filepath, pages_i=-1, dpi=150, output_dir="."):
         raise ValueError(
             "The number of pages in the pdf is not a multiple of num_pages_per_doc."
         )
-    
+
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
 
@@ -44,7 +43,7 @@ def pdf_to_imgs(filepath, pages_i=-1, dpi=150, output_dir="."):
             pix_bytes = pix.tobytes()
             with open(img_filepath, "wb") as f:
                 f.write(pix_bytes)
-            doc_info.append((i, j+1, img_filename))
+            doc_info.append((i, j + 1, img_filename))
 
     doc.close()
     with open(os.path.join(output_dir, "doc_info.csv"), "w") as f:
@@ -65,8 +64,10 @@ if __name__ == "__main__":
         "--pages_i",
         type=int,
         default=-1,
-        help=("Number of pages per individual document, assuming the --filepath pdf is a concatenation of multiple documents. "
-              "Defaults to -1, which means that the entire pdf is considered a single document."),
+        help=(
+            "Number of pages per individual document, assuming the --filepath pdf is a concatenation of multiple documents. "
+            "Defaults to -1, which means that the entire pdf is considered a single document."
+        ),
     )
     parser.add_argument("--dpi", type=int, default=150)
     parser.add_argument("--output_dir", type=str, default=".")
