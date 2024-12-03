@@ -7,7 +7,9 @@
 
 This repository uses Large Language Models with vision capabilities to extract information from collections of documents. The goal is to create a fully local pipeline that runs on a single machine, and can be used to extract information from document collections for usage in downstream tasks.
 
-This repository is a work in progress. The best performing pipeline currently is one that uses Outlines to enforce JSON schemas on the model's responses, and the Qwen2-VL (AWQ) series of models. See [here](./outlines_quiz.py). The pipeline has been tested on Ubuntu 22.04 with an RTX 3060 Ti and 8GB of VRAM.
+## Benchmarks
+
+Our small test dataset (`./imgs/quiz11-presidents.pdf`) consists of 32 documents representing Physics quizzes and the task is to match them to the test students who took the quiz via their 8-digit university ID and, optionally, their names (`./tests/data/test_ids.csv`). We have already saturated our test dataset with 100% statistically confident detections, but more optimizations are explored to decrease inference cost. You can find more details [here](https://github.com/IonMich/batch-doc-vqa/wiki/Row-of-Digits-OCR:-OpenCV-CNN-versus-LLMs). Currently the best performing pipeline is one that uses `outlines` to enforce JSON schemas on the model's responses, and the Qwen2-VL (AWQ) series of models. It uses less than 5GB of VRAM and completes in about 2 minutes on an RTX 3060 Ti. See the code [here](./outlines_quiz.py). The pipeline has been tested onlyu on Ubuntu 22.04 with an RTX 3060 Ti and 8GB of VRAM.
 
 ## [NEW] Outlines + Qwen2-VL (AWQ)
 
