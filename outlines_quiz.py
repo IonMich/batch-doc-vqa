@@ -1,5 +1,6 @@
 # conda activate outlines
 from collections import defaultdict
+import argparse
 import json
 import os
 
@@ -198,10 +199,15 @@ def json_load_results(filepath):
 
 
 if __name__ == "__main__":
-    model_uri = "Qwen/Qwen2-VL-2B-Instruct-AWQ"
-    # NOTE: Specifying the Qwen model class appears to be unnecessary
-    # from transformers import Qwen2VLForConditionalGeneration
-    # model_class = Qwen2VLForConditionalGeneration
-    outlines_vlm(model_uri)
+    parser = argparse.ArgumentParser(description="Outlines Quiz Submission Parser")
+    parser.add_argument(
+        "--model",
+        default="Qwen/Qwen2-VL-2B-Instruct",
+        dest="model_uri",
+        type=str,
+        help="Hugging Face model URI for the vision-to-sequence model",
+    )
+    args = parser.parse_args()
     # model_uri = "HuggingFaceTB/SmolVLM-Instruct"
-    # outlines_vlm(model_uri)
+    # model_uri = "Qwen/Qwen2-VL-2B-Instruct-AWQ"
+    outlines_vlm(args.model_uri)
