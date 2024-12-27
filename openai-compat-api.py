@@ -5,7 +5,6 @@ import re
 import json
 import dotenv
 
-
 from openai import OpenAI
 
 dotenv.load_dotenv()
@@ -39,16 +38,13 @@ def json_save_results(results, filepath):
         json.dump(results, f)
 
 
-client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
-model_name = "gpt-4o-mini"
-
 pages = [1, 3]
 folder = "imgs/q11/"
 pattern = r"doc-\d+-page-[" + "".join([str(p) for p in pages]) + "]-[A-Z0-9]+.png"
 imagepaths = get_imagepaths(folder, pattern)
 
 
-def create_compation(model_name, imagepath):
+def create_completion(client, model_name, config, imagepath):
     response = client.chat.completions.create(
         model=model_name,
         messages=[
@@ -94,21 +90,17 @@ def create_compation(model_name, imagepath):
                 "strict": True,
             },
         },
-        temperature=0,
-        max_completion_tokens=256,
-        top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0,
+        **config,
     )
 
     return response
 
 
-def parse_images(imagepaths):
+def parse_images(client, model_name, config, imagepaths):
     results = defaultdict(list)
-    imagepaths = imagepaths
+    imagepaths = imagepaths[:1]
     for imagepath in imagepaths:
-        response = create_compation(model_name, imagepath)
+        response = create_completion(client, model_name, config, imagepath)
         print(response.model_dump(mode="json"))
         json_str = (
             response.model_dump(mode="json")
@@ -125,6 +117,25 @@ def parse_images(imagepaths):
     # save the results
     json_save_results(results, filepath=f"tests/output/{model_name}-results.json")
 
+
 if __name__ == "__main__":
-    pass
-    # parse_images(imagepaths)
+    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+    model_name = "gpt-4o-mini"
+    config = {
+        "temperature": 0,
+        "top_p": 1,
+        "max_tokens": 256,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+    }
+    # client = OpenAI(
+    #     api_key=os.environ["GENAI_API_KEY"],
+    #     base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+    # )
+    # model_name = "gemini-2.0-flash-thinking-exp-1219"
+    # config = {
+    #     "temperature": 0,
+    #     "top_p": 1,
+    #     "max_tokens": 8192,
+    # }
+    parse_images(client, model_name, config, imagepaths)
