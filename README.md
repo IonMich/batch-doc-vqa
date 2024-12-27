@@ -11,7 +11,26 @@ This repository uses Large Language Models with vision capabilities to extract i
 
 Our small test dataset (`./imgs/quiz11-presidents.pdf`) consists of 32 documents representing Physics quizzes and the task is to match them to the test students who took the quiz via their 8-digit university ID and, optionally, their names (`./tests/data/test_ids.csv`). We have already saturated our test dataset with 100% statistically confident detections, but more optimizations are explored to decrease inference cost. You can find more details [here](https://github.com/IonMich/batch-doc-vqa/wiki/Row-of-Digits-OCR:-OpenCV-CNN-versus-LLMs). Currently the best performing pipeline is one that uses `outlines` to enforce JSON schemas on the model's responses, and the Qwen2-VL series of models. It uses less than 5GB of VRAM and completes in about 2 minutes on an RTX 3060 Ti. See the code [here](./outlines_quiz.py). The pipeline has been tested only on Ubuntu 22.04 with an RTX 3060 Ti and 8GB of VRAM.
 
-## [NEW] Outlines + Qwen2-VL
+|                         | OpenCV+CNN     | outlines + VLM                | outlines + VLM                | VLM w/ structured output | VLM w/ structured output |
+|:------------------------|:---------------|:------------------------------|:------------------------------|:----------------------|:----------------------|
+| LLM model               | N/A            | outlines + Qwen2-VL-2B-Instruct | outlines + SmolVLM          | gpt-4o-mini           | gemini-2.0-flash-exp  |
+| LLM model size          | N/A            | 2B                            | 2B                            | ??                    | ??                    |
+| Open-weights            | N/A            | Yes (Apache 2.0 License)      | Yes (Apache 2.0 License)      | No                    | No                    |
+| # samples               | 1              | 1                             | 1                             | 1                     | 1                     |
+| logits available        | Yes            | No                            | No                            | Yes (unused)          | Yes (unused)          |
+| regex pattern           | N/A            | Yes                           | Yes                           | No                    | No                    |
+| digit_top1              | 85.16%         | 98.44%                        | 68.35%                        | ??.??%                | ??.??%                |
+| digit_top2              | 90.62%         | N/A                           | N/A                           | N/A                   | N/A                   |
+| digit_top3              | 94.14%         | N/A                           | N/A                           | N/A                   | N/A                   |
+| 8-digit id_top1         | N/A            | 90.63%                        | 53.13%                        | ?                     | ?                     |
+| lastname_top1           | N/A            | 100%                          | 93.75%                        | ?                     | ?                     |
+| Detect Type             | ID (1)         | LastName (2) + ID (1)         | LastName (2) + ID (1)         | LastName (2) + ID (1) | LastName (2) + ID (1) |
+| ID Avg $d_\mathrm{Lev}$ | ?              | 0.1250                        | 2.3750                        | ?                     | ?                     |
+| Lastname Avg $d_\mathrm{Lev}$ | N/A      | 0.0000                        | 0.0938                        | ?                     | ?                     |
+| Docs detected           | 90.62% (29/32) | 100.00% (32/32)               | 68.75% (22/32)                | ??% (??/32)           | ??% (??/32)           |
+| Runtime                 | ~ 1 second     | ~ 2 minutes (RTX 3060 Ti 8GB) | ~ 2 minutes (RTX 3060 Ti 8GB) | ~5 minutes (sequential) | ~5 minutes (sequential) |
+
+## Outlines + Qwen2-VL
 
 ### Installation
 
