@@ -19,10 +19,10 @@ Our small test dataset (`./imgs/quiz11-presidents.pdf`) consists of 32 documents
 | # samples               | 1              | 1                             | 1                             | 1                     | 1                     |
 | logits available        | Yes            | No                            | No                            | Yes (unused)          | Yes (unused)          |
 | regex pattern           | N/A            | Yes                           | Yes                           | No                    | No                    |
-| digit_top1              | 85.16%         | 98.44%                        | 68.35%                        | 26.95%                | 99.22%                |
+| digit_top1              | 85.16%         | 98.44%                        | 68.35%                        | 87.89%                | 99.22%                |
 | digit_top2              | 90.62%         | N/A                           | N/A                           | N/A                   | N/A                   |
 | digit_top3              | 94.14%         | N/A                           | N/A                           | N/A                   | N/A                   |
-| 8-digit id_top1         | N/A            | 90.63%                        | 53.13%                        | 50.00%                | 93.75%                |
+| 8-digit id_top1         | ??             | 90.63%                        | 53.13%                        | 50.00%                | 93.75%                |
 | lastname_top1           | N/A            | 100%                          | 93.75%                        | 93.75%                | 93.75%                |
 | Detect Type             | ID (1)         | LastName (2) + ID (1)         | LastName (2) + ID (1)         | LastName (2) + ID (1) | LastName (2) + ID (1) |
 | ID Avg $d_\mathrm{Lev}$ | N/A            | 0.1250                        | 2.3750                        | 0.6563                | 0.0625                |
