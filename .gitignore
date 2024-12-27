@@ -6,3 +6,4 @@ tests/output/*
 !tests/output/public/
 
 **/__pycache__/
+.env
