@@ -9,15 +9,14 @@ import re
 from PIL import Image
 import torch
 
-from transformers import AutoProcessor
+from transformers import AutoProcessor, AutoModelForVision2Seq
 
-# Qwen
-from transformers import Qwen2VLForConditionalGeneration
+
 
 # outlines
 import outlines
 from pydantic import BaseModel, Field
-from typing import Optional
+# from typing import Optional
 
 # Rich for pretty printing
 from rich import print
@@ -30,7 +29,6 @@ SECTION_NUMBER_PATTERN = r"\d{" + str(SECTION_NUMBER_LEN) + "}"
 
 
 def get_imagepaths(folder, pattern):
-
     images = []
     for root, _, files in os.walk(folder):
         for file in files:
@@ -41,8 +39,12 @@ def get_imagepaths(folder, pattern):
     print(images)
     return images
 
+
 def natural_sort_key(s):
-    return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)]
+    return [
+        int(text) if text.isdigit() else text.lower() for text in re.split(r"(\d+)", s)
+    ]
+
 
 def get_images(folder, pattern):
     filepaths = get_imagepaths(folder, pattern)
@@ -89,10 +91,10 @@ class QuizSubmissionSummary(BaseModel):
         alias=UNIVERSITY_ID_ALIAS,
         description=f"{UNIVERSITY_ID_LEN}-digit {UNIVERSITY_ID_ALIAS.capitalize()} of the student",
     )
-    # section_number: str = Field(
-    #     pattern=SECTION_NUMBER_PATTERN,
-    #     description="Five digit section number where the student is enrolled",
-    # )
+    section_number: str = Field(
+        pattern=SECTION_NUMBER_PATTERN,
+        description="5-digit section number of the student",
+    )
     # problem_number: Optional[int]
     # problem_description: Optional[str] = Field(
     #     description="Description of the problem the student is tasked to solve"
@@ -108,15 +110,15 @@ class QuizSubmissionSummary(BaseModel):
     # )
 
 
-def outlines_qwen():
+def outlines_vlm(model_uri, model_class=AutoModelForVision2Seq):
     # Load + resize the image
     pages = [1, 3]
     folder = "imgs/q11/"
     pattern = r"doc-\d+-page-[" + "".join([str(p) for p in pages]) + "]-[A-Z0-9]+.png"
     images = get_images(folder, pattern)
 
-    model_uri = "Qwen/Qwen2-VL-2B-Instruct-AWQ"
-    model_class = Qwen2VLForConditionalGeneration
+    # model_uri = "HuggingFaceTB/SmolVLM-Instruct"
+    # model_class = AutoModelForVision2Seq
     model = outlines.models.transformers_vision(
         model_uri,
         model_class=model_class,
@@ -178,7 +180,9 @@ def outlines_qwen():
         print("\n")
 
     # save the results
-    json_save_results(results, filepath="tests/output/qwen2-VL-2B-results.json")
+    json_save_results(
+        results, filepath=f"tests/output/{model_uri.replace('/','-')}-results.json"
+    )
 
 
 def json_save_results(results, filepath):
@@ -194,4 +198,10 @@ def json_load_results(filepath):
 
 
 if __name__ == "__main__":
-    outlines_qwen()
+    model_uri = "Qwen/Qwen2-VL-2B-Instruct-AWQ"
+    # NOTE: Specifying the Qwen model class appears to be unnecessary
+    # from transformers import Qwen2VLForConditionalGeneration
+    # model_class = Qwen2VLForConditionalGeneration
+    outlines_vlm(model_uri)
+    # model_uri = "HuggingFaceTB/SmolVLM-Instruct"
+    # outlines_vlm(model_uri)
