@@ -18,7 +18,8 @@ def levenshteinDistance(s1, s2):
     for i2, c2 in enumerate(s2):
         distances_ = [i2 + 1]
         for i1, c1 in enumerate(s1):
-            if c1 == c2:
+            # following https://stackoverflow.com/a/31599276/10119867
+            if c1.casefold() == c2.casefold():
                 distances_.append(distances[i1])
             else:
                 distances_.append(
