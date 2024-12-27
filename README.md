@@ -25,7 +25,7 @@ Our small test dataset (`./imgs/quiz11-presidents.pdf`) consists of 32 documents
 | 8-digit id_top1         | N/A            | 90.63%                        | 53.13%                        | 50.00%                | 93.75%                |
 | lastname_top1           | N/A            | 100%                          | 93.75%                        | 93.75%                | 93.75%                |
 | Detect Type             | ID (1)         | LastName (2) + ID (1)         | LastName (2) + ID (1)         | LastName (2) + ID (1) | LastName (2) + ID (1) |
-| ID Avg $d_\mathrm{Lev}$ | ?              | 0.1250                        | 2.3750                        | 0.6563                | 0.0625                |
+| ID Avg $d_\mathrm{Lev}$ | N/A            | 0.1250                        | 2.3750                        | 0.6563                | 0.0625                |
 | Lastname Avg $d_\mathrm{Lev}$ | N/A      | 0.0000                        | 0.0938                        | 0.156250              | 0.0625                |
 | Docs detected           | 90.62% (29/32) | 100.00% (32/32)               | 68.75% (22/32)                | 100% (32/32)          | 100% (32/32)          |
 | Runtime                 | ~ 1 second     | ~ 2 minutes (RTX 3060 Ti 8GB) | ~ 2 minutes (RTX 3060 Ti 8GB) | ~5 minutes (sequential) | ~5 minutes (sequential) |
