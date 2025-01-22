@@ -75,21 +75,31 @@ class QuizSubmissionSummary(BaseModel):
         # try also literal list of UFIDs
         # pattern=UNIVERSITY_ID_PATTERN,
         alias=UNIVERSITY_ID_ALIAS,
-        description=f"{UNIVERSITY_ID_LEN}-digit {UNIVERSITY_ID_ALIAS.capitalize()} of the student",
+        description=f"{UNIVERSITY_ID_LEN}-digit {UNIVERSITY_ID_ALIAS.capitalize()} of the student. If missing, report an empty string",
     )
     section_number: str = Field(
         # pattern=SECTION_NUMBER_PATTERN,
-        description="5-digit section number of the student",
+        description="5-digit section number of the student. If missing, report an empty string",
     )
 
 
 prompt = f"""You are an expert at grading student quizzes in physics courses.
-    Please extract the information from the student's submission. Be as detailed as possible --
-    missing or misreporting information is a crime.
+    Please extract the information from the student's submission. Be as detailed as possible. Do not overthink the problem.
 
     Return the information in the following JSON schema:
     {QuizSubmissionSummary.model_json_schema(by_alias=True)}
+
+    Example:
+    ```json
+    {{
+        "student_full_name": "John Doe",
+        "ufid": "12345678",
+        "section_number": "12345"
+    }}
+    ```
 """
+
+print(prompt)
 
 pages = [1, 3]
 folder = "imgs/q11/"
@@ -107,6 +117,11 @@ def create_completion(client, model_name, config, imagepath):
         ],
         config=config,
     )
+    for part in response.candidates[0].content.parts:
+        if part.thought:
+            print(f"Model Thought:\n{part.text}\n")
+        else:
+            print(f"\nModel Response:\n{part.text}\n")
     return response
 
 
@@ -125,6 +140,9 @@ def parse_images(client, model_name, config, imagepaths):
         )
         model_responses = [r for r in response_parts if not r.get("thought")]
         json_str = model_responses[0].get("text")
+        if "thinking" in model_name:
+            json_str = parse_json(json_str)
+        # print(json_str)
         json_obj = json.loads(json_str)
         # replace ufid with university_id
         json_obj["university_id"] = json_obj.pop("ufid")
@@ -141,11 +159,14 @@ if __name__ == "__main__":
     api_key = os.getenv("GEMINI_API_KEY")
 
     client = genai.Client(api_key=api_key, http_options={"api_version": "v1alpha"})
-    # model_id = "gemini-2.0-flash-thinking-exp-1219"
-    model_id = "gemini-2.0-flash-exp"
+    model_id = "gemini-2.0-flash-thinking-exp-01-21"
+    # model_id = "gemini-2.0-flash-exp"
     config = types.GenerateContentConfig(
-        response_mime_type="application/json", 
-        response_schema=QuizSubmissionSummary,
+        # response_mime_type="application/json", 
+        # response_schema=QuizSubmissionSummary,
         temperature=0,
+        thinking_config=types.ThinkingConfig(
+            include_thoughts=False,
+        ),
     )
     parse_images(client, model_id, config, imagepaths)
