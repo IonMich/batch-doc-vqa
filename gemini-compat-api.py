@@ -159,6 +159,7 @@ if __name__ == "__main__":
     api_key = os.getenv("GEMINI_API_KEY")
 
     client = genai.Client(api_key=api_key, http_options={"api_version": "v1alpha"})
+    # NOTE: as of 2021-01-21, thinking models do not support schema validation
     model_id = "gemini-2.0-flash-thinking-exp-01-21"
     # model_id = "gemini-2.0-flash-exp"
     config = types.GenerateContentConfig(
