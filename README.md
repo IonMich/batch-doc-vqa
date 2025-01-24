@@ -7,6 +7,49 @@
 
 This repository uses Large Language Models with vision capabilities to extract information from collections of documents. The goal is to create a fully local pipeline that runs on a single machine, and can be used to extract information from document collections for usage in downstream tasks.
 
+## How to use
+
+### Installation
+
+1. Run the following commands to clone the repository:
+
+    ```bash
+    git clone https://github.com/IonMich/batch-doc-vqa.git
+    cd batch-doc-vqa
+    ```
+
+2. Create a new (conda) environment and install the required packages:
+
+    ```bash
+    conda create -n batch python=3.11
+    conda activate batch
+    pip install -r requirements.txt
+    ```
+
+### Prepare the documents
+
+It is common for a batch of documents to be stored in a single large PDF file. Since multimodal LLMs can only process images, the first step is to convert the PDF file into a collection of images. (Of course, if you already have a collection of images, you can skip this step.) This can be done using the `pdf_to_imgs.py` script. For example, to convert a batch of 4-page documents into images stored in a single PDF file `imgs/quiz11-presidents.pdf` to images at 300 DPI, you can run the following command:
+
+```bash
+python pdf_to_imgs.py --filepath imgs/quiz11-presidents.pdf --pages_i 4 --dpi 300 --output_dir imgs/q11/
+```
+
+This will create a directory `imgs/q11/` containing the images of the 4-page documents. Set the `--pages_i` argument to the number of pages in each document. The images will follow the naming convention `doc-0-page-1-*.png`, ..., `doc-0-page-4-*.png`, `doc-1-page-1-*.png`, ..., etc. A CSV file `imgs/q11/doc_info.csv` will also be created, containing the metadata of the images (the page number and the document number).
+
+### Example Usage
+
+The `outlines_quiz.py` script can be used to extract information from a collection of documents using local Vision LLMs. For example, to extract the 8-digit university IDs from the documents in the `imgs/q11/` directory, you can run the following command:
+
+```bash
+    python outlines_quiz.py
+```
+
+By default, this pipeline will use the `Qwen2-VL-2B-Instruct` model to extract full names, 8-digit university IDs, and section numbers from the documents. You can change the model used by setting the `--model` argument. You can change the information extracted by modifying the Pydantic schema in `outlines_quiz.py`. The extracted information will be saved in a JSON file in the `tests/output/` directory.
+
+### Post-processing
+
+You can analyze the extracted information using string matching algorithms. For example, take a look at the `stringmatching.ipynb` notebook to see how to match the extracted last names and university IDs to a list of entries in a CSV file.
+
 ## Benchmarks
 
 Our small test dataset (`./imgs/quiz11-presidents.pdf`) consists of 32 documents representing Physics quizzes and the task is to match them to the test students who took the quiz via their 8-digit university ID and, optionally, their names (`./tests/data/test_ids.csv`). We have already saturated our test dataset with 100% statistically confident detections, but more optimizations are explored to decrease inference cost. You can find more details [here](https://github.com/IonMich/batch-doc-vqa/wiki/Row-of-Digits-OCR:-OpenCV-CNN-versus-LLMs). Currently the best performing pipeline is one that uses `outlines` to enforce JSON schemas on the model's responses, and the Qwen2-VL series of models. It uses less than 5GB of VRAM and completes in about 2 minutes on an RTX 3060 Ti. See the code [here](./outlines_quiz.py). The pipeline has been tested only on Ubuntu 22.04 with an RTX 3060 Ti and 8GB of VRAM.
@@ -29,24 +72,6 @@ Our small test dataset (`./imgs/quiz11-presidents.pdf`) consists of 32 documents
 | Lastname Avg $d_\mathrm{Lev}$ | N/A      | 0.0000                        | 0.0938                        | 0.156250              | 0.0625                |
 | Docs detected           | 90.62% (29/32) | 100.00% (32/32)               | 68.75% (22/32)                | 100% (32/32)          | 100% (32/32)          |
 | Runtime                 | ~ 1 second     | ~ 2 minutes (RTX 3060 Ti 8GB) | ~ 2 minutes (RTX 3060 Ti 8GB) | ~5 minutes (sequential) | ~5 minutes (sequential) |
-
-## Outlines + Qwen2-VL
-
-### Installation
-
-1. Install `outlines` (Structured Generation) and `transformers_vision` (Vission LLM backbone) via the official installation instructions in the `outlines` Wiki [here](https://dottxt-ai.github.io/outlines/latest/installation/) and [here](https://dottxt-ai.github.io/outlines/latest/reference/models/transformers_vision/).
-
-### Example Usage
-
-The pipeline is split into multiple Python Scripts with the following command line usage:
-
-```bash
-    python pdf_to_imgs.py --filepath imgs/quiz11-presidents.pdf --pages_i 4 --dpi 300 --output_dir imgs/q11/
-    python outlines_quiz.py
-    python string_matching.py
-```
-
-Use `--help` to see the full list of options for each script.
 
 ## [OLD] Ollama + Llama3.2-Vision 11B
 
