@@ -120,16 +120,17 @@ def outlines_vlm(model_uri, model_class=AutoModelForVision2Seq):
 
     # model_uri = "HuggingFaceTB/SmolVLM-Instruct"
     # model_class = AutoModelForVision2Seq
+    has_cuda = torch.cuda.is_available()
     model = outlines.models.transformers_vision(
         model_uri,
         model_class=model_class,
         model_kwargs={
-            "device_map": "cuda:0",
-            "torch_dtype": torch.float16,
-            "attn_implementation": "flash_attention_2",
+            "device_map": "cuda:0" if has_cuda else "cpu",
+            "torch_dtype": torch.float16 if has_cuda else torch.float32,
+            "attn_implementation": "flash_attention_2" if has_cuda else "eager",
         },
         processor_kwargs={
-            "device": "cuda",  # set to "cpu" if you don't have a GPU
+            "device": "cuda" if has_cuda else "cpu",
         },
     )
 

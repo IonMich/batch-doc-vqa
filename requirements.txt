@@ -1,0 +1,38 @@
+# python=3.11
+numpy<2
+transformers
+datasets 
+accelerate 
+torch
+rich
+sentencepiece
+pymupdf
+torchvision
+pillow
+outlines
+ipykernel
+ipywidgets
+matplotlib
+
+# or with a conda environment.yml file
+# channels:
+#   - conda-forge
+# dependencies:
+#   - python=3.11
+#   - ipykernel
+#   - pip>=22
+#   - pip:
+#     - numpy<2
+#     - transformers
+#     - datasets
+#     - accelerate
+#     - torch
+#     - rich
+#     - sentencepiece
+#     - pymupdf
+#     - torchvision
+#     - pillow
+#     - outlines
+#     - ipywidgets
+#     - matplotlib
+
