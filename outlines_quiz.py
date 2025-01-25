@@ -1,83 +1,15 @@
-# conda activate outlines
-from collections import defaultdict
+# conda activate batch
 import argparse
-import json
-import os
-
-import re
-
-
-from PIL import Image
-import torch
-
-from transformers import AutoProcessor, AutoModelForVision2Seq
-
-
-
-# outlines
-import outlines
 from pydantic import BaseModel, Field
-# from typing import Optional
 
-# Rich for pretty printing
-from rich import print
+from batch_extract import get_images, outlines_vlm
+# outlines
 
 UNIVERSITY_ID_LEN = 8
 UNIVERSITY_ID_PATTERN = r"\d{" + str(UNIVERSITY_ID_LEN) + "}"
 UNIVERSITY_ID_ALIAS = "ufid"
 SECTION_NUMBER_LEN = 5
 SECTION_NUMBER_PATTERN = r"\d{" + str(SECTION_NUMBER_LEN) + "}"
-
-
-def get_imagepaths(folder, pattern):
-    images = []
-    for root, _, files in os.walk(folder):
-        for file in files:
-            if re.match(pattern, file):
-                images.append(os.path.join(root, file))
-    # sort by integers in the filename
-    images.sort(key=natural_sort_key)
-    print(images)
-    return images
-
-
-def natural_sort_key(s):
-    return [
-        int(text) if text.isdigit() else text.lower() for text in re.split(r"(\d+)", s)
-    ]
-
-
-def get_images(folder, pattern):
-    filepaths = get_imagepaths(folder, pattern)
-    return {filepath: load_and_resize_image(filepath) for filepath in filepaths}
-
-
-def load_and_resize_image(image_path, max_size=1024):
-    """
-    Load and resize an image while maintaining aspect ratio
-
-    Args:
-        image_path: Path to the image file
-        max_size: Maximum dimension (width or height) of the output image
-
-    Returns:
-        PIL Image: Resized image
-    """
-    image = Image.open(image_path)
-
-    # Get current dimensions
-    width, height = image.size
-
-    # Calculate scaling factor
-    scale = min(max_size / width, max_size / height)
-
-    # Only resize if image is larger than max_size
-    if scale < 1:
-        new_width = int(width * scale)
-        new_height = int(height * scale)
-        image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
-
-    return image
 
 
 class QuizSubmissionSummary(BaseModel):
@@ -111,94 +43,6 @@ class QuizSubmissionSummary(BaseModel):
     # )
 
 
-def outlines_vlm(model_uri, model_class=AutoModelForVision2Seq):
-    # Load + resize the image
-    pages = [1, 3]
-    folder = "imgs/q11/"
-    pattern = r"doc-\d+-page-[" + "".join([str(p) for p in pages]) + "]-[A-Z0-9]+.png"
-    images = get_images(folder, pattern)
-
-    # model_uri = "HuggingFaceTB/SmolVLM-Instruct"
-    # model_class = AutoModelForVision2Seq
-    has_cuda = torch.cuda.is_available()
-    model = outlines.models.transformers_vision(
-        model_uri,
-        model_class=model_class,
-        model_kwargs={
-            "device_map": "cuda:0" if has_cuda else "cpu",
-            "torch_dtype": torch.float16 if has_cuda else torch.float32,
-            "attn_implementation": "flash_attention_2" if has_cuda else "eager",
-        },
-        processor_kwargs={
-            "device": "cuda" if has_cuda else "cpu",
-        },
-    )
-
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    # The image is provided as a PIL Image object
-                    "type": "image",
-                    "image": "",
-                },
-                {
-                    "type": "text",
-                    "text": f"""You are an expert at grading student quizzes in physics courses.
-                    Please extract the information from the student's submission. Be as detailed as possible --
-                    missing or misreporting information is a crime.
-
-                    Return the information in the following JSON schema:
-                    {QuizSubmissionSummary.model_json_schema(by_alias=True)}
-                """,
-                },
-            ],
-        }
-    ]
-
-    # Convert the messages to the final prompt
-    processor = AutoProcessor.from_pretrained(model_uri)
-    prompt = processor.apply_chat_template(
-        messages, tokenize=False, add_generation_prompt=True
-    )
-    quiz_summary_generator = outlines.generate.json(
-        model,
-        QuizSubmissionSummary,
-        # Greedy sampling is a good idea for numeric
-        # data extraction -- no randomness.
-        sampler=outlines.samplers.greedy(),
-        # sampler=outlines.samplers.multinomial(temperature=0.5),
-    )
-
-    # Generate the quiz submission summary
-    results = defaultdict(list)
-    n_samples = 1
-    for imagepath, image in images.items():
-        for _ in range(n_samples):
-            result = quiz_summary_generator(prompt, [image])
-            print(result.model_dump(mode="json", by_alias=True))
-            results[imagepath].append(result.model_dump(mode="json"))
-        print("\n")
-
-    # save the results
-    json_save_results(
-        results, filepath=f"tests/output/{model_uri.replace('/','-')}-results.json"
-    )
-
-
-def json_save_results(results, filepath):
-    # save the results
-    with open(filepath, "w") as f:
-        json.dump(results, f)
-
-
-def json_load_results(filepath):
-    with open(filepath, "r") as f:
-        results = json.load(f)
-    return results
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Outlines Quiz Submission Parser")
     parser.add_argument(
@@ -211,4 +55,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
     # model_uri = "HuggingFaceTB/SmolVLM-Instruct"
     # model_uri = "Qwen/Qwen2-VL-2B-Instruct-AWQ"
-    outlines_vlm(args.model_uri)
+    folder = "imgs/q11/"
+    pages = [1, 3]
+    pattern = r"doc-\d+-page-[" + "".join([str(p) for p in pages]) + "]-[A-Z0-9]+.png"
+    quiz_images = get_images(folder, pattern)
+    user_message = "You are an expert at grading student quizzes in physics courses. Please extract the information from the student's submission. Be as detailed as possible."
+
+    outlines_vlm(
+        images=quiz_images,
+        model_uri=args.model_uri,
+        pydantic_model=QuizSubmissionSummary,
+        user_message=user_message,
+    )
