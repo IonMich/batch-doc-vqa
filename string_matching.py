@@ -1,7 +1,7 @@
 import argparse
 
 import pandas as pd
-from outlines_quiz import json_load_results, get_imagepaths
+from batch_extract import json_load_results, get_imagepaths
 
 D_CUTOFF = 3
 
