@@ -89,12 +89,9 @@ def outlines_vlm(
         model_uri,
         model_class=model_class,
         model_kwargs={
-            "device_map": "cuda:0" if has_cuda else "cpu",
+            "device_map": "auto" if has_cuda else "cpu",
             "torch_dtype": torch.float16 if has_cuda else torch.float32,
             "attn_implementation": "flash_attention_2" if has_cuda else "eager",
-        },
-        processor_kwargs={
-            "device": "cuda" if has_cuda else "cpu",
         },
     )
 
@@ -103,7 +100,6 @@ def outlines_vlm(
             "role": "user",
             "content": [
                 {
-                    # The image is provided as a PIL Image object
                     "type": "image",
                     "image": "",
                 },
