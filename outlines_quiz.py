@@ -1,5 +1,6 @@
 # conda activate batch
 import argparse
+# from typing import Optional
 from pydantic import BaseModel, Field
 
 from batch_extract import get_images, outlines_vlm
@@ -30,13 +31,18 @@ class QuizSubmissionSummary(BaseModel):
     )
     # problem_number: Optional[int]
     # problem_description: Optional[str] = Field(
-    #     description="Description of the problem the student is tasked to solve"
+    #     description="Description of the problem the student is tasked to solve",
+    #     max_length=500,
     # )
-    # student_work_latex: Optional[str] = Field(
-    #     description="Student's handwritten work converted to LaTeX"
+    # handwritten_attempt_solution: Optional[str] = Field(
+    #     description="Student's handwritten step-by-step work, converted to text. Say 'DID NOT ATTEMPT' if the student did not attempt the problem.",
+    #     max_length=500,
     # )
     # student_final_answer: Optional[float] = Field(
-    #     description="Student's final handwritten answer. Sometimes the answer is boxed by the student."
+    #     description="Student's final handwritten answer. Sometimes the answer is boxed by the student. Leave blank if the student did not attempt the problem."
+    # )
+    # evaluation: Optional[float] = Field(
+    #     description="A detailed evaluation of the student's work and answer. This will help the grader understand the student's thought process and provide feedback. Return 'DID NOT ATTEMPT' if the student did not attempt the problem."
     # )
     # date: Optional[str] = Field(
     #     pattern=r"\d{4}-\d{2}-\d{2}", description="Date in the format YYYY-MM-DD"
