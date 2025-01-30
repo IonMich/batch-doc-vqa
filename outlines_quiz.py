@@ -23,7 +23,7 @@ class QuizSubmissionSummary(BaseModel):
         # try also literal list of UFIDs
         pattern=UNIVERSITY_ID_PATTERN,
         alias=UNIVERSITY_ID_ALIAS,
-        description=f"{UNIVERSITY_ID_LEN}-digit {UNIVERSITY_ID_ALIAS.capitalize()} of the student",
+        description=f"{UNIVERSITY_ID_LEN}-digit {UNIVERSITY_ID_ALIAS.upper()} of the student",
     )
     section_number: str = Field(
         pattern=SECTION_NUMBER_PATTERN,

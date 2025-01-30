@@ -105,10 +105,15 @@ def outlines_vlm(
                 },
                 {
                     "type": "text",
+                    # NOTE: probably here by_alias should be False for best results,
+                    # since we pass the model directly to `outlines.generate.json`
+                    # so during generation the LLM sees the original model attributes.
+                    # Currently `outlines.generate.json` uses `model_json_schema()`,
+                    # which uses the default `by_alias=False`.
                     "text": f"""{user_message}
 
                     Return the information in the following JSON schema:
-                    {pydantic_model.model_json_schema(by_alias=True)}
+                    {pydantic_model.model_json_schema(by_alias=False)}
                 """,
                 },
             ],
