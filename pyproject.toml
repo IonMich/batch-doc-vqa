@@ -1,0 +1,35 @@
+[project]
+name = "batch-doc-vqa"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Ioannis Michaloliakos", email = "ioannis.michalol@ufl.edu" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "outlines>=1.2.3",
+    "pillow>=11.3.0",
+    "pydantic>=2.11.7",
+    "rich>=14.1.0",
+    "transformers",
+]
+
+[project.scripts]
+batch-doc-vqa = "batch_doc_vqa:main"
+
+[build-system]
+requires = ["uv_build>=0.8.2,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+transformers = { git = "https://github.com/huggingface/transformers.git" }
+
+[dependency-groups]
+dev = [
+    "dotenv>=0.9.9",
+    "ipykernel>=6.30.1",
+    "matplotlib>=3.10.5",
+    "mypy>=1.17.1",
+    "pandas>=2.3.1",
+]

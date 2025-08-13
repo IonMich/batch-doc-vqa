@@ -52,26 +52,27 @@ You can analyze the extracted information using string matching algorithms. For 
 
 ## Benchmarks
 
-Our small test dataset (`./imgs/quiz11-presidents.pdf`) consists of 32 documents representing Physics quizzes and the task is to match them to the test students who took the quiz via their 8-digit university ID and, optionally, their names (`./tests/data/test_ids.csv`). We have already saturated our test dataset with 100% statistically confident detections, but more optimizations are explored to decrease inference cost. You can find more details [here](https://github.com/IonMich/batch-doc-vqa/wiki/Row-of-Digits-OCR:-OpenCV-CNN-versus-LLMs). Currently the best performing pipeline is one that uses `outlines` to enforce JSON schemas on the model's responses, and the Qwen2-VL series of models. It uses less than 5GB of VRAM and completes in about 2 minutes on an RTX 3060 Ti. See the code [here](./outlines_quiz.py). The pipeline has been tested only on Ubuntu 22.04 with an RTX 3060 Ti and 8GB of VRAM.
+Our small test dataset (`./imgs/quiz11-presidents.pdf`) consists of 32 documents representing Physics quizzes and the task is to match them to the test students who took the quiz via their 8-digit university ID and, optionally, their names (`./tests/data/test_ids.csv`). We have already saturated our test dataset with 100% statistically confident detections, but more optimizations are explored to decrease inference cost. You can find more details [here](https://github.com/IonMich/batch-doc-vqa/wiki/Row-of-Digits-OCR:-OpenCV-CNN-versus-LLMs). 
 
-|                         | OpenCV+CNN     | outlines + VLM                | outlines + VLM                | VLM w/ structured output | VLM w/ structured output |
-|:------------------------|:---------------|:------------------------------|:------------------------------|:----------------------|:----------------------|
-| LLM model               | N/A            | outlines + Qwen2-VL-2B-Instruct | outlines + SmolVLM          | gpt-4o-mini           | gemini-2.0-flash-exp  |
-| LLM model size          | N/A            | 2B                            | 2B                            | ??                    | ??                    |
-| Open-weights            | N/A            | Yes (Apache 2.0 License)      | Yes (Apache 2.0 License)      | No                    | No                    |
-| # samples               | 1              | 1                             | 1                             | 1                     | 1                     |
-| logits available        | Yes            | No                            | No                            | Yes (unused)          | Yes (unused)          |
-| regex pattern           | N/A            | Yes                           | Yes                           | No                    | No                    |
-| digit_top1              | 85.16%         | 98.44%                        | 68.35%                        | 87.89%                | 99.22%                |
-| digit_top2              | 90.62%         | N/A                           | N/A                           | N/A                   | N/A                   |
-| digit_top3              | 94.14%         | N/A                           | N/A                           | N/A                   | N/A                   |
-| 8-digit id_top1         | ??             | 90.63%                        | 53.13%                        | 50.00%                | 93.75%                |
-| lastname_top1           | N/A            | 100%                          | 93.75%                        | 93.75%                | 93.75%                |
-| Detect Type             | ID (1)         | LastName (2) + ID (1)         | LastName (2) + ID (1)         | LastName (2) + ID (1) | LastName (2) + ID (1) |
-| ID Avg $d_\mathrm{Lev}$ | N/A            | 0.1250                        | 2.3750                        | 0.6563                | 0.0625                |
-| Lastname Avg $d_\mathrm{Lev}$ | N/A      | 0.0000                        | 0.0938                        | 0.156250              | 0.0625                |
-| Docs detected           | 90.62% (29/32) | 100.00% (32/32)               | 68.75% (22/32)                | 100% (32/32)          | 100% (32/32)          |
-| Runtime                 | ~ 1 second     | ~ 2 minutes (RTX 3060 Ti 8GB) | ~ 2 minutes (RTX 3060 Ti 8GB) | ~5 minutes (sequential) | ~5 minutes (sequential) |
+The table below shows the top performing models by category. See [BENCHMARKS.md](BENCHMARKS.md) for comprehensive results with all tested models.
+
+<!-- BENCHMARK_TABLE_START -->
+
+| Metric | OpenCV+CNN | qwen/qwen2.5-vl-32b-instruct | z-ai/glm-4.5v | openai/gpt-5-nano | anthropic/claude-sonnet-4 |
+|:---|:---|:---|:---|:---|:---|
+| LLM model size | N/A | 32B | 106A12 | ?? | ?? |
+| Open-weights | N/A | Yes | Yes | No | No |
+| digit_top1 | 85.16% | 96.09% | 93.36% | **96.48%** | 84.77% |
+| 8-digit id_top1 | ?? | **84.38%** | 78.12% | 78.12% | 37.50% |
+| lastname_top1 | N/A | **100.00%** | **100.00%** | 90.62% | **100.00%** |
+| ID Avg d_Lev | N/A | **0.1562** | 0.2188 | 0.2188 | 1.0938 |
+| Lastname Avg d_Lev | N/A | **0.0000** | **0.0000** | 0.1250 | **0.0000** |
+| Docs detected | 90.62% (29/32) | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** |
+| Runtime | **~ 1 second** | 2.3 minutes | 6.2 minutes | 10.5 minutes | 3.5 minutes |
+| Cost per image | **$0.00** | $0.002605 | $0.002057 | $0.000463 | $0.005567 |
+| Total cost | **$0.00** | $0.1667 | $0.1316 | $0.0297 | $0.3563 |
+
+<!-- BENCHMARK_TABLE_END -->
 
 ## [OLD] Ollama + Llama3.2-Vision 11B
 

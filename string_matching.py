@@ -36,12 +36,20 @@ def get_llm_ids_and_fullnames(results_filename):
     pattern = r"doc-\d+-page-[" + "|".join([str(p) for p in pages]) + r"]-[A-Z0-9]+.png"
     print(f"Pattern: {pattern}")
     filenames = get_imagepaths(folder, pattern)
-    llm_ids = {
-        filename: results[filename][0]["university_id"] for filename in filenames
-    }
-    llm_fullnames = {
-        filename: results[filename][0]["student_full_name"] for filename in filenames
-    }
+    llm_ids = {}
+    llm_fullnames = {}
+    
+    for filename in filenames:
+        if filename in results and results[filename]:
+            # Get the first valid result (skip failed entries)
+            result = results[filename][0]
+            llm_ids[filename] = result.get("university_id", "")
+            llm_fullnames[filename] = result.get("student_full_name", "")
+        else:
+            # Handle missing or empty results
+            print(f"Warning: No results found for {filename}")
+            llm_ids[filename] = ""
+            llm_fullnames[filename] = ""
     df_ids = pd.DataFrame(llm_ids.items(), columns=["filename", "llm_id"])
     df_fullnames = pd.DataFrame(
         llm_fullnames.items(), columns=["filename", "llm_fullname"]
