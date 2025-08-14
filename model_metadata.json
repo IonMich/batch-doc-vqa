@@ -59,6 +59,11 @@
       "open_weights": false,
       "model_size": "??",
       "license": null
+    },
+    "bytedance/ui-tars-1.5-7b": {
+      "open_weights": true,
+      "model_size": "7B",
+      "license": "Apache-2.0"
     }
   },
   "needs_review": [
