@@ -34,7 +34,14 @@
       "open_weights": true,
       "model_size": "32B",
       "license": "Apache-2.0"
+    },
+    "openai/gpt-5-mini": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
     }
   },
-  "needs_review": []
+  "needs_review": [
+    "openai/gpt-5"
+  ]
 }
