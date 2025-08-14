@@ -34,16 +34,17 @@ All VLM runs use the following consistent configuration:
 ## Complete Results
 
 
-| Metric | OpenCV+CNN | meta-llama/llama-4-maverick | moonshotai/kimi-vl-a3b-thinking:free | anthropic/claude-sonnet-4 | openai/gpt-5-nano | z-ai/glm-4.5v | qwen/qwen-2.5-vl-7b-instruct | qwen/qwen2.5-vl-32b-instruct |
-|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| LLM model size | N/A | 400A17 | 16A3 | ?? | ?? | 106A12 | 7B | 32B |
-| Open-weights | N/A | Yes | Yes | No | No | Yes | Yes | Yes |
-| digit_top1 | 85.16% | 89.84% | 85.94% | 84.77% | **96.48%** | 93.36% | 82.08% | 96.09% |
-| 8-digit id_top1 | ?? | 56.25% | 50.00% | 37.50% | 78.12% | 78.12% | 76.67% | **84.38%** |
-| lastname_top1 | N/A | 93.75% | 96.88% | **100.00%** | 90.62% | **100.00%** | **100.00%** | **100.00%** |
-| ID Avg d_Lev | N/A | 0.5312 | 0.9062 | 1.0938 | 0.2188 | 0.2188 | 1.6333 | **0.1562** |
-| Lastname Avg d_Lev | N/A | 0.0938 | 0.0938 | **0.0000** | 0.1250 | **0.0000** | **0.0000** | **0.0000** |
-| Docs detected | 90.62% (29/32) | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** | 93.75% (30/32) | **100.00% (32/32)** |
-| Runtime | **~ 1 second** | 2.0 minutes | 9.5 minutes | 3.5 minutes | 10.5 minutes | 6.2 minutes | 6.8 minutes | 2.3 minutes |
-| Cost per image | **$0.00** | $0.000539 | **$0.000000** | $0.005567 | $0.000463 | $0.002057 | $0.000081 | $0.002605 |
-| Total cost | **$0.00** | $0.0345 | **$0.0000** | $0.3563 | $0.0297 | $0.1316 | $0.0039 | $0.1667 |
+| **Metric** | **OpenCV+CNN** | **openai** | *↪* | **meta-llama** | **moonshotai** | **anthropic** | **z-ai** | **qwen** | *↪* |
+|  |  | gpt-5-mini | gpt-5-nano | llama-4-maverick | kimi-vl-a3b-thinking:free | claude-sonnet-4 | glm-4.5v | qwen-2.5-vl-7b-instruct | qwen2.5-vl-32b-instruct |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| LLM model size | N/A | ?? | ?? | 400A17 | 16A3 | ?? | 106A12 | 7B | 32B |
+| Open-weights | N/A | No | No | Yes | Yes | No | Yes | Yes | Yes |
+| digit_top1 | 85.16% | **98.83%** | 96.48% | 89.84% | 85.94% | 84.77% | 93.36% | 82.08% | 96.09% |
+| 8-digit id_top1 | ?? | **90.62%** | 78.12% | 56.25% | 50.00% | 37.50% | 78.12% | 76.67% | 84.38% |
+| lastname_top1 | N/A | 96.88% | 90.62% | 93.75% | 96.88% | **100.00%** | **100.00%** | **100.00%** | **100.00%** |
+| ID Avg d_Lev | N/A | **0.0938** | 0.2188 | 0.5312 | 0.9062 | 1.0938 | 0.2188 | 1.6333 | 0.1562 |
+| Lastname Avg d_Lev | N/A | 0.0312 | 0.1250 | 0.0938 | 0.0938 | **0.0000** | **0.0000** | **0.0000** | **0.0000** |
+| Docs detected | 90.62% (29/32) | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** | 93.75% (30/32) | **100.00% (32/32)** |
+| Runtime | **~ 1 second** | 8.3 minutes | 10.5 minutes | 2.0 minutes | 9.5 minutes | 3.5 minutes | 6.2 minutes | 6.8 minutes | 2.3 minutes |
+| Cost per image | **$0.00** | $0.001115 | $0.000463 | $0.000539 | **$0.000000** | $0.005567 | $0.002057 | $0.000081 | $0.002605 |
+| Total cost | **$0.00** | $0.0714 | $0.0297 | $0.0345 | **$0.0000** | $0.3563 | $0.1316 | $0.0039 | $0.1667 |

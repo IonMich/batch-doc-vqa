@@ -386,30 +386,56 @@ class BenchmarkTableGenerator:
             raise ValueError(f"Unknown output format: {output_format}")
     
     def _generate_markdown_table(self, run_stats: Dict) -> str:
-        """Generate markdown table from run statistics."""
-        # Create header
-        headers = ["Metric", "OpenCV+CNN"]
-        model_names = []
-        
+        """Generate markdown table from run statistics with models grouped by organization."""
+        # Group models by organization
+        models_by_org = {}
         for model_key, data in run_stats.items():
             config = data["run_info"]["config"]
-            model_display = f"{config['model']['org']}/{config['model']['model']}"
+            org = config['model']['org']
+            model_name = config['model']['model']
             if config['model']['variant']:
-                model_display += f"-{config['model']['variant']}"
-            model_names.append(model_display)
-            headers.append(model_display)
+                model_name += f"-{config['model']['variant']}"
+            
+            if org not in models_by_org:
+                models_by_org[org] = []
+            models_by_org[org].append((model_key, model_name, data))
+        
+        # Create multiline headers grouped by organization
+        header_line1 = ["**Metric**", "**OpenCV+CNN**"]
+        header_line2 = ["", ""]
+        
+        for org, models in models_by_org.items():
+            # Add organization name spanning all models from this org
+            if len(models) == 1:
+                header_line1.append(f"**{org}**")
+                header_line2.append(models[0][1])  # model name
+            else:
+                # For multiple models, add org name centered over its models
+                for i, (model_key, model_name, data) in enumerate(models):
+                    if i == 0:
+                        header_line1.append(f"**{org}**")
+                        header_line2.append(model_name)
+                    else:
+                        header_line1.append("*↪*")  # Continuation symbol
+                        header_line2.append(model_name)
         
         # Create separator
-        separator = [":---"] + [":---" for _ in headers[1:]]
+        separator = [":---"] + [":---" for _ in header_line1[1:]]
         
         # Build table rows - only include configured rows
-        all_rows = [headers, separator]
+        all_rows = [header_line1, header_line2, separator]
+        
+        # Create ordered list of models for consistent column ordering
+        ordered_models = []
+        for org, models in models_by_org.items():
+            for model_key, model_name, data in models:
+                ordered_models.append((model_key, data))
         
         for row_name in self.included_rows:
             row_data = [row_name, self.OPENCV_CNN_BASELINE.get(row_name, "N/A")]
             
             if row_name == "LLM model size":
-                for model_key, data in run_stats.items():
+                for model_key, data in ordered_models:
                     if model_key in self.model_metadata["models"]:
                         metadata = self.model_metadata["models"][model_key]
                         row_data.append(metadata.get("model_size", "??"))
@@ -418,7 +444,7 @@ class BenchmarkTableGenerator:
                         row_data.append(config.get("model_size", "??"))
                         
             elif row_name == "Open-weights":
-                for model_key, data in run_stats.items():
+                for model_key, data in ordered_models:
                     if model_key in self.model_metadata["models"]:
                         metadata = self.model_metadata["models"][model_key]
                         row_data.append("Yes" if metadata.get("open_weights", False) else "No")
@@ -427,50 +453,50 @@ class BenchmarkTableGenerator:
                         row_data.append("Yes" if config.get("open_weights", False) else "No")
                         
             elif row_name == "digit_top1":
-                values = [self.OPENCV_CNN_BASELINE[row_name]] + [f"{data['stats']['digit_top1']:.2f}%" for data in run_stats.values()]
+                values = [self.OPENCV_CNN_BASELINE[row_name]] + [f"{data['stats']['digit_top1']:.2f}%" for _, data in ordered_models]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=True, format_type="markdown")
                 
             elif row_name == "8-digit id_top1":
-                values = [self.OPENCV_CNN_BASELINE[row_name]] + [f"{data['stats']['id_top1']:.2f}%" for data in run_stats.values()]
+                values = [self.OPENCV_CNN_BASELINE[row_name]] + [f"{data['stats']['id_top1']:.2f}%" for _, data in ordered_models]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=True, format_type="markdown")
                 
             elif row_name == "lastname_top1":
-                values = [self.OPENCV_CNN_BASELINE[row_name]] + [f"{data['stats']['lastname_top1']:.2f}%" for data in run_stats.values()]
+                values = [self.OPENCV_CNN_BASELINE[row_name]] + [f"{data['stats']['lastname_top1']:.2f}%" for _, data in ordered_models]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=True, format_type="markdown")
                 
             elif row_name == "ID Avg d_Lev":
-                values = [self.OPENCV_CNN_BASELINE[row_name]] + [f"{data['stats']['id_avg_lev']:.4f}" for data in run_stats.values()]
+                values = [self.OPENCV_CNN_BASELINE[row_name]] + [f"{data['stats']['id_avg_lev']:.4f}" for _, data in ordered_models]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=False, format_type="markdown")
                 
             elif row_name == "Lastname Avg d_Lev":
-                values = [self.OPENCV_CNN_BASELINE[row_name]] + [f"{data['stats']['lastname_avg_lev']:.4f}" for data in run_stats.values()]
+                values = [self.OPENCV_CNN_BASELINE[row_name]] + [f"{data['stats']['lastname_avg_lev']:.4f}" for _, data in ordered_models]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=False, format_type="markdown")
                 
             elif row_name == "Docs detected":
                 values = [self.OPENCV_CNN_BASELINE[row_name]] + [
                     f"{data['stats']['docs_detected']:.2f}% ({data['stats']['docs_detected_count']}/32)"
-                    for data in run_stats.values()
+                    for _, data in ordered_models
                 ]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=True, format_type="markdown")
                 
             elif row_name == "Runtime":
                 values = [self.OPENCV_CNN_BASELINE[row_name]] + [
                     data["run_info"]["config"]["environment"].get("runtime", "Unknown")
-                    for data in run_stats.values()
+                    for _, data in ordered_models
                 ]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=False, format_type="markdown")
                 
             elif row_name == "Cost per image":
                 values = [self.OPENCV_CNN_BASELINE[row_name]] + [
                     f"${data['stats'].get('cost_per_image', 0.0):.6f}" if data['stats'].get('cost_per_image') is not None else "N/A" 
-                    for data in run_stats.values()
+                    for _, data in ordered_models
                 ]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=False, format_type="markdown")
                 
             elif row_name == "Total cost":
                 values = [self.OPENCV_CNN_BASELINE[row_name]] + [
                     f"${data['stats'].get('total_cost', 0.0):.4f}" if data['stats'].get('total_cost') is not None else "N/A"
-                    for data in run_stats.values()
+                    for _, data in ordered_models
                 ]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=False, format_type="markdown")
             
@@ -641,7 +667,20 @@ class BenchmarkTableGenerator:
         return formatted_values
     
     def _generate_rich_table(self, run_stats: Dict) -> Table:
-        """Generate rich table from run statistics."""
+        """Generate rich table from run statistics with models grouped by organization."""
+        # Group models by organization (same as markdown)
+        models_by_org = {}
+        for model_key, data in run_stats.items():
+            config = data["run_info"]["config"]
+            org = config['model']['org']
+            model_name = config['model']['model']
+            if config['model']['variant']:
+                model_name += f"-{config['model']['variant']}"
+            
+            if org not in models_by_org:
+                models_by_org[org] = []
+            models_by_org[org].append((model_key, model_name, data))
+        
         # Create rich table
         table = Table(show_header=True, header_style="bold cyan")
         
@@ -649,18 +688,43 @@ class BenchmarkTableGenerator:
         table.add_column("Metric", style="yellow", no_wrap=True)
         table.add_column("OpenCV+CNN", style="white", justify="right")
         
-        for data in run_stats.values():
-            config = data["run_info"]["config"]
-            model_display = f"{config['model']['org']}/{config['model']['model']}"
-            if config['model']['variant']:
-                model_display += f"-{config['model']['variant']}"
-            table.add_column(model_display, justify="right")  # Remove default green style
+        # Add columns grouped by organization
+        for org, models in models_by_org.items():
+            for i, (model_key, model_name, data) in enumerate(models):
+                # Format model name to wrap across lines 2-3 if needed
+                if len(model_name) > 12:  # If model name is long, split it
+                    # Find a good break point (prefer hyphens)
+                    if '-' in model_name and len(model_name) > 15:
+                        parts = model_name.split('-')
+                        mid = len(parts) // 2
+                        model_display = '-'.join(parts[:mid]) + '\n' + '-'.join(parts[mid:])
+                    else:
+                        # Break at midpoint if no good hyphen break
+                        mid = len(model_name) // 2
+                        model_display = model_name[:mid] + '\n' + model_name[mid:]
+                else:
+                    # Short model name, put on line 3 only
+                    model_display = '\n' + model_name
+                
+                if i == 0:
+                    # First model in org - show org name on line 1, model on lines 2-3
+                    column_header = f"[bold]{org}[/bold]\n{model_display}"
+                else:
+                    # Subsequent models - show continuation symbol on line 1, model on lines 2-3  
+                    column_header = f"[dim]↪[/dim]\n{model_display}"
+                table.add_column(column_header, justify="right", no_wrap=False)
+        
+        # Create ordered list of models for consistent column ordering (same as markdown)
+        ordered_models = []
+        for org, models in models_by_org.items():
+            for model_key, model_name, data in models:
+                ordered_models.append((model_key, data))
         
         # Add non-numeric rows (no highlighting) - use metadata if available
         model_sizes = ["N/A"]
         open_weights = ["N/A"]
         
-        for model_key, data in run_stats.items():
+        for model_key, data in ordered_models:
             # Use metadata if available, otherwise fall back to config
             if model_key in self.model_metadata["models"]:
                 metadata = self.model_metadata["models"][model_key]
@@ -676,46 +740,46 @@ class BenchmarkTableGenerator:
         table.add_row("Open-weights", *open_weights)
         
         # Performance metrics with best value highlighting (higher is better)
-        digit_top1_values = ["85.16%"] + [f"{data['stats']['digit_top1']:.2f}%" for data in run_stats.values()]
+        digit_top1_values = ["85.16%"] + [f"{data['stats']['digit_top1']:.2f}%" for _, data in ordered_models]
         table.add_row("digit_top1", *self._format_best_value(digit_top1_values, higher_is_better=True))
         
-        id_top1_values = ["??"] + [f"{data['stats']['id_top1']:.2f}%" for data in run_stats.values()]
+        id_top1_values = ["??"] + [f"{data['stats']['id_top1']:.2f}%" for _, data in ordered_models]
         table.add_row("8-digit id_top1", *self._format_best_value(id_top1_values, higher_is_better=True))
         
-        lastname_top1_values = ["N/A"] + [f"{data['stats']['lastname_top1']:.2f}%" for data in run_stats.values()]
+        lastname_top1_values = ["N/A"] + [f"{data['stats']['lastname_top1']:.2f}%" for _, data in ordered_models]
         table.add_row("lastname_top1", *self._format_best_value(lastname_top1_values, higher_is_better=True))
         
         # Distance metrics (lower is better)
-        id_avg_lev_values = ["N/A"] + [f"{data['stats']['id_avg_lev']:.4f}" for data in run_stats.values()]
+        id_avg_lev_values = ["N/A"] + [f"{data['stats']['id_avg_lev']:.4f}" for _, data in ordered_models]
         table.add_row("ID Avg d_Lev", *self._format_best_value(id_avg_lev_values, higher_is_better=False))
         
-        lastname_avg_lev_values = ["N/A"] + [f"{data['stats']['lastname_avg_lev']:.4f}" for data in run_stats.values()]
+        lastname_avg_lev_values = ["N/A"] + [f"{data['stats']['lastname_avg_lev']:.4f}" for _, data in ordered_models]
         table.add_row("Lastname Avg d_Lev", *self._format_best_value(lastname_avg_lev_values, higher_is_better=False))
         
         # Detection metrics (higher is better)
         docs_detected_values = ["90.62% (29/32)"] + [
             f"{data['stats']['docs_detected']:.2f}% ({data['stats']['docs_detected_count']}/32)"
-            for data in run_stats.values()
+            for _, data in ordered_models
         ]
         table.add_row("Docs detected", *self._format_best_value(docs_detected_values, higher_is_better=True))
         
         # Runtime (lower is better)
         runtime_values = ["~ 1 second"] + [
             data["run_info"]["config"]["environment"].get("runtime", "Unknown")
-            for data in run_stats.values()
+            for _, data in ordered_models
         ]
         table.add_row("Runtime", *self._format_best_value(runtime_values, higher_is_better=False))
         
         # Cost metrics (lower is better) - handle missing cost data for backward compatibility
         cost_per_image_values = ["$0.00"] + [
             f"${data['stats'].get('cost_per_image', 0.0):.6f}" if data['stats'].get('cost_per_image') is not None else "N/A" 
-            for data in run_stats.values()
+            for _, data in ordered_models
         ]
         table.add_row("Cost per image", *self._format_best_value(cost_per_image_values, higher_is_better=False))
         
         total_cost_values = ["$0.00"] + [
             f"${data['stats'].get('total_cost', 0.0):.4f}" if data['stats'].get('total_cost') is not None else "N/A"
-            for data in run_stats.values()
+            for _, data in ordered_models
         ]
         table.add_row("Total cost", *self._format_best_value(total_cost_values, higher_is_better=False))
         

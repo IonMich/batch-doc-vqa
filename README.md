@@ -18,7 +18,19 @@ This repository uses Large Language Models with vision capabilities to extract i
     cd batch-doc-vqa
     ```
 
-2. Create a new (conda) environment and install the required packages:
+2. Install dependencies using uv (recommended) or pip:
+
+    **With uv (recommended):**
+
+    ```bash
+    # Install uv if you haven't already
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    
+    # Install dependencies
+    uv sync
+    ```
+
+    **Or with conda/pip:**
 
     ```bash
     conda create -n batch python=3.11
@@ -50,27 +62,65 @@ By default, this pipeline will use the `Qwen2-VL-2B-Instruct` model to extract f
 
 You can analyze the extracted information using string matching algorithms. For example, take a look at the `stringmatching.ipynb` notebook to see how to match the extracted last names and university IDs to a list of entries in a CSV file.
 
+### Testing New Models with OpenRouter
+
+To test new vision models and add them to the benchmark tables:
+
+1. **Run inference** on your dataset with a new model:
+
+   ```bash
+   # The script will automatically prompt for API key setup if needed
+   python openrouter_inference.py --model "anthropic/claude-4-sonnet" --org "anthropic"
+   ```
+
+   The script will:
+   - Check for `OPENROUTER_API_KEY` in environment or `.env` file
+   - If not found, prompt you to enter it interactively
+   - Without a key: only free models with limited requests are available
+   - With a key: access to all models and higher rate limits
+   - Offer to save the key to `.env` file for future use
+   - Get your API key from: [openrouter.ai/keys](https://openrouter.ai/keys)
+
+2. **Update benchmark tables** with the new results:
+
+   ```bash
+   # Generate comprehensive results (all models)
+   python generate_benchmark_table.py --output BENCHMARKS.md
+   
+   # Generate README table (top performers only)
+   python generate_benchmark_table.py --readme
+   python update_readme_section.py
+   ```
+
+3. **Interactive model classification**: When you run the benchmark generator with a new model, you'll be prompted to classify it:
+   - Is it open-weights? (y/n)
+   - Number of parameters (e.g., "7B", "70A8" for MoE models)  
+   - License (for open-weight models)
+
+The system automatically saves this metadata and uses it for proper categorization in benchmark tables.
+
 ## Benchmarks
 
-Our small test dataset (`./imgs/quiz11-presidents.pdf`) consists of 32 documents representing Physics quizzes and the task is to match them to the test students who took the quiz via their 8-digit university ID and, optionally, their names (`./tests/data/test_ids.csv`). We have already saturated our test dataset with 100% statistically confident detections, but more optimizations are explored to decrease inference cost. You can find more details [here](https://github.com/IonMich/batch-doc-vqa/wiki/Row-of-Digits-OCR:-OpenCV-CNN-versus-LLMs). 
+Our small test dataset (`./imgs/quiz11-presidents.pdf`) consists of 32 documents representing Physics quizzes and the task is to match them to the test students who took the quiz via their 8-digit university ID and, optionally, their names (`./tests/data/test_ids.csv`). We have already saturated our test dataset with 100% statistically confident detections, but more optimizations are explored to decrease inference cost. You can find more details [in this wiki](https://github.com/IonMich/batch-doc-vqa/wiki/Row-of-Digits-OCR:-OpenCV-CNN-versus-LLMs).
 
 The table below shows the top performing models by category. See [BENCHMARKS.md](BENCHMARKS.md) for comprehensive results with all tested models.
 
 <!-- BENCHMARK_TABLE_START -->
 
-| Metric | OpenCV+CNN | qwen/qwen2.5-vl-32b-instruct | z-ai/glm-4.5v | openai/gpt-5-nano | anthropic/claude-sonnet-4 |
+| **Metric** | **OpenCV+CNN** | **qwen** | **z-ai** | **openai** | *↪* |
+|  |  | qwen2.5-vl-32b-instruct | glm-4.5v | gpt-5-mini | gpt-5-nano |
 |:---|:---|:---|:---|:---|:---|
 | LLM model size | N/A | 32B | 106A12 | ?? | ?? |
 | Open-weights | N/A | Yes | Yes | No | No |
-| digit_top1 | 85.16% | 96.09% | 93.36% | **96.48%** | 84.77% |
-| 8-digit id_top1 | ?? | **84.38%** | 78.12% | 78.12% | 37.50% |
-| lastname_top1 | N/A | **100.00%** | **100.00%** | 90.62% | **100.00%** |
-| ID Avg d_Lev | N/A | **0.1562** | 0.2188 | 0.2188 | 1.0938 |
-| Lastname Avg d_Lev | N/A | **0.0000** | **0.0000** | 0.1250 | **0.0000** |
+| digit_top1 | 85.16% | 96.09% | 93.36% | **98.83%** | 96.48% |
+| 8-digit id_top1 | ?? | 84.38% | 78.12% | **90.62%** | 78.12% |
+| lastname_top1 | N/A | **100.00%** | **100.00%** | 96.88% | 90.62% |
+| ID Avg d_Lev | N/A | 0.1562 | 0.2188 | **0.0938** | 0.2188 |
+| Lastname Avg d_Lev | N/A | **0.0000** | **0.0000** | 0.0312 | 0.1250 |
 | Docs detected | 90.62% (29/32) | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** |
-| Runtime | **~ 1 second** | 2.3 minutes | 6.2 minutes | 10.5 minutes | 3.5 minutes |
-| Cost per image | **$0.00** | $0.002605 | $0.002057 | $0.000463 | $0.005567 |
-| Total cost | **$0.00** | $0.1667 | $0.1316 | $0.0297 | $0.3563 |
+| Runtime | **~ 1 second** | 2.3 minutes | 6.2 minutes | 8.3 minutes | 10.5 minutes |
+| Cost per image | **$0.00** | $0.002605 | $0.002057 | $0.001115 | $0.000463 |
+| Total cost | **$0.00** | $0.1667 | $0.1316 | $0.0714 | $0.0297 |
 
 <!-- BENCHMARK_TABLE_END -->
 
