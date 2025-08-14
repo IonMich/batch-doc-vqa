@@ -107,8 +107,7 @@ The table below shows the top performing models by category. See [BENCHMARKS.md]
 
 <!-- BENCHMARK_TABLE_START -->
 
-| **Metric** | **OpenCV+CNN** | **qwen** | **z-ai** | **openai** | *↪* |
-|  |  | qwen2.5-vl-32b-instruct | glm-4.5v | gpt-5-mini | gpt-5-nano |
+| **Metric** | **OpenCV+CNN** | **qwen**<br>qwen2.5-vl-32b-instruct | **z-ai**<br>glm-4.5v | **openai**<br>gpt-5-mini | **openai**<br>gpt-5-nano |
 |:---|:---|:---|:---|:---|:---|
 | LLM model size | N/A | 32B | 106A12 | ?? | ?? |
 | Open-weights | N/A | Yes | Yes | No | No |

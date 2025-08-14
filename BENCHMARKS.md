@@ -34,8 +34,7 @@ All VLM runs use the following consistent configuration:
 ## Complete Results
 
 
-| **Metric** | **OpenCV+CNN** | **openai** | *↪* | **meta-llama** | **moonshotai** | **anthropic** | **z-ai** | **qwen** | *↪* |
-|  |  | gpt-5-mini | gpt-5-nano | llama-4-maverick | kimi-vl-a3b-thinking:free | claude-sonnet-4 | glm-4.5v | qwen-2.5-vl-7b-instruct | qwen2.5-vl-32b-instruct |
+| **Metric** | **OpenCV+CNN** | **openai**<br>gpt-5-mini | **openai**<br>gpt-5-nano | **meta-llama**<br>llama-4-maverick | **moonshotai**<br>kimi-vl-a3b-thinking:free | **anthropic**<br>claude-sonnet-4 | **z-ai**<br>glm-4.5v | **qwen**<br>qwen-2.5-vl-7b-instruct | **qwen**<br>qwen2.5-vl-32b-instruct |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
 | LLM model size | N/A | ?? | ?? | 400A17 | 16A3 | ?? | 106A12 | 7B | 32B |
 | Open-weights | N/A | No | No | Yes | Yes | No | Yes | Yes | Yes |

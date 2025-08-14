@@ -400,30 +400,19 @@ class BenchmarkTableGenerator:
                 models_by_org[org] = []
             models_by_org[org].append((model_key, model_name, data))
         
-        # Create multiline headers grouped by organization
-        header_line1 = ["**Metric**", "**OpenCV+CNN**"]
-        header_line2 = ["", ""]
+        # Create single header row with org/model format
+        headers = ["**Metric**", "**OpenCV+CNN**"]
         
         for org, models in models_by_org.items():
-            # Add organization name spanning all models from this org
-            if len(models) == 1:
-                header_line1.append(f"**{org}**")
-                header_line2.append(models[0][1])  # model name
-            else:
-                # For multiple models, add org name centered over its models
-                for i, (model_key, model_name, data) in enumerate(models):
-                    if i == 0:
-                        header_line1.append(f"**{org}**")
-                        header_line2.append(model_name)
-                    else:
-                        header_line1.append("*↪*")  # Continuation symbol
-                        header_line2.append(model_name)
+            for model_key, model_name, data in models:
+                # Combine org and model name in a single header
+                headers.append(f"**{org}**<br>{model_name}")
         
         # Create separator
-        separator = [":---"] + [":---" for _ in header_line1[1:]]
+        separator = [":---"] * len(headers)
         
         # Build table rows - only include configured rows
-        all_rows = [header_line1, header_line2, separator]
+        all_rows = [headers, separator]
         
         # Create ordered list of models for consistent column ordering
         ordered_models = []
