@@ -69,6 +69,21 @@
       "open_weights": false,
       "model_size": "??",
       "license": null
+    },
+    "microsoft/phi-4-multimodal-instruct": {
+      "open_weights": true,
+      "model_size": "5.6B",
+      "license": "MIT"
+    },
+    "amazon/nova-lite-v1": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
+    },
+    "openai/gpt-5-chat": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
     }
   },
   "needs_review": [
