@@ -74,7 +74,14 @@ def main():
                 return False
             
             with open(tmp_path, 'r', encoding='utf-8') as f:
-                new_content = f.read().strip()
+                table_content = f.read().strip()
+            
+            # Add Pareto plot if it exists
+            pareto_plot_path = "pareto_plot.png"
+            if Path(pareto_plot_path).exists():
+                new_content = f"{table_content}\n\n### Performance vs Cost Trade-off\n\nThe chart below shows the Pareto frontier of models, highlighting the most cost-efficient options for different performance levels:\n\n![Model Performance vs Cost Trade-off](pareto_plot.png)"
+            else:
+                new_content = table_content
                 
         finally:
             Path(tmp_path).unlink(missing_ok=True)

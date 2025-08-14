@@ -56,15 +56,26 @@ def main():
     if not run_command(benchmarks_cmd, "Updating BENCHMARKS.md", interactive=is_interactive):
         sys.exit(1)
     
+    # Generate Pareto plot
+    pareto_cmd_parts = ["python", "generate_pareto_plot.py", "--output", "pareto_plot.png"]
+    if args.patterns:
+        pareto_cmd_parts.extend(["--patterns"] + args.patterns)
+    if args.no_interactive:
+        pareto_cmd_parts.append("--no-interactive")
+    
+    pareto_cmd = " ".join(pareto_cmd_parts)
+    if not run_command(pareto_cmd, "Generating Pareto plot", interactive=is_interactive):
+        sys.exit(1)
+    
     # Update README.md
     readme_cmd = "python update_readme_section.py"
     if not run_command(readme_cmd, "Updating README.md", interactive=False):
         sys.exit(1)
     
-    print("\n✅ Successfully updated both BENCHMARKS.md and README.md!")
+    print("\n✅ Successfully updated BENCHMARKS.md, README.md, and Pareto plot!")
     print("\n💡 To commit and push changes, run:")
-    print("   git add BENCHMARKS.md README.md")
-    print("   git commit -m 'Update benchmark tables'")
+    print("   git add BENCHMARKS.md README.md pareto_plot.png")
+    print("   git commit -m 'Update benchmark tables and Pareto plot'")
     print("   git push")
     print("\n📝 Usage notes:")
     print("   • Default: Will prompt for interactive model review if unknown models found")

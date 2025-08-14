@@ -107,19 +107,25 @@ The table below shows the top performing models by category. See [BENCHMARKS.md]
 
 <!-- BENCHMARK_TABLE_START -->
 
-| **Metric** | **OpenCV+CNN** | **bytedance**<br>ui-tars-1.5-7b | **qwen**<br>qwen2.5-vl-32b-instruct | **google**<br>gemini-2.5-flash-lite | **google**<br>gemini-2.5-flash |
+| **Metric** | **OpenCV+CNN** | **bytedance**<br>ui-tars-1.5-7b | **qwen**<br>qwen2.5-vl-32b-instruct | **google**<br>gemini-2.5-pro | **google**<br>gemini-2.5-flash-lite |
 |:---|:---|:---|:---|:---|:---|
 | LLM model size | N/A | 7B | 32B | ?? | ?? |
 | Open-weights | N/A | Yes | Yes | No | No |
-| digit_top1 | 85.16% | 96.48% | 96.09% | **99.22%** | 98.83% |
-| 8-digit id_top1 | ?? | 84.38% | 84.38% | **93.75%** | 90.62% |
-| lastname_top1 | N/A | 96.88% | **100.00%** | 93.75% | 96.88% |
-| ID Avg d_Lev | N/A | 0.1562 | 0.1562 | **0.0625** | 0.0938 |
-| Lastname Avg d_Lev | N/A | 0.0312 | **0.0000** | 0.0625 | 0.0312 |
+| digit_top1 | 85.16% | 96.48% | 96.09% | **99.22%** | **99.22%** |
+| 8-digit id_top1 | ?? | 84.38% | 84.38% | **93.75%** | **93.75%** |
+| lastname_top1 | N/A | 96.88% | **100.00%** | 96.88% | 93.75% |
+| ID Avg d_Lev | N/A | 0.1562 | 0.1562 | **0.0625** | **0.0625** |
+| Lastname Avg d_Lev | N/A | 0.0312 | **0.0000** | 0.0312 | 0.0625 |
 | Docs detected | 90.62% (29/32) | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** |
-| Runtime | **~ 1 second** | 1.8 minutes | 2.3 minutes | 2.3 minutes | 2.7 minutes |
-| Cost per image | **$0.00** | $0.000293 | $0.002605 | $0.000214 | $0.000695 |
-| Total cost | **$0.00** | $0.0187 | $0.1667 | $0.0137 | $0.0445 |
+| Runtime | **~ 1 second** | 1.8 minutes | 2.3 minutes | 8.0 minutes | 2.3 minutes |
+| Cost per image | **$0.00** | $0.000293 | $0.002605 | $0.007125 | $0.000214 |
+| Total cost | **$0.00** | $0.0187 | $0.1667 | $0.4560 | $0.0137 |
+
+### Performance vs Cost Trade-off
+
+The chart below shows the Pareto frontier of models, highlighting the most cost-efficient options for different performance levels:
+
+![Model Performance vs Cost Trade-off](pareto_plot.png)
 
 <!-- BENCHMARK_TABLE_END -->
 
