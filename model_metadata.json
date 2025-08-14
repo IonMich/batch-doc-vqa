@@ -39,6 +39,26 @@
       "open_weights": false,
       "model_size": "??",
       "license": null
+    },
+    "google/gemma-3-27b-it": {
+      "open_weights": true,
+      "model_size": "27B",
+      "license": "Gemma"
+    },
+    "google/gemma-3-4b-it": {
+      "open_weights": true,
+      "model_size": "4B",
+      "license": "Gemma"
+    },
+    "google/gemini-2.5-flash": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
+    },
+    "google/gemini-2.5-flash-lite": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
     }
   },
   "needs_review": [
