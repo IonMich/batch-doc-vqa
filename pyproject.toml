@@ -17,6 +17,13 @@ dependencies = [
 
 [project.scripts]
 batch-doc-vqa = "batch_doc_vqa:main"
+openrouter-inference = "batch_doc_vqa.openrouter.main:main"
+openrouter-cli = "batch_doc_vqa.openrouter.cli:main"
+openrouter-ui = "batch_doc_vqa.openrouter.ui:interactive_organization_model_selection"
+update-benchmarks = "batch_doc_vqa.update_benchmarks:main"
+generate-benchmark-table = "batch_doc_vqa.benchmarks.table_generator:main"
+generate-pareto-plot = "batch_doc_vqa.benchmarks.pareto_plot:main"
+update-readme-section = "batch_doc_vqa.benchmarks.readme_updater:main"
 
 [build-system]
 requires = ["uv_build>=0.8.2,<0.9.0"]

@@ -55,7 +55,7 @@ def format_runtime(seconds: float) -> str:
 
 def list_model_overrides():
     """List models with special configuration overrides."""
-    from openrouter_api import MODEL_CONFIG_OVERRIDES
+    from .api import MODEL_CONFIG_OVERRIDES
     
     if not MODEL_CONFIG_OVERRIDES:
         print("No model-specific overrides configured.")
@@ -138,14 +138,14 @@ Examples:
     
     if not args.model:
         # Interactive provider and model selection
-        from openrouter_ui import interactive_provider_model_selection
+        from .ui import interactive_provider_model_selection
         selected_model = interactive_provider_model_selection()
         if not selected_model:
             return
         # Set the selected model for inference
         args.model = selected_model
     
-    from openrouter_inference import run_openrouter_inference
+    from .inference import run_openrouter_inference
     run_name = run_openrouter_inference(
         model_name=args.model,
         temperature=args.temperature,

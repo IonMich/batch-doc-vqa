@@ -14,8 +14,8 @@ from rich.console import Console
 from rich.table import Table
 from rich import print as rprint
 
-from run_manager import RunManager
-from string_matching import (
+from ..core.run_manager import RunManager
+from ..utils.string_matching import (
     get_llm_ids_and_fullnames,
     get_llm_distances,
     get_matches,

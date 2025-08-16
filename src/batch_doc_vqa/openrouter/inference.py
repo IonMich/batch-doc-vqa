@@ -11,16 +11,16 @@ from typing import Optional
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, MofNCompleteColumn, TimeElapsedColumn
 
-from run_manager import RunManager, RunConfig
-from openrouter_api import (
+from ..core.run_manager import RunManager, RunConfig
+from .api import (
     MODEL_CONFIG_OVERRIDES, 
     create_completion, 
     parse_response_content, 
     fetch_openrouter_models,
     batch_update_generation_costs
 )
-from openrouter_ui import interactive_config_prompt
-from openrouter_cli import get_imagepaths, format_runtime
+from .ui import interactive_config_prompt
+from .cli import get_imagepaths, format_runtime
 
 console = Console()
 
@@ -523,5 +523,5 @@ def run_openrouter_inference(model_name: str,
 
 
 if __name__ == "__main__":
-    from openrouter_cli import main
+    from .cli import main
     main()

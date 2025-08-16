@@ -9,7 +9,7 @@ from rich.console import Console
 from rich.prompt import Prompt, Confirm
 from rich.table import Table
 
-from openrouter_api import fetch_openrouter_providers, fetch_openrouter_models, filter_vision_models
+from .api import fetch_openrouter_providers, fetch_openrouter_models, filter_vision_models
 
 console = Console()
 

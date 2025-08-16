@@ -1,0 +1,1 @@
+"""Templates and prompts for batch document VQA."""

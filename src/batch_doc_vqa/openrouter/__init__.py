@@ -1,0 +1,1 @@
+"""OpenRouter integration for batch document VQA."""

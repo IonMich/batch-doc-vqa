@@ -1,0 +1,1 @@
+"""Utilities for batch document VQA."""

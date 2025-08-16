@@ -40,7 +40,7 @@ MODEL_CONFIG_OVERRIDES = {
 
 def create_completion(model_name: str, config: Dict[str, Any], imagepath: str):
     """Create a completion request to OpenRouter."""
-    from openrouter_cli import filepath_to_base64
+    from .cli import filepath_to_base64
     
     response = requests.post(
         url="https://openrouter.ai/api/v1/chat/completions",

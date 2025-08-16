@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 import json
 
-from generate_benchmark_table import BenchmarkTableGenerator
+from .table_generator import BenchmarkTableGenerator
 
 
 def calculate_pareto_frontier(points: List[Tuple[float, float]]) -> List[int]:

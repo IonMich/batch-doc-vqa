@@ -1,0 +1,1 @@
+"""Benchmarking and analysis tools for batch document VQA."""
