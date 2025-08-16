@@ -50,7 +50,7 @@ class BenchmarkTableGenerator:
         "ID Avg d_Lev": "N/A",
         "Lastname Avg d_Lev": "N/A",
         "Docs detected": "90.62% (29/32)",
-        "Runtime": "~ 1 second",
+        "Runtime": "~1 second",
         "Cost per image": "$0.00",
         "Total cost": "$0.00"
     }
@@ -753,7 +753,7 @@ class BenchmarkTableGenerator:
         table.add_row("Docs detected", *self._format_best_value(docs_detected_values, higher_is_better=True))
         
         # Runtime (lower is better)
-        runtime_values = ["~ 1 second"] + [
+        runtime_values = ["~1 second"] + [
             data["run_info"]["config"]["environment"].get("runtime", "Unknown")
             for _, data in ordered_models
         ]

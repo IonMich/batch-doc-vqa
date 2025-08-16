@@ -117,7 +117,7 @@ The table below shows the top performing models by category. See [BENCHMARKS.md]
 | ID Avg d_Lev | N/A | 0.1562 | 0.1562 | **0.0625** | **0.0625** |
 | Lastname Avg d_Lev | N/A | 0.0312 | **0.0000** | 0.0312 | 0.0625 |
 | Docs detected | 90.62% (29/32) | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** |
-| Runtime | **~ 1 second** | 1.8 minutes | 2.3 minutes | 8.0 minutes | 2.3 minutes |
+| Runtime | **~1 second** | 1.8 minutes | 2.3 minutes | 8.0 minutes | 2.3 minutes |
 | Cost per image | **$0.00** | $0.000293 | $0.002605 | $0.007125 | $0.000214 |
 | Total cost | **$0.00** | $0.0187 | $0.1667 | $0.4560 | $0.0137 |
 
