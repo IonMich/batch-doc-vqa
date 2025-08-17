@@ -15,6 +15,7 @@ dotenv.load_dotenv()
 
 # Import shared utilities from core
 from ..core import filepath_to_base64, get_imagepaths, natural_sort_key
+from ..core.prompts import STUDENT_EXTRACTION_PROMPT
 
 
 def parse_json(json_output):
@@ -62,22 +63,8 @@ class QuizSubmissionSummary(BaseModel):
     )
 
 
-# Use the same prompt as OpenRouter for consistency
-prompt = """Extract the student information from this quiz submission. Return ONLY valid JSON in this format:
-{
-    "student_full_name": "Full name of the student",
-    "ufid": "8-digit UFID number if present, empty string if missing",
-    "section_number": "5-digit section number"
-}
-
-Example:
-{
-    "student_full_name": "John Doe",
-    "ufid": "12345678",
-    "section_number": "11900"
-}
-
-If UFID is not visible in the image, use an empty string for ufid."""
+# Use the centralized prompt from core module
+prompt = STUDENT_EXTRACTION_PROMPT
 
 pages = [1, 3]
 folder = "imgs/q11/"

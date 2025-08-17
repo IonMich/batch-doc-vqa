@@ -9,25 +9,11 @@ import requests
 from typing import Dict, Any, Optional, List
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
+from ..core.prompts import STUDENT_EXTRACTION_PROMPT
 
 console = Console()
 
-# Prompt template for student information extraction
-STUDENT_EXTRACTION_PROMPT = """Extract the student information from this quiz submission. Return ONLY valid JSON in this format:
-{
-    "student_full_name": "Full name of the student",
-    "ufid": "8-digit UFID number if present, empty string if missing",
-    "section_number": "5-digit section number"
-}
-
-Example:
-{
-    "student_full_name": "John Doe",
-    "ufid": "12345678",
-    "section_number": "11900"
-}
-
-If UFID is not visible in the image, use an empty string for ufid."""
+# Prompt is now centralized in core.prompts module
 
 # Model-specific configurations for special cases
 MODEL_CONFIG_OVERRIDES = {

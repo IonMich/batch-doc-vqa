@@ -17,8 +17,8 @@ from .api import (
     parse_response_content, 
     fetch_openrouter_models,
     batch_update_generation_costs,
-    STUDENT_EXTRACTION_PROMPT
 )
+from ..core.prompts import STUDENT_EXTRACTION_PROMPT
 from .ui import interactive_config_prompt
 from .cli import get_imagepaths
 
