@@ -9,18 +9,18 @@ from pathlib import Path
 from typing import Optional
 
 from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, MofNCompleteColumn, TimeElapsedColumn
 
-from ..core.run_manager import RunManager, RunConfig
+from ..core import RunManager, RunConfig, format_runtime, create_inference_progress, add_inference_task
 from .api import (
     MODEL_CONFIG_OVERRIDES, 
     create_completion, 
     parse_response_content, 
     fetch_openrouter_models,
-    batch_update_generation_costs
+    batch_update_generation_costs,
+    STUDENT_EXTRACTION_PROMPT
 )
 from .ui import interactive_config_prompt
-from .cli import get_imagepaths, format_runtime
+from .cli import get_imagepaths
 
 console = Console()
 
@@ -105,7 +105,7 @@ def run_openrouter_inference(model_name: str,
             "response_format": response_format,
             "model_name": model_name,
             "top_p": top_p,
-            "prompt_template": "STUDENT_EXTRACTION_PROMPT",
+            "prompt_template": STUDENT_EXTRACTION_PROMPT,
             "actual_model_providers": set(),  # Will track actual model providers used
         }
     )
@@ -136,25 +136,8 @@ def run_openrouter_inference(model_name: str,
     successful_images = 0
     
     # Create progress bar with live status
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
-        MofNCompleteColumn(),
-        TextColumn("•"),
-        TimeElapsedColumn(),
-        TextColumn("•"),
-        TextColumn("[bold green]{task.fields[success_rate]}"),
-        TextColumn("•"),
-        TextColumn("{task.fields[last_result]}", style="dim")
-    ) as progress:
-        
-        task = progress.add_task(
-            "Processing images...", 
-            total=total_images,
-            success_rate="0%",
-            last_result=""
-        )
+    with create_inference_progress() as progress:
+        task = add_inference_task(progress, total_images)
         
         for i, imagepath in enumerate(imagepaths, 1):            
             try:

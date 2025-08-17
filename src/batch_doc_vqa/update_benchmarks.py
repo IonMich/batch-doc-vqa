@@ -36,7 +36,7 @@ def main():
     args = parser.parse_args()
     
     # Build command for benchmark table generation
-    cmd_parts = ["python", "generate_benchmark_table.py", "--format", "markdown", "--output", "BENCHMARKS.md"]
+    cmd_parts = ["uv", "run", "generate-benchmark-table", "--format", "markdown", "--output", "BENCHMARKS.md"]
     
     if args.patterns:
         cmd_parts.extend(["--patterns"] + args.patterns)
@@ -57,7 +57,7 @@ def main():
         sys.exit(1)
     
     # Generate Pareto plot
-    pareto_cmd_parts = ["python", "generate_pareto_plot.py", "--output", "pareto_plot.png"]
+    pareto_cmd_parts = ["uv", "run", "generate-pareto-plot", "--output", "pareto_plot.png"]
     if args.patterns:
         pareto_cmd_parts.extend(["--patterns"] + args.patterns)
     if args.no_interactive:
@@ -68,7 +68,7 @@ def main():
         sys.exit(1)
     
     # Update README.md
-    readme_cmd = "python update_readme_section.py"
+    readme_cmd = "uv run update-readme-section"
     if not run_command(readme_cmd, "Updating README.md", interactive=False):
         sys.exit(1)
     

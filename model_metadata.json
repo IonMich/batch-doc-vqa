@@ -87,6 +87,5 @@
     }
   },
   "needs_review": [
-    "openai/gpt-5"
   ]
 }

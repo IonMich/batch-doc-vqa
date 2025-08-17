@@ -16,41 +16,8 @@ dotenv.load_dotenv()
 console = Console()
 
 
-def filepath_to_base64(filepath):
-    """Convert file to base64 encoded string."""
-    with open(filepath, "rb") as f:
-        return base64.b64encode(f.read()).decode("utf-8")
-
-
-def get_imagepaths(folder, pattern):
-    """Get image paths matching pattern from folder."""
-    images = []
-    for root, _, files in os.walk(folder):
-        for file in files:
-            if re.match(pattern, file):
-                images.append(os.path.join(root, file))
-    # sort by integers in the filename
-    images.sort(key=natural_sort_key)
-    return images
-
-
-def natural_sort_key(s):
-    """Natural sorting key for filenames with numbers."""
-    return [
-        int(text) if text.isdigit() else text.lower() for text in re.split(r"(\d+)", s)
-    ]
-
-
-def format_runtime(seconds: float) -> str:
-    """Format runtime in a human-readable way."""
-    if seconds < 60:
-        return f"{seconds:.0f} seconds"
-    elif seconds < 3600:
-        minutes = seconds / 60
-        return f"{minutes:.1f} minutes"
-    else:
-        hours = seconds / 3600
-        return f"{hours:.1f} hours"
+# Import shared utilities from core
+from ..core import filepath_to_base64, get_imagepaths, natural_sort_key, format_runtime
 
 
 def list_model_overrides():

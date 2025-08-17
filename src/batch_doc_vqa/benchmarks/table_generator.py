@@ -895,11 +895,19 @@ def main():
     
     if args.output:
         # Check if this is BENCHMARKS.md and needs template header
-        if args.output.endswith('BENCHMARKS.md') and os.path.exists('benchmarks_template.md'):
-            with open('benchmarks_template.md', 'r') as template_f:
-                template_content = template_f.read()
-            with open(args.output, 'w') as f:
-                f.write(template_content + "\n\n" + table_markdown)
+        if args.output.endswith('BENCHMARKS.md'):
+            # Use relative path from this file to the template
+            template_path = os.path.join(os.path.dirname(__file__), '..', 'templates', 'benchmarks.md')
+            if os.path.exists(template_path):
+                with open(template_path, 'r') as template_f:
+                    template_content = template_f.read()
+                with open(args.output, 'w') as f:
+                    f.write(template_content + "\n\n" + table_markdown)
+            else:
+                # Fallback: template not found, just write the table
+                with open(args.output, 'w') as f:
+                    f.write(table_markdown)
+                print(f"Warning: Template file not found at {template_path}, writing table only")
         else:
             with open(args.output, 'w') as f:
                 f.write(table_markdown)

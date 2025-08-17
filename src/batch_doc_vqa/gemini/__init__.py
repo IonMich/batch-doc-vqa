@@ -1,0 +1,1 @@
+"""Gemini API integration for batch document VQA."""

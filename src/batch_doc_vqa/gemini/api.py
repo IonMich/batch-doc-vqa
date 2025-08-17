@@ -1,7 +1,4 @@
-import os
-import re
 import json
-import base64
 from collections import defaultdict
 import time
 from PIL import Image
@@ -16,26 +13,8 @@ from google.genai import types
 dotenv.load_dotenv()
 
 
-def filepath_to_base64(filepath):
-    with open(filepath, "rb") as f:
-        return base64.b64encode(f.read()).decode("utf-8")
-
-
-def get_imagepaths(folder, pattern):
-    images = []
-    for root, _, files in os.walk(folder):
-        for file in files:
-            if re.match(pattern, file):
-                images.append(os.path.join(root, file))
-    # sort by integers in the filename
-    images.sort(key=natural_sort_key)
-    return images
-
-
-def natural_sort_key(s):
-    return [
-        int(text) if text.isdigit() else text.lower() for text in re.split(r"(\d+)", s)
-    ]
+# Import shared utilities from core
+from ..core import filepath_to_base64, get_imagepaths, natural_sort_key
 
 
 def parse_json(json_output):
@@ -83,23 +62,22 @@ class QuizSubmissionSummary(BaseModel):
     )
 
 
-prompt = f"""You are an expert at grading student quizzes in physics courses.
-    Please extract the information from the student's submission. Be as detailed as possible. Do not overthink the problem.
+# Use the same prompt as OpenRouter for consistency
+prompt = """Extract the student information from this quiz submission. Return ONLY valid JSON in this format:
+{
+    "student_full_name": "Full name of the student",
+    "ufid": "8-digit UFID number if present, empty string if missing",
+    "section_number": "5-digit section number"
+}
 
-    Return the information in the following JSON schema:
-    {QuizSubmissionSummary.model_json_schema(by_alias=True)}
+Example:
+{
+    "student_full_name": "John Doe",
+    "ufid": "12345678",
+    "section_number": "11900"
+}
 
-    Example:
-    ```json
-    {{
-        "student_full_name": "John Doe",
-        "ufid": "12345678",
-        "section_number": "12345"
-    }}
-    ```
-"""
-
-print(prompt)
+If UFID is not visible in the image, use an empty string for ufid."""
 
 pages = [1, 3]
 folder = "imgs/q11/"
@@ -140,9 +118,9 @@ def parse_images(client, model_name, config, imagepaths):
         )
         model_responses = [r for r in response_parts if not r.get("thought")]
         json_str = model_responses[0].get("text")
-        if "thinking" in model_name:
-            json_str = parse_json(json_str)
-        # print(json_str)
+        # Apply JSON parsing to clean up markdown formatting for all models
+        json_str = parse_json(json_str)
+        print(f"Cleaned JSON string: '{json_str}'")
         json_obj = json.loads(json_str)
         # replace ufid with university_id
         json_obj["university_id"] = json_obj.pop("ufid")
@@ -155,19 +133,27 @@ def parse_images(client, model_name, config, imagepaths):
     json_save_results(results, filepath=f"tests/output/{model_name}-results.json")
 
 
-if __name__ == "__main__":
-    api_key = os.getenv("GEMINI_API_KEY")
+def run_gemini_inference(model_id: str, 
+                         temperature: float = 0.0):
+    """Run Gemini inference on the quiz images."""
+    import dotenv
+    dotenv.load_dotenv()
 
-    client = genai.Client(api_key=api_key, http_options={"api_version": "v1alpha"})
-    # NOTE: as of 2021-01-21, thinking models do not support schema validation
-    model_id = "gemini-2.0-flash-thinking-exp-01-21"
-    # model_id = "gemini-2.0-flash-exp"
+    client = genai.Client()
+    
     config = types.GenerateContentConfig(
         # response_mime_type="application/json", 
         # response_schema=QuizSubmissionSummary,
-        temperature=0,
+        temperature=temperature,
         thinking_config=types.ThinkingConfig(
             include_thoughts=False,
+            thinking_budget=-1, # dynamic thinking
         ),
     )
+    
+    # Use global imagepaths from module
     parse_images(client, model_id, config, imagepaths)
+
+
+if __name__ == "__main__":
+    run_gemini_inference(model_id="gemini-2.5-flash-lite", temperature=0.0)
