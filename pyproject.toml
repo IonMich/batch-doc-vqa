@@ -26,7 +26,7 @@ gemini-ui = "batch_doc_vqa.gemini.main:main"
 update-benchmarks = "batch_doc_vqa.update_benchmarks:main"
 generate-benchmark-table = "batch_doc_vqa.benchmarks.table_generator:main"
 generate-pareto-plot = "batch_doc_vqa.benchmarks.pareto_plot:main"
-update-readme-section = "batch_doc_vqa.benchmarks.readme_updater:main"
+update-readme-section = "batch_doc_vqa.benchmarks.readme_updater:cli_main"
 
 [project.optional-dependencies]
 gemini = [

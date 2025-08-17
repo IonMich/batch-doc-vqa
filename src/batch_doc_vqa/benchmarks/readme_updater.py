@@ -64,13 +64,14 @@ def main():
         try:
             # Generate README table
             result = subprocess.run([
-                'python', 'generate_benchmark_table.py', 
+                'uv', 'run', 'generate-benchmark-table', 
                 '--readme', '--format', 'markdown', '--no-interactive',
                 '--output', tmp_path
             ], capture_output=True, text=True)
             
             if result.returncode != 0:
                 print(f"Error generating table: {result.stderr}")
+                print(f"Command stdout: {result.stdout}")
                 return False
             
             with open(tmp_path, 'r', encoding='utf-8') as f:
@@ -83,10 +84,25 @@ def main():
             else:
                 new_content = table_content
                 
+        except Exception as e:
+            print(f"Exception during table generation: {e}")
+            return False
         finally:
             Path(tmp_path).unlink(missing_ok=True)
     
     return update_readme_section(args.readme, new_content, args.start_marker, args.end_marker)
 
+def cli_main():
+    """Entry point for the CLI command."""
+    import sys
+    try:
+        success = main()
+        sys.exit(0 if success else 1)
+    except Exception as e:
+        print(f"Exception in main(): {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
 if __name__ == "__main__":
-    main()
+    cli_main()
