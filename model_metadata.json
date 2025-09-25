@@ -84,8 +84,12 @@
       "open_weights": false,
       "model_size": "??",
       "license": null
+    },
+    "qwen/qwen3-vl-235b-a22b-instruct": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
     }
   },
-  "needs_review": [
-  ]
+  "needs_review": []
 }
