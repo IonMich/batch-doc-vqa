@@ -9,6 +9,7 @@ import argparse
 from pathlib import Path
 from typing import Dict, List, Tuple
 import json
+from adjustText import adjust_text
 
 from .table_generator import BenchmarkTableGenerator
 
@@ -49,8 +50,9 @@ def get_organization_colors():
     }
 
 
+
 def create_pareto_plot(run_stats: Dict, output_path: str = "pareto_plot.png", 
-                      title: str = "Model Performance vs Cost Trade-off"):
+                      title: str = "Model Performance vs Cost Trade-off", show_all_labels: bool = True):
     """Create Pareto frontier plot for 8-digit_top1 vs total cost."""
     
     # Extract data
@@ -109,14 +111,28 @@ def create_pareto_plot(run_stats: Dict, output_path: str = "pareto_plot.png",
         frontier_scores = [id_top1_scores[i] for i in frontier_indices]
         ax.plot(frontier_costs, frontier_scores, 'k--', alpha=0.7, linewidth=2, zorder=1, label='Pareto Frontier')
     
-    # Add labels only for frontier models
+    # Collect text annotations for adjustText
+    texts = []
+    
+    # Add labels for frontier models (black text)
     for i in frontier_indices:
-        ax.annotate(model_names[i], 
-                   (total_costs[i], id_top1_scores[i]),
-                   xytext=(5, 5), textcoords='offset points',
-                   fontsize=9, ha='left', va='bottom',
-                   bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8),
-                   zorder=4)
+        text = ax.annotate(model_names[i], 
+                          (total_costs[i], id_top1_scores[i]),
+                          fontsize=9, ha='center', va='center',
+                          bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8, edgecolor='black'),
+                          zorder=4)
+        texts.append(text)
+    
+    # Add labels for non-frontier models (gray text) if show_all_labels is True
+    if show_all_labels:
+        for i, (cost, score) in enumerate(zip(total_costs, id_top1_scores)):
+            if i not in frontier_indices:
+                text = ax.annotate(model_names[i], 
+                                  (cost, score),
+                                  fontsize=8, ha='center', va='center', color='gray',
+                                  bbox=dict(boxstyle='round,pad=0.2', facecolor='white', alpha=0.6, edgecolor='gray'),
+                                  zorder=3)
+                texts.append(text)
     
     # Formatting
     ax.set_xscale('log')
@@ -137,7 +153,29 @@ def create_pareto_plot(run_stats: Dict, output_path: str = "pareto_plot.png",
         legend_elements.append(plt.Line2D([0], [0], color='black', linestyle='--', 
                                         linewidth=2, label='Pareto Frontier'))
     
-    ax.legend(handles=legend_elements, loc='lower right', fontsize=10)
+    ax.legend(handles=legend_elements, loc='center left', bbox_to_anchor=(1, 0.5), fontsize=10)
+    
+    # Apply adjustText LAST, after all plotting is complete
+    # This is crucial according to the documentation
+    if texts:
+        adjust_text(texts,
+                   ax=ax,
+                   # Slightly increased expansion for better text separation
+                   expand=(1.1, 1.25),
+                   # Prevent axes from expanding beyond reasonable limits
+                   ensure_inside_axes=True,
+                   expand_axes=False,
+                   # Limit horizontal movement, allow more vertical movement
+                   max_move=(30, 100),
+                   # Limit iterations to prevent runaway adjustments
+                   iter_lim=150,
+                   # Bias forces towards vertical movement (x_force, y_force)
+                   force_text=(0.05, 0.6),  # Low horizontal, high vertical repulsion
+                   force_explode=(0.05, 0.8),  # Initial vertical separation preferred
+                   force_static=(0.05, 0.3),  # Reduced horizontal static force
+                   force_pull=(0.01, 0.01),  # Keep pull forces balanced
+                   # Add arrows to connect moved labels to points
+                   arrowprops=dict(arrowstyle='-', color='gray', alpha=0.6, lw=0.5))
     
     # Adjust layout and save
     plt.tight_layout()
@@ -161,6 +199,8 @@ def main():
     parser.add_argument("--output", default="pareto_plot.png", help="Output plot file")
     parser.add_argument("--title", default="Model Performance vs Cost Trade-off", help="Plot title")
     parser.add_argument("--no-interactive", action="store_true", help="Skip interactive model review")
+    parser.add_argument("--hide-non-frontier-labels", action="store_true", 
+                       help="Hide labels for non-frontier models (default: show all labels in gray)")
     args = parser.parse_args()
     
     # Generate benchmark data
@@ -209,7 +249,7 @@ def main():
         }
     
     # Create plot
-    create_pareto_plot(run_stats, args.output, args.title)
+    create_pareto_plot(run_stats, args.output, args.title, show_all_labels=not args.hide_non_frontier_labels)
 
 
 if __name__ == "__main__":

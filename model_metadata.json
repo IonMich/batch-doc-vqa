@@ -85,15 +85,40 @@
       "model_size": "??",
       "license": null
     },
-    "qwen/qwen3-vl-235b-a22b-instruct": {
+    "opengvlab/internvl3-78b": {
+      "open_weights": true,
+      "model_size": "78B",
+      "license": "custom"
+    },
+    "google/gemini-2.5-flash-lite-preview-09-2025": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
+    },
+    "google/gemini-2.5-flash-preview-09-2025": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
+    },
+    "qwen/qwen-vl-max": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
+    },
+    "anthropic/claude-sonnet-4.5": {
       "open_weights": false,
       "model_size": "??",
       "license": null
     },
     "qwen/qwen3-vl-235b-a22b-thinking": {
-      "open_weights": false,
-      "model_size": "??",
-      "license": null
+      "open_weights": true,
+      "model_size": "235A22",
+      "license": "Apache-2.0"
+    },
+    "qwen/qwen3-vl-235b-a22b-instruct": {
+      "open_weights": true,
+      "model_size": "235A22",
+      "license": "Apache-2.0"
     }
   },
   "needs_review": []

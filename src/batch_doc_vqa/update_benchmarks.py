@@ -33,6 +33,8 @@ def main():
                        help="Skip interactive model review (add unknown models to needs_review list)")
     parser.add_argument("--interactive", action="store_true",
                        help="Force interactive model review even if unknown models exist")
+    parser.add_argument("--hide-non-frontier-labels", action="store_true",
+                       help="Hide labels for non-frontier models in Pareto plot (default: show all labels in gray)")
     args = parser.parse_args()
     
     # Build command for benchmark table generation
@@ -62,6 +64,8 @@ def main():
         pareto_cmd_parts.extend(["--patterns"] + args.patterns)
     if args.no_interactive:
         pareto_cmd_parts.append("--no-interactive")
+    if args.hide_non_frontier_labels:
+        pareto_cmd_parts.append("--hide-non-frontier-labels")
     
     pareto_cmd = " ".join(pareto_cmd_parts)
     if not run_command(pareto_cmd, "Generating Pareto plot", interactive=is_interactive):
@@ -77,10 +81,11 @@ def main():
     print("   git add BENCHMARKS.md README.md pareto_plot.png")
     print("   git commit -m 'Update benchmark tables and Pareto plot'")
     print("   git push")
-    print("\n📝 Usage notes:")
+    print("\n💡 Usage notes:")
     print("   • Default: Will prompt for interactive model review if unknown models found")
     print("   • --no-interactive: Skip review, add unknown models to needs_review list") 
     print("   • --interactive: Force review even if no unknown models")
+    print("   • --hide-non-frontier-labels: Hide model names for non-frontier points (default: show in gray)")
 
 if __name__ == "__main__":
     main()
