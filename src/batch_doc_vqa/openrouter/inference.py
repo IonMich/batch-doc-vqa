@@ -3,14 +3,15 @@
 OpenRouter inference engine and orchestration.
 """
 import time
-import yaml
-from collections import defaultdict
+import yaml  # type: ignore[import]
+import re
+from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional, cast
 
 from rich.console import Console
 
-from ..core import RunManager, RunConfig, format_runtime, create_inference_progress, add_inference_task
+from ..core import RunManager, RunConfig, format_runtime, create_inference_progress, add_inference_task, get_imagepaths
 from .api import (
     MODEL_CONFIG_OVERRIDES, 
     create_completion, 
@@ -20,15 +21,45 @@ from .api import (
 )
 from ..core.prompts import STUDENT_EXTRACTION_PROMPT
 from .ui import interactive_config_prompt
-from .cli import get_imagepaths
 
 console = Console()
+
+
+def assess_repetition(text: str, *, min_tokens: int = 80) -> tuple[bool, float]:
+    """Heuristically determine whether a response is highly repetitive."""
+    if not text:
+        return False, 0.0
+
+    tokens = re.findall(r"\w+|[^\s\w]", text.lower())
+    total_tokens = len(tokens)
+
+    if total_tokens < min_tokens:
+        return False, 0.0
+
+    token_counts = Counter(tokens)
+    unique_tokens = len(token_counts)
+    if unique_tokens == 0:
+        return False, 0.0
+
+    most_common_count = token_counts.most_common(1)[0][1]
+    repetition_ratio = most_common_count / total_tokens
+    diversity_ratio = unique_tokens / total_tokens
+
+    consecutive_repeats = 0.0
+    if total_tokens > 1:
+        consecutive_repeats = sum(1 for i in range(total_tokens - 1) if tokens[i] == tokens[i + 1]) / (total_tokens - 1)
+
+    repetition_score = max(repetition_ratio, 1 - diversity_ratio, consecutive_repeats)
+    is_repetitive = repetition_score >= 0.22 or (diversity_ratio <= 0.35 and repetition_ratio >= 0.18)
+
+    return is_repetitive, repetition_score
 
 
 def run_openrouter_inference(model_name: str, 
                             temperature: float = 0.0,
                             max_tokens: int = 4096,
                             top_p: float = 1.0,
+                            repetition_penalty: Optional[float] = None,
                             model_size: Optional[str] = None,
                             open_weights: Optional[bool] = None,
                             license_info: Optional[str] = None,
@@ -51,7 +82,13 @@ def run_openrouter_inference(model_name: str,
         org, model = "unknown", model_name
     
     # Get model-specific overrides if they exist
-    overrides = MODEL_CONFIG_OVERRIDES.get(model_name, {})
+    overrides = cast(Dict[str, Any], MODEL_CONFIG_OVERRIDES.get(model_name, {}))
+
+    effective_repetition_penalty: Optional[float] = repetition_penalty
+    if effective_repetition_penalty is None:
+        override_penalty = overrides.get("repetition_penalty")
+        if isinstance(override_penalty, (int, float)):
+            effective_repetition_penalty = float(override_penalty)
     
     # Set defaults with potential overrides
     response_format = overrides.get("response_format", "json")
@@ -105,6 +142,7 @@ def run_openrouter_inference(model_name: str,
             "response_format": response_format,
             "model_name": model_name,
             "top_p": top_p,
+            "repetition_penalty": effective_repetition_penalty,
             "prompt_template": STUDENT_EXTRACTION_PROMPT,
             "actual_model_providers": set(),  # Will track actual model providers used
         }
@@ -124,16 +162,29 @@ def run_openrouter_inference(model_name: str,
     pattern = r"doc-\d+-page-[" + "".join([str(p) for p in pages]) + "]-[A-Z0-9]+.png"
     imagepaths = get_imagepaths(folder, pattern)
     
-    inference_config = {
+    inference_config: Dict[str, Any] = {
         "temperature": temperature,
         "top_p": top_p,
         "max_tokens": max_tokens,
     }
+
+    include_reasoning_override = overrides.get("include_reasoning")
+    reasoning_override = overrides.get("reasoning")
+
+    if include_reasoning_override is not None:
+        inference_config["include_reasoning"] = include_reasoning_override
+
+    if reasoning_override is not None:
+        inference_config["reasoning"] = reasoning_override
+
+    if effective_repetition_penalty is not None:
+        inference_config["repetition_penalty"] = effective_repetition_penalty
     
     # Run inference with rich progress tracking
     results = defaultdict(list)
     total_images = len(imagepaths)
     successful_images = 0
+    repetition_event_scores: Dict[str, float] = {}
     
     # Create progress bar with live status
     with create_inference_progress() as progress:
@@ -238,8 +289,86 @@ def run_openrouter_inference(model_name: str,
                                    last_result="[red]No response[/red]")
                     continue
                     
-                content = response_json["choices"][0]["message"]["content"]
+                message = response_json["choices"][0]["message"]
+                content = message.get("content", "")
                 choice = response_json["choices"][0]
+                reasoning_text = message.get("reasoning")
+
+                repetition_detected = False
+                repetition_score = 0.0
+
+                def update_repetition_metrics(content_text: Optional[str], reasoning_text: Optional[str]) -> None:
+                    nonlocal repetition_detected, repetition_score
+                    combined = " ".join(
+                        part.strip() for part in (content_text, reasoning_text) if isinstance(part, str) and part.strip()
+                    )
+                    if not combined:
+                        return
+                    detected, score = assess_repetition(combined)
+                    if detected:
+                        repetition_detected = True
+                        repetition_score = max(repetition_score, score)
+                        current_best = repetition_event_scores.get(imagepath, 0.0)
+                        if score > current_best:
+                            repetition_event_scores[imagepath] = score
+
+                update_repetition_metrics(content, reasoning_text)
+
+                # Automatically increase max_tokens if the model hit the length cap
+                length_retry_attempts = 0
+                max_length_retry_attempts = 3
+                current_max_tokens = inference_config.get("max_tokens", max_tokens)
+                override_ceiling = overrides.get("max_tokens_ceiling")
+                if isinstance(override_ceiling, int) and override_ceiling > 0:
+                    max_tokens_ceiling = override_ceiling
+                else:
+                    max_tokens_ceiling = max(16384, current_max_tokens)
+
+                while choice.get("finish_reason") == "length" and length_retry_attempts < max_length_retry_attempts:
+                    if repetition_detected:
+                        break
+                    new_max_tokens = min(max_tokens_ceiling, current_max_tokens * 2)
+
+                    if new_max_tokens <= current_max_tokens:
+                        console.print(f"\n[yellow]⚠️ Truncated response for {imagepath}, but cannot increase max_tokens beyond {current_max_tokens}[/yellow]")
+                        break
+
+                    console.print(f"\n[yellow]⚠️ Truncated response for {imagepath} (finish_reason=length)[/yellow]")
+                    console.print(f"[dim]Doubling max_tokens from {current_max_tokens} to {new_max_tokens} and retrying...[/dim]")
+                    progress.update(task, last_result="[yellow]Retrying with more tokens...[/yellow]")
+                    time.sleep(2)
+
+                    retry_config = {**inference_config, "max_tokens": new_max_tokens}
+                    retry_response = create_completion(model_name, retry_config, imagepath)
+
+                    if retry_response.status_code != 200:
+                        console.print(f"[red]Retry failed with status {retry_response.status_code}[/red]")
+                        break
+
+                    retry_response_json = retry_response.json()
+
+                    if "provider" in retry_response_json:
+                        retry_provider = retry_response_json["provider"]
+                        config.additional_config["actual_model_providers"].add(retry_provider)
+
+                    if "choices" not in retry_response_json or not retry_response_json["choices"]:
+                        console.print("[red]Retry returned no choices[/red]")
+                        break
+
+                    retry_message = retry_response_json["choices"][0]["message"]
+                    content = retry_message.get("content", "")
+                    reasoning_text = retry_message.get("reasoning")
+                    choice = retry_response_json["choices"][0]
+                    update_repetition_metrics(content, reasoning_text)
+                    response_json = retry_response_json
+                    current_max_tokens = new_max_tokens
+                    inference_config["max_tokens"] = new_max_tokens
+                    length_retry_attempts += 1
+
+                    if choice.get("finish_reason") != "length":
+                        console.print("[green]✓ Retry completed without truncation[/green]")
+                    else:
+                        console.print("[yellow]Still truncated after retry; will attempt once more if allowed.[/yellow]")
                 
                 # Check for empty content with no finish reason (likely cold start/warm-up)
                 if not content and choice.get("finish_reason") is None:
@@ -265,12 +394,15 @@ def run_openrouter_inference(model_name: str,
                             config.additional_config["actual_model_providers"].add(retry_provider)
                         
                         if "choices" in retry_response_json and retry_response_json["choices"]:
-                            retry_content = retry_response_json["choices"][0]["message"]["content"]
+                            retry_message = retry_response_json["choices"][0]["message"]
+                            retry_content = retry_message.get("content", "")
                             if retry_content:  # Success on retry
                                 console.print("[green]✓ Retry successful![/green]")
                                 content = retry_content
                                 response_json = retry_response_json
                                 choice = retry_response_json["choices"][0]
+                                reasoning_text = retry_message.get("reasoning")
+                                update_repetition_metrics(content, reasoning_text)
                             else:
                                 console.print("[red]Retry also returned empty content[/red]")
                                 # Add empty entry after failed retry
@@ -311,6 +443,14 @@ def run_openrouter_inference(model_name: str,
                     json_obj = parse_response_content(content, response_format)
                 else:
                     json_obj = None
+
+                # Fallback: attempt to parse JSON from reasoning text if primary content is empty/unparseable
+                if json_obj is None and isinstance(reasoning_text, str) and reasoning_text.strip():
+                    fallback_content = reasoning_text.strip()
+                    fallback_json = parse_response_content(fallback_content, response_format)
+                    if fallback_json is not None:
+                        console.print(f"[yellow]⚠️ Using reasoning text as fallback for {imagepath}[/yellow]")
+                        json_obj = fallback_json
                 
                 if json_obj is None:
                     # Log the parsing failure for debugging
@@ -327,7 +467,7 @@ def run_openrouter_inference(model_name: str,
                     
                     # Add empty entry to preserve zero results in table
                     usage = response_json.get("usage", {})
-                    results[imagepath].append({
+                    parse_failure_entry = {
                         "student_full_name": "",
                         "university_id": "",
                         "section_number": "",
@@ -337,7 +477,12 @@ def run_openrouter_inference(model_name: str,
                             "completion_tokens": usage.get("completion_tokens", 0),
                             "total_tokens": usage.get("total_tokens", 0)
                         }
-                    })
+                    }
+                    if repetition_detected:
+                        parse_failure_entry["_repetition_detected"] = True
+                        parse_failure_entry["_repetition_score"] = round(repetition_score, 3)
+
+                    results[imagepath].append(parse_failure_entry)
                     
                     progress.update(task, 
                                    advance=1,
@@ -359,6 +504,10 @@ def run_openrouter_inference(model_name: str,
                     "total_tokens": usage.get("total_tokens", 0),
                     "generation_id": generation_id  # Store for batch processing later
                 }
+
+                if repetition_detected:
+                    json_obj["_repetition_detected"] = True
+                    json_obj["_repetition_score"] = round(repetition_score, 3)
                 
                 results[imagepath].append(json_obj)
                 successful_images += 1
@@ -400,6 +549,15 @@ def run_openrouter_inference(model_name: str,
                                last_result=f"[red]Error: {str(e)[:20]}...[/red]")
                 continue
     
+    if repetition_event_scores:
+        worst_image, worst_score = max(repetition_event_scores.items(), key=lambda item: item[1])
+        console.print(
+            f"\n[yellow]⚠️ Detected repetitive output in {len(repetition_event_scores)} responses (max score {worst_score:.2f}).[/yellow]"
+        )
+        console.print(
+            f"[dim]Example image: {worst_image}. Consider increasing repetition penalty via --repetition-penalty when rerunning.[/dim]"
+        )
+
     # Calculate actual runtime
     end_time = time.time()
     runtime_seconds = end_time - start_time
@@ -410,6 +568,7 @@ def run_openrouter_inference(model_name: str,
     config_dict = config.to_dict()
     config_dict["environment"]["runtime"] = runtime_formatted
     config_dict["additional"]["actual_runtime_seconds"] = runtime_seconds
+    config_dict["api"]["repetition_penalty"] = effective_repetition_penalty
     
     # Convert provider set to list for serialization
     if "actual_model_providers" in config_dict["additional"]:

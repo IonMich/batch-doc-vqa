@@ -5,11 +5,12 @@ OpenRouter API interactions and data processing utilities.
 import os
 import json
 import time
-import requests
+import requests  # type: ignore[import]
 from typing import Dict, Any, Optional, List
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
 from ..core.prompts import STUDENT_EXTRACTION_PROMPT
+from ..core import filepath_to_base64
 
 console = Console()
 
@@ -26,7 +27,6 @@ MODEL_CONFIG_OVERRIDES = {
 
 def create_completion(model_name: str, config: Dict[str, Any], imagepath: str):
     """Create a completion request to OpenRouter."""
-    from .cli import filepath_to_base64
     
     response = requests.post(
         url="https://openrouter.ai/api/v1/chat/completions",

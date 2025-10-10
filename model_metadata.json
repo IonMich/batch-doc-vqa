@@ -119,6 +119,16 @@
       "open_weights": true,
       "model_size": "235A22",
       "license": "Apache-2.0"
+    },
+    "qwen/qwen3-vl-30b-a3b-thinking": {
+      "open_weights": true,
+      "model_size": "30A3",
+      "license": "Apache-2.0"
+    },
+    "qwen/qwen3-vl-30b-a3b-instruct": {
+      "open_weights": true,
+      "model_size": "30A3",
+      "license": "Apache-2.0"
     }
   },
   "needs_review": []

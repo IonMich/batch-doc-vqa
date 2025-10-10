@@ -3,8 +3,6 @@
 OpenRouter CLI utilities and main entry point.
 """
 import os
-import re
-import base64
 import argparse
 import dotenv
 
@@ -17,9 +15,6 @@ console = Console()
 
 
 # Import shared utilities from core
-from ..core import filepath_to_base64, get_imagepaths, natural_sort_key, format_runtime
-
-
 def list_model_overrides():
     """List models with special configuration overrides."""
     from .api import MODEL_CONFIG_OVERRIDES
@@ -93,6 +88,7 @@ Examples:
     parser.add_argument("--license-info", type=str, help="License information")
     parser.add_argument("--interactive", "-i", action="store_true", help="Use interactive prompts for missing configuration")
     parser.add_argument("--list-overrides", action="store_true", help="List models with special configurations and exit")
+    parser.add_argument("--repetition-penalty", type=float, help="Repetition penalty to apply (higher values discourage loops)")
     
     args = parser.parse_args()
     
@@ -118,6 +114,7 @@ Examples:
         temperature=args.temperature,
         max_tokens=args.max_tokens,
         top_p=args.top_p,
+    repetition_penalty=args.repetition_penalty,
         model_size=args.model_size,
         open_weights=args.open_weights,
         license_info=args.license_info,
