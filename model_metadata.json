@@ -134,6 +134,11 @@
       "open_weights": true,
       "model_size": "8B",
       "license": "Apache-2.0"
+    },
+    "qwen/qwen3-vl-8b-thinking": {
+      "open_weights": true,
+      "model_size": "8B",
+      "license": "Apache-2.0"
     }
   },
   "needs_review": []
