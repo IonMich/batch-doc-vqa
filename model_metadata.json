@@ -139,6 +139,11 @@
       "open_weights": true,
       "model_size": "8B",
       "license": "Apache-2.0"
+    },
+    "anthropic/claude-haiku-4.5": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
     }
   },
   "needs_review": []
