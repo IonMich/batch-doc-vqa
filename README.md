@@ -107,19 +107,19 @@ The table below shows the top performing models by category. See [BENCHMARKS.md]
 
 <!-- BENCHMARK_TABLE_START -->
 
-| **Metric** | **OpenCV+CNN** | **qwen**<br>qwen3-vl-8b-instruct | **qwen**<br>qwen3-vl-30b-a3b-instruct | **google**<br>gemini-2.5-pro | **google**<br>gemini-2.5-flash-lite |
+| **Metric** | **OpenCV+CNN** | **nvidia**<br>nemotron-nano-12b-v2-vl:free | **qwen**<br>qwen3-vl-8b-instruct | **google**<br>gemini-3-pro-preview | **google**<br>gemini-2.5-pro |
 |:---|:---|:---|:---|:---|:---|
-| LLM model size | N/A | 8B | 30A3 | ?? | ?? |
+| LLM model size | N/A | 12B | 8B | ?? | ?? |
 | Open-weights | N/A | Yes | Yes | No | No |
-| digit_top1 | 85.16% | **99.61%** | 99.22% | 99.22% | 99.22% |
-| 8-digit id_top1 | ?? | **96.88%** | 93.75% | 93.75% | 93.75% |
-| lastname_top1 | N/A | **96.88%** | 93.75% | **96.88%** | 93.75% |
-| ID Avg d_Lev | N/A | **0.0312** | 0.0625 | 0.0625 | 0.0625 |
-| Lastname Avg d_Lev | N/A | 0.0625 | 0.1875 | **0.0312** | 0.0625 |
-| Docs detected | 90.62% (29/32) | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** |
-| Runtime | **~1 second** | 4.5 minutes | 2.3 minutes | 8.0 minutes | 2.3 minutes |
-| Cost per image | **$0.00** | $0.000302 | $0.000700 | $0.007125 | $0.000214 |
-| Total cost | **$0.00** | $0.0184 | $0.0448 | $0.4560 | $0.0137 |
+| digit_top1 | 85.16% | 0.00% | **99.61%** | 99.22% | 99.22% |
+| 8-digit id_top1 | ?? | 0.00% | **96.88%** | 93.75% | 93.75% |
+| lastname_top1 | N/A | 0.00% | **96.88%** | **96.88%** | **96.88%** |
+| ID Avg d_Lev | N/A | **0.0000** | 0.0312 | 0.0625 | 0.0625 |
+| Lastname Avg d_Lev | N/A | **0.0000** | 0.0625 | 0.0312 | 0.0312 |
+| Docs detected | 90.62% (29/32) | 0.00% (0/32) | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** |
+| Runtime | **~1 second** | TBD | 4.5 minutes | 26.4 minutes | 8.0 minutes |
+| Cost per image | **$0.00** | **$0.000000** | $0.000302 | $0.015111 | $0.007125 |
+| Total cost | **$0.00** | **$0.0000** | $0.0184 | $0.9671 | $0.4560 |
 
 ### Performance vs Cost Trade-off
 

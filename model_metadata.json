@@ -144,6 +144,71 @@
       "open_weights": false,
       "model_size": "??",
       "license": null
+    },
+    "qwen/qwen3-vl-32b-instruct": {
+      "open_weights": true,
+      "model_size": "32B",
+      "license": "Apache-2.0"
+    },
+    "amazon/nova-premier-v1": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
+    },
+    "nvidia/nemotron-nano-12b-v2-vl:free": {
+      "open_weights": true,
+      "model_size": "12B",
+      "license": "nvidia-open-model-license"
+    },
+    "openai/gpt-5.1": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
+    },
+    "openai/gpt-5.1-chat": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
+    },
+    "google/gemini-3-pro-preview": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
+    },
+    "z-ai/glm-4.6v": {
+      "open_weights": true,
+      "model_size": "106B",
+      "license": "MIT"
+    },
+    "amazon/nova-2-lite-v1": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
+    },
+    "openai/gpt-5.2": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
+    },
+    "openai/gpt-5.2-chat": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
+    },
+    "mistralai/mistral-large-2512": {
+      "open_weights": true,
+      "model_size": "675A41",
+      "license": "Apache-2.0"
+    },
+    "mistralai/ministral-3b-2512": {
+      "open_weights": true,
+      "model_size": "3B",
+      "license": "Apache-2.0"
+    },
+    "mistralai/ministral-8b-2512": {
+      "open_weights": true,
+      "model_size": "8B",
+      "license": "Apache-2.0"
     }
   },
   "needs_review": []
