@@ -89,6 +89,8 @@ Examples:
     parser.add_argument("--interactive", "-i", action="store_true", help="Use interactive prompts for missing configuration")
     parser.add_argument("--list-overrides", action="store_true", help="List models with special configurations and exit")
     parser.add_argument("--repetition-penalty", type=float, help="Repetition penalty to apply (higher values discourage loops)")
+    parser.add_argument("--concurrency", type=int, default=1, help="Number of parallel requests (default: 1)")
+    parser.add_argument("--rate-limit", type=float, default=None, help="Max requests per second across all threads (optional)")
     
     args = parser.parse_args()
     
@@ -118,7 +120,9 @@ Examples:
         model_size=args.model_size,
         open_weights=args.open_weights,
         license_info=args.license_info,
-        interactive=args.interactive
+        interactive=args.interactive,
+        concurrency=args.concurrency,
+        rate_limit=args.rate_limit,
     )
     
     print(f"\nRun completed: {run_name}")

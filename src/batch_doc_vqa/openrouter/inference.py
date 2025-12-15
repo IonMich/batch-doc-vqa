@@ -5,6 +5,7 @@ OpenRouter inference engine and orchestration.
 import time
 import yaml  # type: ignore[import]
 import re
+import json
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Dict, Optional, cast
@@ -63,11 +64,80 @@ def run_openrouter_inference(model_name: str,
                             model_size: Optional[str] = None,
                             open_weights: Optional[bool] = None,
                             license_info: Optional[str] = None,
-                            interactive: bool = False):
+                            interactive: bool = False,
+                            concurrency: int = 1,
+                            rate_limit: Optional[float] = None):
     """Run inference using any OpenRouter vision model."""
     
     # Start timing
     start_time = time.time()
+
+    def parse_with_reasoning_fallback(
+        primary_content: Optional[str],
+        reasoning_content: Optional[str],
+        *,
+        log_image: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        parsed = None
+        if isinstance(response_format, str):
+            parsed = parse_response_content(primary_content or "", response_format)
+
+        if parsed is not None:
+            return parsed
+
+        if isinstance(reasoning_content, str) and reasoning_content.strip():
+            fallback = parse_response_content(reasoning_content.strip(), response_format)
+            if fallback is not None and log_image:
+                console.print(f"[yellow]⚠️ Using reasoning text as fallback for {log_image}[/yellow]")
+            return fallback
+
+        return None
+
+    def build_reasoning_retry_steps(
+        *,
+        reasoning_capable: bool,
+        include_reasoning_capable: bool,
+        target_max_tokens: int,
+        base_repetition_penalty: Optional[float],
+    ) -> list[dict[str, Any]]:
+        steps: list[dict[str, Any]] = []
+
+        if reasoning_capable:
+            for effort in ("medium", "low"):
+                steps.append({
+                    "label": f"reasoning_{effort}",
+                    "config_updates": {
+                        "max_tokens": target_max_tokens,
+                        "reasoning": {"effort": effort},
+                        "include_reasoning": True,
+                    },
+                })
+
+            penalty_value = 1.1
+            if base_repetition_penalty and base_repetition_penalty > penalty_value:
+                penalty_value = base_repetition_penalty
+
+            steps.append({
+                "label": "reasoning_high_penalty",
+                "config_updates": {
+                    "max_tokens": target_max_tokens,
+                    "reasoning": {"effort": "high"},
+                    "include_reasoning": True,
+                    "repetition_penalty": penalty_value,
+                },
+            })
+
+        if include_reasoning_capable:
+            steps.append({
+                "label": "reasoning_disabled",
+                "config_updates": {
+                    "max_tokens": target_max_tokens,
+                    "include_reasoning": False,
+                },
+                "remove_keys": ["reasoning"],
+            })
+
+        return steps
     
     # Fetch model data to get supported parameters
     models = fetch_openrouter_models()
@@ -151,6 +221,34 @@ def run_openrouter_inference(model_name: str,
     # Create run directory
     manager = RunManager()
     run_dir = manager.create_run_directory(config)
+    reasoning_log_path = Path(run_dir) / "failed_reasoning.log"
+
+    def log_reasoning_trace(imagepath: str,
+                             message: Dict[str, Any],
+                             response_json: Dict[str, Any],
+                             *,
+                             retry_stage: str) -> None:
+        reasoning_text = message.get("reasoning")
+        if not reasoning_text:
+            return
+
+        log_entry = {
+            "timestamp": time.time(),
+            "image": imagepath,
+            "retry_stage": retry_stage,
+            "finish_reason": message.get("finish_reason") or response_json.get("choices", [{}])[0].get("finish_reason"),
+            "native_finish_reason": response_json.get("choices", [{}])[0].get("native_finish_reason"),
+            "usage": response_json.get("usage", {}),
+            "reasoning": reasoning_text,
+            "content_preview": (message.get("content") or "")[:200].strip(),
+        }
+
+        try:
+            with open(reasoning_log_path, "a", encoding="utf-8") as log_file:
+                log_file.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
+            console.print(f"[dim]Saved reasoning trace for {imagepath} to {reasoning_log_path.name}[/dim]")
+        except Exception as exc:
+            console.print(f"[yellow]⚠️ Failed to write reasoning log: {exc}[/yellow]")
     
     print(f"Starting OpenRouter inference run: {config.run_name}")
     print(f"Model: {model_name}")
@@ -168,6 +266,10 @@ def run_openrouter_inference(model_name: str,
         "max_tokens": max_tokens,
     }
 
+    max_no_choice_retries = overrides.get("no_choice_retries", 2)
+    if not isinstance(max_no_choice_retries, int) or max_no_choice_retries < 0:
+        max_no_choice_retries = 2
+
     include_reasoning_override = overrides.get("include_reasoning")
     reasoning_override = overrides.get("reasoning")
 
@@ -177,377 +279,464 @@ def run_openrouter_inference(model_name: str,
     if reasoning_override is not None:
         inference_config["reasoning"] = reasoning_override
 
+    reasoning_capable = "reasoning" in supported_parameters or reasoning_override is not None
+    include_reasoning_capable = reasoning_capable or "include_reasoning" in supported_parameters or include_reasoning_override is not None
+
     if effective_repetition_penalty is not None:
         inference_config["repetition_penalty"] = effective_repetition_penalty
     
+    # Parallel processing setup
+    import threading
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    class RateLimiter:
+        def __init__(self, rate: Optional[float]):
+            self.rate = rate
+            self.lock = threading.Lock()
+            self.next_time = time.monotonic()
+
+        def acquire(self):
+            if not self.rate or self.rate <= 0:
+                return
+            with self.lock:
+                now = time.monotonic()
+                wait = max(0.0, self.next_time - now)
+                base = max(self.next_time, now)
+                interval = 1.0 / self.rate
+                self.next_time = base + interval
+            if wait > 0:
+                time.sleep(wait)
+
+    rate_limiter = RateLimiter(rate_limit)
+
+    def guarded_create_completion(local_model_name: str, local_config: Dict[str, Any], img_path: str):
+        rate_limiter.acquire()
+        return create_completion(local_model_name, local_config, img_path)
+
     # Run inference with rich progress tracking
     results = defaultdict(list)
     total_images = len(imagepaths)
+    completed_images = 0
     successful_images = 0
     repetition_event_scores: Dict[str, float] = {}
-    
-    # Create progress bar with live status
-    with create_inference_progress() as progress:
-        task = add_inference_task(progress, total_images)
-        
-        for i, imagepath in enumerate(imagepaths, 1):            
-            try:
-                response = create_completion(model_name, inference_config, imagepath)
-                
-                # Check for rate limiting or other API errors
-                if response.status_code == 429:
-                    progress.update(task, last_result="[yellow]Rate limited, waiting...[/yellow]")
-                    time.sleep(10)
-                    # Retry the request
-                    response = create_completion(model_name, inference_config, imagepath)
-                
-                # Handle critical errors that should stop processing
-                if response.status_code == 402:
-                    progress.update(task, last_result="[red]Insufficient funds - stopping[/red]")
-                    console.print("\n[red]❌ Critical Error: Insufficient funds (402)[/red]")
-                    console.print("[yellow]⚠️  Processing stopped. Please check your OpenRouter account balance.[/yellow]")
-                    break
-                
-                elif response.status_code == 401:
-                    progress.update(task, last_result="[red]Invalid API key - stopping[/red]")
-                    console.print("\n[red]❌ Critical Error: Invalid API key (401)[/red]")
-                    console.print("[yellow]⚠️  Processing stopped. Please check your OPENROUTER_API_KEY.[/yellow]")
-                    break
-                
-                elif response.status_code >= 500:
-                    progress.update(task, last_result="[red]Server error - stopping[/red]")
-                    console.print(f"\n[red]❌ Critical Error: Server error ({response.status_code})[/red]")
-                    console.print("[yellow]⚠️  OpenRouter server issues. Processing stopped.[/yellow]")
-                    break
-                
-                elif response.status_code >= 400:
-                    # Log API errors for debugging
-                    console.print(f"\n[red]⚠️ API Error {response.status_code} for {imagepath}[/red]")
-                    try:
-                        error_content = response.json()
-                        console.print(f"[dim]Error details: {error_content.get('error', {}).get('message', 'Unknown error')}[/dim]")
-                        console.print(f"[dim]Full error: {str(error_content)[:500]}[/dim]")
-                    except Exception:
-                        console.print(f"[dim]HTTP {response.status_code}: {response.text[:500]}[/dim]")
-                        if len(response.text) > 500:
-                            console.print(f"[dim]... (truncated, full length: {len(response.text)} chars)[/dim]")
-                    
-                    # Add empty entry to preserve zero results in table
-                    # Try to get usage even for errors (some errors still have usage data)
-                    try:
-                        error_usage = response.json().get("usage", {})
-                    except Exception:
-                        error_usage = {}
-                    
-                    results[imagepath].append({
-                        "student_full_name": "",
-                        "university_id": "",
-                        "section_number": "",
-                        "_api_error": response.status_code,
-                        "_token_usage": {
-                            "prompt_tokens": error_usage.get("prompt_tokens", 0),
-                            "completion_tokens": error_usage.get("completion_tokens", 0),
-                            "total_tokens": error_usage.get("total_tokens", 0)
-                        }
-                    })
-                    
-                    progress.update(task, 
-                                   advance=1,
-                                   last_result=f"[red]API Error {response.status_code}[/red]")
-                    continue
-                
-                response_json = response.json()
-                
-                # Track actual model provider used by OpenRouter
-                if "provider" in response_json:
-                    actual_provider = response_json["provider"]
-                    config.additional_config["actual_model_providers"].add(actual_provider)
-                
-                if "choices" not in response_json or not response_json["choices"]:
-                    # Log missing response for debugging
-                    console.print(f"\n[red]⚠️ No response choices for {imagepath}[/red]")
-                    console.print(f"[dim]Response: {str(response_json)[:500]}[/dim]")
-                    if len(str(response_json)) > 500:
-                        console.print(f"[dim]... (truncated, full length: {len(str(response_json))} chars)[/dim]")
-                    
-                    # Add empty entry to preserve zero results in table
+    provider_lock = threading.Lock()
+
+    # Per-image worker encapsulating the existing logic. Avoids disk writes and progress updates.
+    def process_image(imagepath: str):
+        local_results: list[Dict[str, Any]] = []
+        local_providers: set[str] = set()
+        local_rep_score: float = 0.0
+        status_msg: str = ""
+
+        # Copy base inference config for this image
+        local_inference_config: Dict[str, Any] = dict(inference_config)
+        try:
+            response = guarded_create_completion(model_name, local_inference_config, imagepath)
+
+            if response.status_code == 429:
+                time.sleep(10)
+                response = guarded_create_completion(model_name, local_inference_config, imagepath)
+
+            if response.status_code == 402:
+                return {
+                    "critical_error": (402, "Insufficient funds"),
+                    "imagepath": imagepath,
+                }
+            if response.status_code == 401:
+                return {
+                    "critical_error": (401, "Invalid API key"),
+                    "imagepath": imagepath,
+                }
+            if response.status_code >= 500:
+                return {
+                    "critical_error": (response.status_code, "Server error"),
+                    "imagepath": imagepath,
+                }
+            if response.status_code >= 400:
+                try:
+                    error_usage = response.json().get("usage", {})
+                except Exception:
+                    error_usage = {}
+                local_results.append({
+                    "student_full_name": "",
+                    "university_id": "",
+                    "section_number": "",
+                    "_api_error": response.status_code,
+                    "_token_usage": {
+                        "prompt_tokens": error_usage.get("prompt_tokens", 0),
+                        "completion_tokens": error_usage.get("completion_tokens", 0),
+                        "total_tokens": error_usage.get("total_tokens", 0)
+                    }
+                })
+                status_msg = f"[red]API Error {response.status_code}[/red]"
+                return {
+                    "imagepath": imagepath,
+                    "results": local_results,
+                    "providers": list(local_providers),
+                    "rep_score": local_rep_score,
+                    "status_msg": status_msg,
+                    "success": False,
+                }
+
+            response_json = response.json()
+            if "provider" in response_json:
+                local_providers.add(response_json["provider"])
+
+            if "choices" not in response_json or not response_json["choices"]:
+                missing_choices = True
+                no_choice_attempts = 0
+
+                while missing_choices and no_choice_attempts < max_no_choice_retries:
+                    no_choice_attempts += 1
+                    time.sleep(min(5 * no_choice_attempts, 15))
+                    retry_response = guarded_create_completion(model_name, local_inference_config, imagepath)
+                    if retry_response.status_code >= 500:
+                        continue
+                    if retry_response.status_code == 429:
+                        time.sleep(10)
+                        retry_response = guarded_create_completion(model_name, local_inference_config, imagepath)
+                    if retry_response.status_code != 200:
+                        continue
+                    retry_response_json = retry_response.json()
+                    if "provider" in retry_response_json:
+                        local_providers.add(retry_response_json["provider"])
+                    if "choices" in retry_response_json and retry_response_json["choices"]:
+                        response_json = retry_response_json
+                        missing_choices = False
+                        break
+
+                if missing_choices:
                     usage = response_json.get("usage", {})
-                    results[imagepath].append({
+                    error_details = response_json.get("error", {})
+                    local_results.append({
                         "student_full_name": "",
                         "university_id": "",
                         "section_number": "",
                         "_no_response": True,
+                        "_no_response_error": error_details,
                         "_token_usage": {
                             "prompt_tokens": usage.get("prompt_tokens", 0),
                             "completion_tokens": usage.get("completion_tokens", 0),
                             "total_tokens": usage.get("total_tokens", 0)
                         }
                     })
-                    
-                    progress.update(task, 
-                                   advance=1,
-                                   last_result="[red]No response[/red]")
-                    continue
-                    
-                message = response_json["choices"][0]["message"]
-                content = message.get("content", "")
-                choice = response_json["choices"][0]
-                reasoning_text = message.get("reasoning")
+                    status_msg = "[red]No response[/red]"
+                    return {
+                        "imagepath": imagepath,
+                        "results": local_results,
+                        "providers": list(local_providers),
+                        "rep_score": local_rep_score,
+                        "status_msg": status_msg,
+                        "success": False,
+                    }
 
-                repetition_detected = False
-                repetition_score = 0.0
+            message = response_json["choices"][0]["message"]
+            content = message.get("content", "")
+            choice = response_json["choices"][0]
+            reasoning_text = message.get("reasoning")
 
-                def update_repetition_metrics(content_text: Optional[str], reasoning_text: Optional[str]) -> None:
-                    nonlocal repetition_detected, repetition_score
-                    combined = " ".join(
-                        part.strip() for part in (content_text, reasoning_text) if isinstance(part, str) and part.strip()
-                    )
-                    if not combined:
-                        return
-                    detected, score = assess_repetition(combined)
-                    if detected:
-                        repetition_detected = True
-                        repetition_score = max(repetition_score, score)
-                        current_best = repetition_event_scores.get(imagepath, 0.0)
-                        if score > current_best:
-                            repetition_event_scores[imagepath] = score
+            repetition_detected = False
+            repetition_score = 0.0
 
+            def update_repetition_metrics(content_text: Optional[str], reasoning_text_val: Optional[str]) -> None:
+                nonlocal repetition_detected, repetition_score
+                combined = " ".join(
+                    part.strip() for part in (content_text, reasoning_text_val) if isinstance(part, str) and part.strip()
+                )
+                if not combined:
+                    return
+                detected, score = assess_repetition(combined)
+                if detected:
+                    repetition_detected = True
+                    repetition_score = max(repetition_score, score)
+            update_repetition_metrics(content, reasoning_text)
+
+            length_retry_attempts = 0
+            max_length_retry_attempts = 3
+            current_max_tokens = local_inference_config.get("max_tokens", max_tokens)
+            override_ceiling = overrides.get("max_tokens_ceiling")
+            if isinstance(override_ceiling, int) and override_ceiling > 0:
+                max_tokens_ceiling = max(override_ceiling, current_max_tokens)
+            else:
+                max_tokens_ceiling = max(16384, current_max_tokens)
+
+            while choice.get("finish_reason") == "length" and length_retry_attempts < max_length_retry_attempts:
+                if repetition_detected:
+                    break
+                new_max_tokens = min(max_tokens_ceiling, current_max_tokens * 2)
+                if new_max_tokens <= current_max_tokens:
+                    break
+                time.sleep(2)
+                retry_config = {**local_inference_config, "max_tokens": new_max_tokens}
+                retry_response = guarded_create_completion(model_name, retry_config, imagepath)
+                if retry_response.status_code != 200:
+                    break
+                retry_response_json = retry_response.json()
+                if "provider" in retry_response_json:
+                    local_providers.add(retry_response_json["provider"])
+                if "choices" not in retry_response_json or not retry_response_json["choices"]:
+                    break
+                retry_message = retry_response_json["choices"][0]["message"]
+                content = retry_message.get("content", "")
+                reasoning_text = retry_message.get("reasoning")
+                choice = retry_response_json["choices"][0]
                 update_repetition_metrics(content, reasoning_text)
+                response_json = retry_response_json
+                current_max_tokens = new_max_tokens
+                local_inference_config["max_tokens"] = new_max_tokens
+                length_retry_attempts += 1
 
-                # Automatically increase max_tokens if the model hit the length cap
-                length_retry_attempts = 0
-                max_length_retry_attempts = 3
-                current_max_tokens = inference_config.get("max_tokens", max_tokens)
-                override_ceiling = overrides.get("max_tokens_ceiling")
-                if isinstance(override_ceiling, int) and override_ceiling > 0:
-                    max_tokens_ceiling = override_ceiling
-                else:
-                    max_tokens_ceiling = max(16384, current_max_tokens)
-
-                while choice.get("finish_reason") == "length" and length_retry_attempts < max_length_retry_attempts:
-                    if repetition_detected:
-                        break
-                    new_max_tokens = min(max_tokens_ceiling, current_max_tokens * 2)
-
-                    if new_max_tokens <= current_max_tokens:
-                        console.print(f"\n[yellow]⚠️ Truncated response for {imagepath}, but cannot increase max_tokens beyond {current_max_tokens}[/yellow]")
-                        break
-
-                    console.print(f"\n[yellow]⚠️ Truncated response for {imagepath} (finish_reason=length)[/yellow]")
-                    console.print(f"[dim]Doubling max_tokens from {current_max_tokens} to {new_max_tokens} and retrying...[/dim]")
-                    progress.update(task, last_result="[yellow]Retrying with more tokens...[/yellow]")
-                    time.sleep(2)
-
-                    retry_config = {**inference_config, "max_tokens": new_max_tokens}
-                    retry_response = create_completion(model_name, retry_config, imagepath)
-
-                    if retry_response.status_code != 200:
-                        console.print(f"[red]Retry failed with status {retry_response.status_code}[/red]")
-                        break
-
+            if not content and choice.get("finish_reason") is None:
+                time.sleep(10)
+                retry_response = guarded_create_completion(model_name, local_inference_config, imagepath)
+                if retry_response.status_code == 200:
                     retry_response_json = retry_response.json()
-
                     if "provider" in retry_response_json:
-                        retry_provider = retry_response_json["provider"]
-                        config.additional_config["actual_model_providers"].add(retry_provider)
-
-                    if "choices" not in retry_response_json or not retry_response_json["choices"]:
-                        console.print("[red]Retry returned no choices[/red]")
-                        break
-
-                    retry_message = retry_response_json["choices"][0]["message"]
-                    content = retry_message.get("content", "")
-                    reasoning_text = retry_message.get("reasoning")
-                    choice = retry_response_json["choices"][0]
-                    update_repetition_metrics(content, reasoning_text)
-                    response_json = retry_response_json
-                    current_max_tokens = new_max_tokens
-                    inference_config["max_tokens"] = new_max_tokens
-                    length_retry_attempts += 1
-
-                    if choice.get("finish_reason") != "length":
-                        console.print("[green]✓ Retry completed without truncation[/green]")
-                    else:
-                        console.print("[yellow]Still truncated after retry; will attempt once more if allowed.[/yellow]")
-                
-                # Check for empty content with no finish reason (likely cold start/warm-up)
-                if not content and choice.get("finish_reason") is None:
-                    console.print(f"\n[yellow]⚠️ Empty response for {imagepath} (likely cold start)[/yellow]")
-                    console.print(f"[dim]Finish reason: {choice.get('finish_reason')}[/dim]")
-                    console.print(f"[dim]Completion tokens: {response_json.get('usage', {}).get('completion_tokens', 'unknown')}[/dim]")
-                    console.print(f"[dim]Prompt tokens: {response_json.get('usage', {}).get('prompt_tokens', 'unknown')}[/dim]")
-                    
-                    # Implement retry for empty responses (cold start/warm-up issue)
-                    console.print("[dim]Retrying in 10 seconds (cold start recovery)...[/dim]")
-                    progress.update(task, last_result="[yellow]Retrying cold start...[/yellow]")
-                    time.sleep(10)
-                    
-                    # Retry the request
-                    retry_response = create_completion(model_name, inference_config, imagepath)
-                    
-                    if retry_response.status_code == 200:
-                        retry_response_json = retry_response.json()
-                        
-                        # Track provider from retry response too
-                        if "provider" in retry_response_json:
-                            retry_provider = retry_response_json["provider"]
-                            config.additional_config["actual_model_providers"].add(retry_provider)
-                        
-                        if "choices" in retry_response_json and retry_response_json["choices"]:
-                            retry_message = retry_response_json["choices"][0]["message"]
-                            retry_content = retry_message.get("content", "")
-                            if retry_content:  # Success on retry
-                                console.print("[green]✓ Retry successful![/green]")
-                                content = retry_content
-                                response_json = retry_response_json
-                                choice = retry_response_json["choices"][0]
-                                reasoning_text = retry_message.get("reasoning")
-                                update_repetition_metrics(content, reasoning_text)
-                            else:
-                                console.print("[red]Retry also returned empty content[/red]")
-                                # Add empty entry after failed retry
-                                results[imagepath].append({
-                                    "student_full_name": "",
-                                    "university_id": "",
-                                    "section_number": "",
-                                    "_empty_response": True,
-                                    "_retry_failed": True
-                                })
-                                progress.update(task, advance=1, last_result="[red]Empty after retry[/red]")
-                                continue
+                        local_providers.add(retry_response_json["provider"])
+                    if "choices" in retry_response_json and retry_response_json["choices"]:
+                        retry_message = retry_response_json["choices"][0]["message"]
+                        retry_content = retry_message.get("content", "")
+                        if retry_content:
+                            content = retry_content
+                            response_json = retry_response_json
+                            choice = retry_response_json["choices"][0]
+                            reasoning_text = retry_message.get("reasoning")
+                            update_repetition_metrics(content, reasoning_text)
                         else:
-                            console.print("[red]Retry returned malformed response[/red]")
-                            results[imagepath].append({
+                            local_results.append({
                                 "student_full_name": "",
                                 "university_id": "",
                                 "section_number": "",
                                 "_empty_response": True,
                                 "_retry_failed": True
                             })
-                            progress.update(task, advance=1, last_result="[red]Retry failed[/red]")
-                            continue
-                    else:
-                        console.print(f"[red]Retry failed with status {retry_response.status_code}[/red]")
-                        results[imagepath].append({
-                            "student_full_name": "",
-                            "university_id": "",
-                            "section_number": "",
-                            "_empty_response": True,
-                            "_retry_failed": True
-                        })
-                        progress.update(task, advance=1, last_result="[red]Retry failed[/red]")
-                        continue
-                
-                # Parse response based on model format
-                if isinstance(response_format, str):
-                    json_obj = parse_response_content(content, response_format)
+                            status_msg = "[red]Empty after retry[/red]"
+                            return {
+                                "imagepath": imagepath,
+                                "results": local_results,
+                                "providers": list(local_providers),
+                                "rep_score": local_rep_score,
+                                "status_msg": status_msg,
+                                "success": False,
+                            }
                 else:
-                    json_obj = None
-
-                # Fallback: attempt to parse JSON from reasoning text if primary content is empty/unparseable
-                if json_obj is None and isinstance(reasoning_text, str) and reasoning_text.strip():
-                    fallback_content = reasoning_text.strip()
-                    fallback_json = parse_response_content(fallback_content, response_format)
-                    if fallback_json is not None:
-                        console.print(f"[yellow]⚠️ Using reasoning text as fallback for {imagepath}[/yellow]")
-                        json_obj = fallback_json
-                
-                if json_obj is None:
-                    # Log the parsing failure for debugging
-                    console.print(f"\n[red]⚠️ Parse failed for {imagepath}[/red]")
-                    console.print(f"[dim]Content type: {type(content)}[/dim]")
-                    console.print(f"[dim]Content length: {len(content) if content else 'None'}[/dim]")
-                    if content:
-                        console.print(f"[dim]Raw response: '{content[:1000]}'[/dim]")
-                        if len(content) > 1000:
-                            console.print(f"[dim]... (truncated, full length: {len(content)} chars)[/dim]")
-                    else:
-                        console.print("[dim]Content is empty or None[/dim]")
-                        console.print(f"[dim]Full response: {str(response_json)[:800]}[/dim]")
-                    
-                    # Add empty entry to preserve zero results in table
-                    usage = response_json.get("usage", {})
-                    parse_failure_entry = {
+                    local_results.append({
                         "student_full_name": "",
                         "university_id": "",
                         "section_number": "",
-                        "_parse_failed": True,
-                        "_token_usage": {
-                            "prompt_tokens": usage.get("prompt_tokens", 0),
-                            "completion_tokens": usage.get("completion_tokens", 0),
-                            "total_tokens": usage.get("total_tokens", 0)
-                        }
+                        "_empty_response": True,
+                        "_retry_failed": True
+                    })
+                    status_msg = "[red]Retry failed[/red]"
+                    return {
+                        "imagepath": imagepath,
+                        "results": local_results,
+                        "providers": list(local_providers),
+                        "rep_score": local_rep_score,
+                        "status_msg": status_msg,
+                        "success": False,
                     }
-                    if repetition_detected:
-                        parse_failure_entry["_repetition_detected"] = True
-                        parse_failure_entry["_repetition_score"] = round(repetition_score, 3)
 
-                    results[imagepath].append(parse_failure_entry)
-                    
-                    progress.update(task, 
-                                   advance=1,
-                                   last_result="[red]Parse failed[/red]")
-                    continue
-                
-                # Standardize field names for consistency
-                if "ufid" in json_obj:
-                    json_obj["university_id"] = json_obj.pop("ufid", "")
-                
-                # Store token usage data for cost calculation
+            json_obj = parse_with_reasoning_fallback(content, reasoning_text, log_image=imagepath)
+            target_parse_tokens = min(max_tokens_ceiling, 16384)
+
+            while json_obj is None and current_max_tokens < target_parse_tokens:
+                new_max_tokens = min(target_parse_tokens, max(current_max_tokens * 2, current_max_tokens + 512))
+                if new_max_tokens <= current_max_tokens:
+                    break
+                time.sleep(2)
+                retry_config = {**local_inference_config, "max_tokens": new_max_tokens}
+                retry_response = guarded_create_completion(model_name, retry_config, imagepath)
+                if retry_response.status_code != 200:
+                    break
+                retry_response_json = retry_response.json()
+                if "provider" in retry_response_json:
+                    local_providers.add(retry_response_json["provider"])
+                if "choices" not in retry_response_json or not retry_response_json["choices"]:
+                    break
+                retry_message = retry_response_json["choices"][0]["message"]
+                content = retry_message.get("content", "")
+                reasoning_text = retry_message.get("reasoning")
+                choice = retry_response_json["choices"][0]
+                response_json = retry_response_json
+                update_repetition_metrics(content, reasoning_text)
+                current_max_tokens = new_max_tokens
+                local_inference_config["max_tokens"] = new_max_tokens
+                json_obj = parse_with_reasoning_fallback(content, reasoning_text, log_image=imagepath)
+
+            if json_obj is None:
+                adaptive_target_tokens = max(current_max_tokens, target_parse_tokens)
+                if local_inference_config.get("max_tokens", current_max_tokens) < adaptive_target_tokens:
+                    local_inference_config["max_tokens"] = adaptive_target_tokens
+                    current_max_tokens = adaptive_target_tokens
+
+                adaptive_steps = build_reasoning_retry_steps(
+                    reasoning_capable=reasoning_capable,
+                    include_reasoning_capable=include_reasoning_capable,
+                    target_max_tokens=adaptive_target_tokens,
+                    base_repetition_penalty=local_inference_config.get("repetition_penalty"),
+                )
+
+                for step in adaptive_steps:
+                    retry_config = dict(local_inference_config)
+                    for key in step.get("remove_keys", []):
+                        retry_config.pop(key, None)
+                    retry_config.update(step.get("config_updates", {}))
+                    time.sleep(2)
+                    retry_response = guarded_create_completion(model_name, retry_config, imagepath)
+                    if retry_response.status_code == 429:
+                        time.sleep(10)
+                        retry_response = guarded_create_completion(model_name, retry_config, imagepath)
+                    if retry_response.status_code >= 500:
+                        continue
+                    if retry_response.status_code != 200:
+                        continue
+                    retry_response_json = retry_response.json()
+                    if "provider" in retry_response_json:
+                        local_providers.add(retry_response_json["provider"])
+                    if "choices" not in retry_response_json or not retry_response_json["choices"]:
+                        continue
+                    retry_message = retry_response_json["choices"][0]["message"]
+                    content = retry_message.get("content", "")
+                    reasoning_text = retry_message.get("reasoning")
+                    choice = retry_response_json["choices"][0]
+                    response_json = retry_response_json
+                    update_repetition_metrics(content, reasoning_text)
+                    step_max_tokens = retry_config.get("max_tokens")
+                    if isinstance(step_max_tokens, int) and step_max_tokens > current_max_tokens:
+                        current_max_tokens = step_max_tokens
+                        local_inference_config["max_tokens"] = step_max_tokens
+                    json_obj = parse_with_reasoning_fallback(content, reasoning_text, log_image=imagepath)
+                    if json_obj is not None:
+                        break
+
+            if json_obj is None:
+                log_reasoning_trace(imagepath, message, response_json, retry_stage="parse_failure")
                 usage = response_json.get("usage", {})
-                generation_id = response_json.get("id")
-                
-                # Store token usage data (we'll update with precise costs later)
-                json_obj["_token_usage"] = {
-                    "prompt_tokens": usage.get("prompt_tokens", 0),
-                    "completion_tokens": usage.get("completion_tokens", 0),
-                    "total_tokens": usage.get("total_tokens", 0),
-                    "generation_id": generation_id  # Store for batch processing later
-                }
-
-                if repetition_detected:
-                    json_obj["_repetition_detected"] = True
-                    json_obj["_repetition_score"] = round(repetition_score, 3)
-                
-                results[imagepath].append(json_obj)
-                successful_images += 1
-                
-                # Save results incrementally for streaming updates
-                results_dict = dict(results)
-                manager.save_results(config.run_name, results_dict)
-                
-                # Create concise success message
-                name = json_obj.get('student_full_name', 'N/A')
-                ufid = json_obj.get('university_id', '')
-                if ufid:
-                    result_msg = f"✓ {name} (ID: {ufid})"
-                else:
-                    result_msg = f"✓ {name}"
-                
-                # Update progress with success rate and latest result
-                success_rate = f"{successful_images/i*100:.1f}%"
-                progress.update(task, 
-                               advance=1, 
-                               success_rate=success_rate,
-                               last_result=result_msg[:40] + "..." if len(result_msg) > 40 else result_msg)
-                    
-            except Exception as e:
-                # Log the exception for debugging
-                console.print(f"\n[red]⚠️ Exception processing {imagepath}[/red]")
-                console.print(f"[dim]Error: {str(e)}[/dim]")
-                
-                # Add empty entry to preserve zero results in table
-                results[imagepath].append({
+                parse_failure_entry = {
                     "student_full_name": "",
                     "university_id": "",
                     "section_number": "",
-                    "_exception": str(e)
-                })
-                
-                progress.update(task, 
-                               advance=1,
-                               last_result=f"[red]Error: {str(e)[:20]}...[/red]")
-                continue
+                    "_parse_failed": True,
+                    "_token_usage": {
+                        "prompt_tokens": usage.get("prompt_tokens", 0),
+                        "completion_tokens": usage.get("completion_tokens", 0),
+                        "total_tokens": usage.get("total_tokens", 0)
+                    }
+                }
+                if repetition_detected:
+                    parse_failure_entry["_repetition_detected"] = True
+                    parse_failure_entry["_repetition_score"] = round(repetition_score, 3)
+                    local_rep_score = max(local_rep_score, repetition_score)
+                local_results.append(parse_failure_entry)
+                status_msg = "[red]Parse failed[/red]"
+                return {
+                    "imagepath": imagepath,
+                    "results": local_results,
+                    "providers": list(local_providers),
+                    "rep_score": local_rep_score,
+                    "status_msg": status_msg,
+                    "success": False,
+                }
+
+            if "ufid" in json_obj:
+                json_obj["university_id"] = json_obj.pop("ufid", "")
+            usage = response_json.get("usage", {})
+            generation_id = response_json.get("id")
+            json_obj["_token_usage"] = {
+                "prompt_tokens": usage.get("prompt_tokens", 0),
+                "completion_tokens": usage.get("completion_tokens", 0),
+                "total_tokens": usage.get("total_tokens", 0),
+                "generation_id": generation_id
+            }
+            if repetition_detected:
+                json_obj["_repetition_detected"] = True
+                json_obj["_repetition_score"] = round(repetition_score, 3)
+                local_rep_score = max(local_rep_score, repetition_score)
+            local_results.append(json_obj)
+
+            name = json_obj.get('student_full_name', 'N/A')
+            ufid = json_obj.get('university_id', '')
+            status_msg = f"✓ {name} (ID: {ufid})" if ufid else f"✓ {name}"
+
+            return {
+                "imagepath": imagepath,
+                "results": local_results,
+                "providers": list(local_providers),
+                "rep_score": local_rep_score,
+                "status_msg": status_msg,
+                "success": True,
+            }
+
+        except Exception as e:
+            local_results.append({
+                "student_full_name": "",
+                "university_id": "",
+                "section_number": "",
+                "_exception": str(e)
+            })
+            return {
+                "imagepath": imagepath,
+                "results": local_results,
+                "providers": list(local_providers),
+                "rep_score": local_rep_score,
+                "status_msg": f"[red]Error: {str(e)[:20]}...[/red]",
+                "success": False,
+            }
+
+    # Create progress bar with live status, then dispatch tasks
+    with create_inference_progress() as progress:
+        task = add_inference_task(progress, total_images)
+
+        critical_stop: Optional[tuple[int, str]] = None
+        with ThreadPoolExecutor(max_workers=max(1, concurrency)) as executor:
+            future_map = {executor.submit(process_image, img): img for img in imagepaths}
+            for future in as_completed(future_map):
+                result_payload = future.result()
+                if "critical_error" in result_payload:
+                    code, msg = result_payload["critical_error"]
+                    progress.update(task, last_result=f"[red]{msg} - stopping[/red]")
+                    critical_stop = (code, msg)
+                    break
+
+                img = result_payload["imagepath"]
+                local_results = result_payload["results"]
+                local_providers = result_payload["providers"]
+                local_rep_score = result_payload["rep_score"]
+                status_msg = result_payload["status_msg"]
+                success = result_payload["success"]
+
+                # Merge providers
+                with provider_lock:
+                    for p in local_providers:
+                        config.additional_config["actual_model_providers"].add(p)
+                if local_rep_score:
+                    current_best = repetition_event_scores.get(img, 0.0)
+                    if local_rep_score > current_best:
+                        repetition_event_scores[img] = local_rep_score
+
+                results[img].extend(local_results)
+                completed_images += 1
+                if success:
+                    successful_images += 1
+
+                # Save incrementally
+                manager.save_results(config.run_name, dict(results))
+
+                success_rate = f"{(successful_images/max(1, completed_images))*100:.1f}%"
+                progress.update(
+                    task,
+                    advance=1,
+                    success_rate=success_rate,
+                    last_result=status_msg[:40] + "..." if len(status_msg) > 40 else status_msg,
+                )
+
+            # If we hit a critical stop, cancel remaining futures
+            if critical_stop is not None:
+                for pending_future in future_map:
+                    pending_future.cancel()
+                console.print(f"\n[red]❌ Critical Error: {critical_stop[1]} ({critical_stop[0]})[/red]")
+                console.print("[yellow]⚠️  Processing stopped. Please resolve the issue and rerun.[/yellow]")
     
     if repetition_event_scores:
         worst_image, worst_score = max(repetition_event_scores.items(), key=lambda item: item[1])
