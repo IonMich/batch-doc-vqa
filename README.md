@@ -107,7 +107,7 @@ The table below shows the top performing models by category. See [BENCHMARKS.md]
 
 <!-- BENCHMARK_TABLE_START -->
 
-| **Metric** | **OpenCV+CNN** | **nvidia**<br>nemotron-nano-12b-v2-vl:free | **qwen**<br>qwen3-vl-8b-instruct | **google**<br>gemini-3-pro-preview | **google**<br>gemini-2.5-pro |
+| **Metric** | **OpenCV+CNN** | **nvidia**<br>nemotron-nano-12b-v2-vl:free | **qwen**<br>qwen3-vl-8b-instruct | **google**<br>gemini-3-flash-preview | **google**<br>gemini-3-pro-preview |
 |:---|:---|:---|:---|:---|:---|
 | LLM model size | N/A | 12B | 8B | ?? | ?? |
 | Open-weights | N/A | Yes | Yes | No | No |
@@ -117,9 +117,9 @@ The table below shows the top performing models by category. See [BENCHMARKS.md]
 | ID Avg d_Lev | N/A | **0.0000** | 0.0312 | 0.0625 | 0.0625 |
 | Lastname Avg d_Lev | N/A | **0.0000** | 0.0625 | 0.0312 | 0.0312 |
 | Docs detected | 90.62% (29/32) | 0.00% (0/32) | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** |
-| Runtime | **~1 second** | TBD | 4.5 minutes | 26.4 minutes | 8.0 minutes |
-| Cost per image | **$0.00** | **$0.000000** | $0.000302 | $0.015111 | $0.007125 |
-| Total cost | **$0.00** | **$0.0000** | $0.0184 | $0.9671 | $0.4560 |
+| Runtime | **~1 second** | TBD | 4.5 minutes | 8 seconds | 26.4 minutes |
+| Cost per image | **$0.00** | **$0.000000** | $0.000302 | $0.001636 | $0.015111 |
+| Total cost | **$0.00** | **$0.0000** | $0.0184 | $0.1047 | $0.9671 |
 
 ### Performance vs Cost Trade-off
 

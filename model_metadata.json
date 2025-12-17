@@ -209,6 +209,11 @@
       "open_weights": true,
       "model_size": "8B",
       "license": "Apache-2.0"
+    },
+    "google/gemini-3-flash-preview": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
     }
   },
   "needs_review": []
