@@ -91,6 +91,8 @@ Examples:
     parser.add_argument("--repetition-penalty", type=float, help="Repetition penalty to apply (higher values discourage loops)")
     parser.add_argument("--concurrency", type=int, default=1, help="Number of parallel requests (default: 1)")
     parser.add_argument("--rate-limit", type=float, default=None, help="Max requests per second across all threads (optional)")
+    parser.add_argument("--retry-max", type=int, default=3, help="Max retries per image for 5xx errors (default: 3)")
+    parser.add_argument("--retry-base-delay", type=float, default=2.0, help="Base delay (seconds) for exponential backoff on 5xx (default: 2.0)")
     
     args = parser.parse_args()
     
@@ -123,6 +125,8 @@ Examples:
         interactive=args.interactive,
         concurrency=args.concurrency,
         rate_limit=args.rate_limit,
+        retry_max=args.retry_max,
+        retry_base_delay=args.retry_base_delay,
     )
     
     print(f"\nRun completed: {run_name}")

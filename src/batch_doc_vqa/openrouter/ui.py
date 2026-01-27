@@ -238,16 +238,16 @@ def interactive_organization_model_selection(show_all_orgs: bool = False):
     console.print(org_table)
     
     if not show_all_orgs:
-        console.print(f"\n[dim]💡 To see all {len(organizations)} organizations, type 'all'[/dim]")
+        console.print(f"\n[dim]💡 To see all {len(organizations)} organizations, type 'a'[/dim]")
     
     # Get organization choice
     while True:
         valid_choices = [str(i) for i in range(1, len(sorted_orgs) + 1)] + ["q"]
         if not show_all_orgs:
-            valid_choices.append("all")
+            valid_choices.append("a")
         
         choice = Prompt.ask(
-            "\nSelect organization number, 'all' to show all organizations, or 'q' to quit" if not show_all_orgs else "\nSelect organization number (or 'q' to quit)",
+            "\nSelect organization number, 'a' to show all organizations, or 'q' to quit" if not show_all_orgs else "\nSelect organization number (or 'q' to quit)",
             choices=valid_choices,
             show_choices=False
         )
@@ -255,7 +255,7 @@ def interactive_organization_model_selection(show_all_orgs: bool = False):
         if choice.lower() == "q":
             console.print("👋 Goodbye!")
             return None
-        elif choice.lower() == "all" and not show_all_orgs:
+        elif choice.lower() == "a" and not show_all_orgs:
             console.print("Showing all organizations...\n")
             return interactive_organization_model_selection(show_all_orgs=True)
         
@@ -313,15 +313,15 @@ def interactive_organization_model_selection(show_all_orgs: bool = False):
     # Get model choice
     while True:
         choice = Prompt.ask(
-            "\nSelect model number, 'back' to choose different organization, or 'q' to quit",
-            choices=[str(i) for i in range(1, len(selected_models) + 1)] + ["back", "q"],
+            "\nSelect model number, 'b' to choose different organization, or 'q' to quit",
+            choices=[str(i) for i in range(1, len(selected_models) + 1)] + ["b", "q"],
             show_choices=False
         )
         
         if choice.lower() == "q":
             console.print("👋 Goodbye!")
             return None
-        elif choice.lower() == "back":
+        elif choice.lower() == "b":
             return interactive_organization_model_selection(show_all_orgs)
         
         selected_model = selected_models[int(choice) - 1]

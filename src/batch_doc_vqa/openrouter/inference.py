@@ -66,7 +66,9 @@ def run_openrouter_inference(model_name: str,
                             license_info: Optional[str] = None,
                             interactive: bool = False,
                             concurrency: int = 1,
-                            rate_limit: Optional[float] = None):
+                            rate_limit: Optional[float] = None,
+                            retry_max: int = 3,
+                            retry_base_delay: float = 2.0):
     """Run inference using any OpenRouter vision model."""
     
     # Start timing
@@ -333,10 +335,12 @@ def run_openrouter_inference(model_name: str,
         try:
             response = guarded_create_completion(model_name, local_inference_config, imagepath)
 
+            # Handle rate limiting with a single retry
             if response.status_code == 429:
                 time.sleep(10)
                 response = guarded_create_completion(model_name, local_inference_config, imagepath)
 
+            # Hard-stop critical errors
             if response.status_code == 402:
                 return {
                     "critical_error": (402, "Insufficient funds"),
@@ -347,11 +351,43 @@ def run_openrouter_inference(model_name: str,
                     "critical_error": (401, "Invalid API key"),
                     "imagepath": imagepath,
                 }
+
+            # Retry transient server errors (5xx) per image with backoff
+            server_attempts = 0
+            while response.status_code >= 500 and server_attempts < max(0, retry_max):
+                delay = min(60.0, retry_base_delay * (2 ** server_attempts))
+                time.sleep(delay)
+                response = guarded_create_completion(model_name, local_inference_config, imagepath)
+                server_attempts += 1
+
+            # If still a server error after retries, record non-critical failure and continue
             if response.status_code >= 500:
+                try:
+                    error_usage = response.json().get("usage", {})
+                except Exception:
+                    error_usage = {}
+                local_results.append({
+                    "student_full_name": "",
+                    "university_id": "",
+                    "section_number": "",
+                    "_api_error": response.status_code,
+                    "_server_error": True,
+                    "_token_usage": {
+                        "prompt_tokens": error_usage.get("prompt_tokens", 0),
+                        "completion_tokens": error_usage.get("completion_tokens", 0),
+                        "total_tokens": error_usage.get("total_tokens", 0)
+                    }
+                })
+                status_msg = f"[red]Server error {response.status_code} - continuing[/red]"
                 return {
-                    "critical_error": (response.status_code, "Server error"),
                     "imagepath": imagepath,
+                    "results": local_results,
+                    "providers": list(local_providers),
+                    "rep_score": local_rep_score,
+                    "status_msg": status_msg,
+                    "success": False,
                 }
+
             if response.status_code >= 400:
                 try:
                     error_usage = response.json().get("usage", {})
