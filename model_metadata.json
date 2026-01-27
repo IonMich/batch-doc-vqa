@@ -214,6 +214,21 @@
       "open_weights": false,
       "model_size": "??",
       "license": null
+    },
+    "bytedance-seed/seed-1.6": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
+    },
+    "bytedance-seed/seed-1.6-flash": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
+    },
+    "moonshotai/kimi-k2.5": {
+      "open_weights": true,
+      "model_size": "1000A32",
+      "license": "modified-mit"
     }
   },
   "needs_review": []

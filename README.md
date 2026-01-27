@@ -107,19 +107,19 @@ The table below shows the top performing models by category. See [BENCHMARKS.md]
 
 <!-- BENCHMARK_TABLE_START -->
 
-| **Metric** | **OpenCV+CNN** | **nvidia**<br>nemotron-nano-12b-v2-vl:free | **qwen**<br>qwen3-vl-8b-instruct | **google**<br>gemini-3-flash-preview | **google**<br>gemini-3-pro-preview |
+| **Metric** | **OpenCV+CNN** | **moonshotai**<br>kimi-k2.5 | **nvidia**<br>nemotron-nano-12b-v2-vl:free | **google**<br>gemini-3-flash-preview | **google**<br>gemini-3-pro-preview |
 |:---|:---|:---|:---|:---|:---|
-| LLM model size | N/A | 12B | 8B | ?? | ?? |
+| LLM model size | N/A | 1000A32 | 12B | ?? | ?? |
 | Open-weights | N/A | Yes | Yes | No | No |
-| digit_top1 | 85.16% | 0.00% | **99.61%** | 99.22% | 99.22% |
-| 8-digit id_top1 | ?? | 0.00% | **96.88%** | 93.75% | 93.75% |
-| lastname_top1 | N/A | 0.00% | **96.88%** | **96.88%** | **96.88%** |
-| ID Avg d_Lev | N/A | **0.0000** | 0.0312 | 0.0625 | 0.0625 |
-| Lastname Avg d_Lev | N/A | **0.0000** | 0.0625 | 0.0312 | 0.0312 |
-| Docs detected | 90.62% (29/32) | 0.00% (0/32) | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** |
-| Runtime | **~1 second** | TBD | 4.5 minutes | 8 seconds | 26.4 minutes |
-| Cost per image | **$0.00** | **$0.000000** | $0.000302 | $0.001636 | $0.015111 |
-| Total cost | **$0.00** | **$0.0000** | $0.0184 | $0.1047 | $0.9671 |
+| digit_top1 | 85.16% | **100.00%** | 0.00% | 99.22% | 99.22% |
+| 8-digit id_top1 | ?? | **100.00%** | 0.00% | 93.75% | 93.75% |
+| lastname_top1 | N/A | **96.88%** | 0.00% | **96.88%** | **96.88%** |
+| ID Avg d_Lev | N/A | **0.0000** | **0.0000** | 0.0625 | 0.0625 |
+| Lastname Avg d_Lev | N/A | 0.0312 | **0.0000** | 0.0312 | 0.0312 |
+| Docs detected | 90.62% (29/32) | **100.00% (32/32)** | 0.00% (0/32) | **100.00% (32/32)** | **100.00% (32/32)** |
+| Runtime | **~1 second** | 1.6 minutes | TBD | 8 seconds | 26.4 minutes |
+| Cost per image | **$0.00** | $0.004679 | **$0.000000** | $0.001636 | $0.015111 |
+| Total cost | **$0.00** | $0.2995 | **$0.0000** | $0.1047 | $0.9671 |
 
 ### Performance vs Cost Trade-off
 
