@@ -53,9 +53,10 @@ def pdf_to_imgs(filepath, pages_i=-1, dpi=150, output_dir="."):
     return doc_info
 
 
-if __name__ == "__main__":
+def main():
+    """CLI entry point for PDF-to-image conversion."""
     # example usage:
-    # python pdf_to_imgs.py --filepath "path/to/pdf" --pages_i 2 --dpi 150 --output_dir "path/to/output"
+    # uv run pdf-to-imgs --filepath "path/to/pdf" --pages_i 2 --dpi 150 --output_dir "path/to/output"
     import argparse
 
     parser = argparse.ArgumentParser()
@@ -73,3 +74,7 @@ if __name__ == "__main__":
     parser.add_argument("--output_dir", type=str, default=".")
     args = parser.parse_args()
     pdf_to_imgs(args.filepath, args.pages_i, args.dpi, args.output_dir)
+
+
+if __name__ == "__main__":
+    main()

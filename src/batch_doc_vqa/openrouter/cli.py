@@ -72,10 +72,10 @@ def main():
         epilog="""
 Examples:
   # Run GLM-4.5V
-  python openrouter_inference.py --model z-ai/glm-4.5v
+  uv run openrouter-inference --model z-ai/glm-4.5v
   
   # List models with special configurations
-  python openrouter_inference.py --list-overrides
+  uv run openrouter-inference --list-overrides
         """
     )
     
@@ -131,7 +131,7 @@ Examples:
     
     print(f"\nRun completed: {run_name}")
     print("Generate benchmark table with:")
-    print(f"uv run python generate_benchmark_table.py --patterns {args.model.split('/')[0]}")
+    print(f"uv run generate-benchmark-table --patterns {args.model.split('/')[0]}")
 
 
 if __name__ == "__main__":

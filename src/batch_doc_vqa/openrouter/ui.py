@@ -340,8 +340,8 @@ def interactive_organization_model_selection(show_all_orgs: bool = False):
     
     # Show usage example
     console.print("\n[bold blue]💡 To run this model:[/bold blue]")
-    console.print(f"uv run python openrouter_inference.py --model [green]{model_id}[/green]")
-    console.print(f"uv run python openrouter_inference.py --model [green]{model_id}[/green] [blue]--interactive[/blue]")
+    console.print(f"uv run openrouter-inference --model [green]{model_id}[/green]")
+    console.print(f"uv run openrouter-inference --model [green]{model_id}[/green] [blue]--interactive[/blue]")
     
     return model_id
 

@@ -47,7 +47,7 @@ def main():
     if args.no_interactive:
         cmd_parts.append("--no-interactive")
     elif not args.interactive:
-        # Default behavior: let generate_benchmark_table.py handle interactivity
+        # Default behavior: let generate-benchmark-table handle interactivity
         # It will prompt if there are unknown models
         pass
     

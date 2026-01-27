@@ -40,10 +40,10 @@ This repository uses Large Language Models with vision capabilities to extract i
 
 ### Prepare the documents
 
-It is common for a batch of documents to be stored in a single large PDF file. Since multimodal LLMs can only process images, the first step is to convert the PDF file into a collection of images. (Of course, if you already have a collection of images, you can skip this step.) This can be done using the `pdf_to_imgs.py` script. For example, to convert a batch of 4-page documents into images stored in a single PDF file `imgs/quiz11-presidents.pdf` to images at 300 DPI, you can run the following command:
+It is common for a batch of documents to be stored in a single large PDF file. Since multimodal LLMs can only process images, the first step is to convert the PDF file into a collection of images. (Of course, if you already have a collection of images, you can skip this step.) This can be done using the `pdf_to_imgs` utility. For example, to convert a batch of 4-page documents into images stored in a single PDF file `imgs/quiz11-presidents.pdf` to images at 300 DPI, you can run the following command:
 
 ```bash
-python pdf_to_imgs.py --filepath imgs/quiz11-presidents.pdf --pages_i 4 --dpi 300 --output_dir imgs/q11/
+uv run pdf-to-imgs --filepath imgs/quiz11-presidents.pdf --pages_i 4 --dpi 300 --output_dir imgs/q11/
 ```
 
 This will create a directory `imgs/q11/` containing the images of the 4-page documents. Set the `--pages_i` argument to the number of pages in each document. The images will follow the naming convention `doc-0-page-1-*.png`, ..., `doc-0-page-4-*.png`, `doc-1-page-1-*.png`, ..., etc. A CSV file `imgs/q11/doc_info.csv` will also be created, containing the metadata of the images (the page number and the document number).
@@ -70,7 +70,7 @@ To test new vision models and add them to the benchmark tables:
 
    ```bash
    # The script will automatically prompt for API key setup if needed
-   python openrouter_inference.py --model "anthropic/claude-4-sonnet" --org "anthropic"
+   uv run openrouter-inference --model "anthropic/claude-4-sonnet" --org "anthropic"
    ```
 
    The script will:
@@ -85,11 +85,11 @@ To test new vision models and add them to the benchmark tables:
 
    ```bash
    # Generate comprehensive results (all models)
-   python generate_benchmark_table.py --output BENCHMARKS.md
+   uv run generate-benchmark-table --output BENCHMARKS.md
    
    # Generate README table (top performers only)
-   python generate_benchmark_table.py --readme
-   python update_readme_section.py
+   uv run generate-benchmark-table --readme
+   uv run update-readme-section
    ```
 
 3. **Interactive model classification**: When you run the benchmark generator with a new model, you'll be prompted to classify it:
@@ -158,7 +158,7 @@ The chart below shows the Pareto frontier of models, highlighting the most cost-
 
 5. Start the Ollama server. On MacOS this can be done by simply opening the Ollama app. On Linux run `ollama server` in the terminal.
 
-6. Check the `SYSTEM_MESSAGES` variable in `llamavision.py`. This are the prompts that the model will use to generate its responses (by default the prompt at index `0`). Leave the prompt unchanged if you want to check the installation on the test images. Feel free to add your own images to the `imgs` directory, or to change the `--filepath` command line argument to point to a different directory.
+6. Check the `SYSTEM_MESSAGES` variable in `llamavision.py`. These are the prompts that the model will use to generate its responses (by default the prompt at index `0`). Leave the prompt unchanged if you want to check the installation on the test images. Feel free to add your own images to the `imgs` directory, or to change the `--filepath` command line argument to point to a different directory.
 
 7. That's it! You're ready to use the pipeline:
 
@@ -168,7 +168,7 @@ The chart below shows the Pareto frontier of models, highlighting the most cost-
 
 ### Usage
 
-The Ollama pipeline is a Python scriptwith the following command line usage:
+The Ollama pipeline is a Python script with the following command line usage:
 
 ```bash
     python llamavision.py [-h] [--filepath FILEPATH] [--pattern PATTERN] [--n_trials N_TRIALS] [--system SYSTEM] [--model MODEL] [--no-stream] [--top_k TOP_K]
@@ -195,6 +195,6 @@ The pipeline has the following options:
 Recent advances in LLM modelling have made it conceivable to build a quantifiably reliable pipeline to extract information in bulk from documents:
 
 - Well formatted JSON can be fully enforced. In fact, using [context-free grammars](https://stackoverflow.com/a/6713333/10119867), precise JSON schemas can be enforced in language models that support structured responses (e.g. see [OpenAI's blog post](https://openai.com/index/introducing-structured-outputs-in-the-api/)).
-- OpenAI's `GPT4 o1-preview` [appears to be well-calibrated](https://openai.com/index/introducing-simpleqa/), i.e. the frequency of its answers to fact-seeking questions is a good proxy for their accuracy. This creates the possibility to sample multiple times from the model to infer probabilities of each distinct answer. It is unclear however how well this calibration generalizes to any open-source models. It is also unclear if the purely textual SimpleQA task is a good proxy for text+vision task.
+- OpenAI's `o1-preview` [appears to be well-calibrated](https://openai.com/index/introducing-simpleqa/), i.e. the frequency of its answers to fact-seeking questions is a good proxy for their accuracy. This creates the possibility to sample multiple times from the model to infer probabilities of each distinct answer. It is unclear however how well this calibration generalizes to any open-source models. It is also unclear if the purely textual SimpleQA task is a good proxy for text+vision task.
 - The latest open-source models, such as the (Q4 quantized) Llama3.2-Vision 11B, show good performance on a variety of tasks, including document DocVQA, when compared to closed-source models like GPT-4. The [OCRBench Space](https://huggingface.co/spaces/echo840/ocrbench-leaderboard) on Huggingface has a nice summary of their performance on various OCR tasks.
 - Hardware with acceptable memory bandwidth and large-enough memory capacity for LLM tasks is becoming more affordable.
