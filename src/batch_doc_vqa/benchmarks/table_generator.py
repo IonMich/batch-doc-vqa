@@ -172,7 +172,7 @@ class BenchmarkTableGenerator:
         
         print("\n💾 All model metadata saved!")
     
-    def compute_run_stats(self, run_info: Dict, doc_info_file: str, test_ids_file: str) -> Dict:
+    def compute_run_stats(self, run_info: Dict, doc_info_file: str, test_ids_file: str) -> Optional[Dict]:
         """Compute statistics for a single run."""
         run_name = run_info["run_name"]
         
@@ -189,13 +189,13 @@ class BenchmarkTableGenerator:
             
             # Load results file
             if not run_info["has_results"]:
-                print(f"  Warning: No results file for run {run_name}")
-                return self._empty_stats()
+                print(f"  Warning: No results file for run {run_name} (skipping)")
+                return None
             
             results = self.run_manager.load_results(run_name)
             if not results:
-                print(f"  Warning: Empty results for run {run_name}")
-                return self._empty_stats()
+                print(f"  Warning: Empty results for run {run_name} (skipping)")
+                return None
             
             # Create temporary results file for processing
             temp_results_file = f"/tmp/{run_name}_results.json"
@@ -225,7 +225,7 @@ class BenchmarkTableGenerator:
             
         except Exception as e:
             print(f"  Error processing run {run_name}: {e}")
-            return self._empty_stats()
+            return None
     
     def _empty_stats(self) -> Dict:
         """Return empty statistics."""
@@ -365,6 +365,9 @@ class BenchmarkTableGenerator:
         for model_key, run_info in runs_by_model.items():
             print(f"Processing run: {run_info['run_name']}")
             stats = self.compute_run_stats(run_info, doc_info_file, test_ids_file)
+            if not stats:
+                print(f"  Skipping {run_info['run_name']} (no usable results)")
+                continue
             run_stats[model_key] = {
                 "run_info": run_info,
                 "stats": stats
@@ -878,6 +881,9 @@ def main():
         for model_key, run_info in runs_by_model.items():
             print(f"Processing run: {run_info['run_name']}")
             stats = generator.compute_run_stats(run_info, args.doc_info, args.test_ids)
+            if not stats:
+                print(f"  Skipping {run_info['run_name']} (no usable results)")
+                continue
             run_stats[model_key] = {
                 "run_info": run_info,
                 "stats": stats
