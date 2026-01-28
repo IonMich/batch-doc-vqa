@@ -47,6 +47,8 @@ def _reorder_readme(content: str) -> str:
             ).strip()
     if not pareto_block:
         pareto_block, rest = _extract_block(PARETO_BLOCK_PATTERN, rest)
+    if pareto_block:
+        rest = re.sub(PARETO_BLOCK_PATTERN, "", rest, flags=re.DOTALL)
 
     how_to_use_block, rest = _extract_block(HOW_TO_USE_BLOCK_PATTERN, rest)
     calibration_block, rest = _extract_block(CALIBRATION_BLOCK_PATTERN, rest)

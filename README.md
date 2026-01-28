@@ -32,14 +32,6 @@ The table below shows the top performing models by category. See [BENCHMARKS.md]
 
 <!-- BENCHMARK_TABLE_END -->
 
-### Performance vs Cost Trade-off
-
-The chart below shows the Pareto frontier of models on the quiz-identify-vqa test, highlighting the most cost-efficient options for different performance levels:
-
-![Model Performance vs Cost Trade-off](pareto_plot.png)
-
-
-
 This repository uses Large Language Models with vision capabilities to extract information from collections of documents and reports performance within a clearly specified document‑VQA setup. The goal is to create a fully local pipeline that runs on a single machine, and can be used to extract information from document collections for usage in downstream tasks.
 
 ## How to use
