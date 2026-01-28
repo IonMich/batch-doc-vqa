@@ -97,7 +97,7 @@ To test new vision models and add them to the benchmark tables:
 
    ```bash
    # The script will automatically prompt for API key setup if needed
-   uv run openrouter-inference --model "anthropic/claude-4-sonnet" --org "anthropic"
+   uv run openrouter-inference --concurrency 64 --rate-limit 64
    ```
 
    The script will:
@@ -107,16 +107,12 @@ To test new vision models and add them to the benchmark tables:
    - With a key: access to all models and higher rate limits
    - Offer to save the key to `.env` file for future use
    - Get your API key from: [openrouter.ai/keys](https://openrouter.ai/keys)
+   - Launch an interactive TUI to select provider/model if `--model` is omitted
 
 2. **Update benchmark tables** with the new results:
 
    ```bash
-   # Generate comprehensive results (all models)
-   uv run generate-benchmark-table --output BENCHMARKS.md
-   
-   # Generate README table (top performers only)
-   uv run generate-benchmark-table --readme
-   uv run update-readme-section
+   uv run update-benchmarks
    ```
 
 3. **Interactive model classification**: When you run the benchmark generator with a new model, you'll be prompted to classify it:
