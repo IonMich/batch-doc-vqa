@@ -1,9 +1,36 @@
 # Vision LLM - Batch Document VQA with structured responses
 
-![Probability calibration curves for OpenCV+CNN and for LLama3.2-Vision 11B](tests/output/public/calibration_curves.png)
+### Performance vs Cost Trade-off
 
-> [!NOTE]  
-> See details in the associated [wiki](https://github.com/IonMich/batch-doc-vqa/wiki/Row-of-Digits-OCR:-OpenCV-CNN-versus-LLMs) article.
+The chart below shows the Pareto frontier of models, highlighting the most cost-efficient options for different performance levels:
+
+![Model Performance vs Cost Trade-off](pareto_plot.png)
+
+## Benchmarks
+
+Our small test dataset (`./imgs/quiz11-presidents.pdf`) consists of 32 documents representing Physics quizzes and the task is to match them to the test students who took the quiz via their 8-digit university ID and, optionally, their names (`./tests/data/test_ids.csv`). We have already saturated our test dataset with 100% statistically confident detections, but more optimizations are explored to decrease inference cost. You can find more details [in this wiki](https://github.com/IonMich/batch-doc-vqa/wiki/Row-of-Digits-OCR:-OpenCV-CNN-versus-LLMs).
+
+The table below shows the top performing models by category. See [BENCHMARKS.md](BENCHMARKS.md) for comprehensive results with all tested models.
+
+<!-- BENCHMARK_TABLE_START -->
+
+| **Metric** | **OpenCV+CNN** | **moonshotai**<br>kimi-k2.5 | **qwen**<br>qwen3-vl-8b-instruct | **google**<br>gemini-3-flash-preview | **google**<br>gemini-3-pro-preview |
+|:---|:---|:---|:---|:---|:---|
+| LLM model size | N/A | 1000A32 | 8B | ?? | ?? |
+| Open-weights | N/A | Yes | Yes | No | No |
+| digit_top1 | 85.16% | **100.00%** | 99.61% | 99.22% | 99.22% |
+| 8-digit id_top1 | ?? | **100.00%** | 96.88% | 93.75% | 93.75% |
+| lastname_top1 | N/A | **96.88%** | **96.88%** | **96.88%** | **96.88%** |
+| ID Avg d_Lev | N/A | **0.0000** | 0.0312 | 0.0625 | 0.0625 |
+| Lastname Avg d_Lev | N/A | **0.0312** | **0.0312** | **0.0312** | **0.0312** |
+| Docs detected | 90.62% (29/32) | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** |
+| Runtime | **~1 second** | 1.6 minutes | 7 seconds | 8 seconds | 26.4 minutes |
+| Cost per image | **$0.00** | $0.004679 | $0.000253 | $0.001636 | $0.015111 |
+| Total cost | **$0.00** | $0.2995 | $0.0162 | $0.1047 | $0.9671 |
+
+
+
+<!-- BENCHMARK_TABLE_END -->
 
 This repository uses Large Language Models with vision capabilities to extract information from collections of documents. The goal is to create a fully local pipeline that runs on a single machine, and can be used to extract information from document collections for usage in downstream tasks.
 
@@ -99,35 +126,10 @@ To test new vision models and add them to the benchmark tables:
 
 The system automatically saves this metadata and uses it for proper categorization in benchmark tables.
 
-## Benchmarks
+![Probability calibration curves for OpenCV+CNN and for LLama3.2-Vision 11B](tests/output/public/calibration_curves.png)
 
-Our small test dataset (`./imgs/quiz11-presidents.pdf`) consists of 32 documents representing Physics quizzes and the task is to match them to the test students who took the quiz via their 8-digit university ID and, optionally, their names (`./tests/data/test_ids.csv`). We have already saturated our test dataset with 100% statistically confident detections, but more optimizations are explored to decrease inference cost. You can find more details [in this wiki](https://github.com/IonMich/batch-doc-vqa/wiki/Row-of-Digits-OCR:-OpenCV-CNN-versus-LLMs).
-
-The table below shows the top performing models by category. See [BENCHMARKS.md](BENCHMARKS.md) for comprehensive results with all tested models.
-
-<!-- BENCHMARK_TABLE_START -->
-
-| **Metric** | **OpenCV+CNN** | **moonshotai**<br>kimi-k2.5 | **qwen**<br>qwen3-vl-8b-instruct | **google**<br>gemini-3-flash-preview | **google**<br>gemini-3-pro-preview |
-|:---|:---|:---|:---|:---|:---|
-| LLM model size | N/A | 1000A32 | 8B | ?? | ?? |
-| Open-weights | N/A | Yes | Yes | No | No |
-| digit_top1 | 85.16% | **100.00%** | 99.61% | 99.22% | 99.22% |
-| 8-digit id_top1 | ?? | **100.00%** | 96.88% | 93.75% | 93.75% |
-| lastname_top1 | N/A | **96.88%** | **96.88%** | **96.88%** | **96.88%** |
-| ID Avg d_Lev | N/A | **0.0000** | 0.0312 | 0.0625 | 0.0625 |
-| Lastname Avg d_Lev | N/A | **0.0312** | **0.0312** | **0.0312** | **0.0312** |
-| Docs detected | 90.62% (29/32) | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** |
-| Runtime | **~1 second** | 1.6 minutes | 7 seconds | 8 seconds | 26.4 minutes |
-| Cost per image | **$0.00** | $0.004679 | $0.000253 | $0.001636 | $0.015111 |
-| Total cost | **$0.00** | $0.2995 | $0.0162 | $0.1047 | $0.9671 |
-
-### Performance vs Cost Trade-off
-
-The chart below shows the Pareto frontier of models, highlighting the most cost-efficient options for different performance levels:
-
-![Model Performance vs Cost Trade-off](pareto_plot.png)
-
-<!-- BENCHMARK_TABLE_END -->
+> [!NOTE]  
+> See details in the associated [wiki](https://github.com/IonMich/batch-doc-vqa/wiki/Row-of-Digits-OCR:-OpenCV-CNN-versus-LLMs) article.
 
 ## [OLD] Ollama + Llama3.2-Vision 11B
 

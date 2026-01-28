@@ -6,6 +6,78 @@ import re
 import argparse
 from pathlib import Path
 
+PARETO_BLOCK_PATTERN = (
+    r"### Performance vs Cost Trade-off"
+    r"[\s\S]*?!\[Model Performance vs Cost Trade-off\]\(pareto_plot\.png\)"
+)
+BENCHMARKS_BLOCK_PATTERN = r"## Benchmarks[\s\S]*?<!-- BENCHMARK_TABLE_END -->"
+HOW_TO_USE_BLOCK_PATTERN = r"## How to use[\s\S]*?(?=\n## |\Z)"
+CALIBRATION_BLOCK_PATTERN = (
+    r"!\[Probability calibration curves[^\n]*\]\(tests/output/public/calibration_curves\.png\)"
+    r"(?:\n\n> \[!NOTE\][\s\S]*?article\.)?"
+)
+
+
+def _extract_block(pattern: str, content: str, flags: int = re.DOTALL):
+    match = re.search(pattern, content, flags)
+    if not match:
+        return None, content
+    block = match.group(0).strip()
+    new_content = content[:match.start()] + content[match.end():]
+    return block, new_content
+
+
+def _reorder_readme(content: str) -> str:
+    """Reorder README sections to the preferred layout."""
+    title_match = re.match(r"^# .*\n", content)
+    if not title_match:
+        return content
+    title_line = title_match.group(0).rstrip("\n")
+    rest = content[len(title_match.group(0)):]
+
+    benchmarks_block, rest = _extract_block(BENCHMARKS_BLOCK_PATTERN, rest)
+    pareto_block = None
+    if benchmarks_block:
+        pareto_match = re.search(PARETO_BLOCK_PATTERN, benchmarks_block, re.DOTALL)
+        if pareto_match:
+            pareto_block = pareto_match.group(0).strip()
+            benchmarks_block = (
+                benchmarks_block[:pareto_match.start()]
+                + benchmarks_block[pareto_match.end():]
+            ).strip()
+    if not pareto_block:
+        pareto_block, rest = _extract_block(PARETO_BLOCK_PATTERN, rest)
+
+    how_to_use_block, rest = _extract_block(HOW_TO_USE_BLOCK_PATTERN, rest)
+    calibration_block, rest = _extract_block(CALIBRATION_BLOCK_PATTERN, rest)
+
+    rest = rest.strip("\n")
+    preamble = ""
+    remainder = rest
+    heading_match = re.search(r"^## ", rest, re.MULTILINE)
+    if heading_match:
+        preamble = rest[:heading_match.start()].strip()
+        remainder = rest[heading_match.start():].strip()
+    else:
+        preamble = rest.strip()
+        remainder = ""
+
+    parts = [title_line]
+    if pareto_block:
+        parts.append(pareto_block)
+    if benchmarks_block:
+        parts.append(benchmarks_block)
+    if preamble:
+        parts.append(preamble)
+    if how_to_use_block:
+        parts.append(how_to_use_block)
+    if calibration_block:
+        parts.append(calibration_block)
+    if remainder:
+        parts.append(remainder)
+
+    return "\n\n".join(parts).rstrip() + "\n"
+
 def update_readme_section(readme_path: str, new_content: str, 
                          start_marker: str = "<!-- BENCHMARK_TABLE_START -->",
                          end_marker: str = "<!-- BENCHMARK_TABLE_END -->") -> bool:
@@ -31,6 +103,7 @@ def update_readme_section(readme_path: str, new_content: str,
     replacement = f"{start_marker}\\n\\n{new_content}\\n\\n{end_marker}"
     
     new_readme_content = re.sub(pattern, replacement, content, flags=re.DOTALL)
+    new_readme_content = _reorder_readme(new_readme_content)
     
     # Write updated README
     with open(readme_file, 'w', encoding='utf-8') as f:
