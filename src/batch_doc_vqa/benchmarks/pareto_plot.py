@@ -52,7 +52,7 @@ def get_organization_colors():
 
 
 def create_pareto_plot(run_stats: Dict, output_path: str = "pareto_plot.png", 
-                      title: str = "Model Performance vs Cost Trade-off", show_all_labels: bool = True):
+                      title: str = "Model Performance vs Cost Trade-off (quiz-identify-vqa)", show_all_labels: bool = True):
     """Create Pareto frontier plot for 8-digit_top1 vs total cost."""
     
     # Extract data
@@ -139,6 +139,16 @@ def create_pareto_plot(run_stats: Dict, output_path: str = "pareto_plot.png",
     ax.set_xlabel('Total Cost ($)', fontsize=12)
     ax.set_ylabel('8-digit ID Top-1 Accuracy (%)', fontsize=12)
     ax.set_title(title, fontsize=14, fontweight='bold')
+    ax.text(
+        0.01,
+        0.99,
+        "Test: quiz-identify-vqa",
+        transform=ax.transAxes,
+        ha="left",
+        va="top",
+        fontsize=10,
+        color="#444444",
+    )
     ax.grid(True, alpha=0.3)
     
     # Create legend for organizations
@@ -197,7 +207,7 @@ def main():
     parser.add_argument("--doc-info", default="imgs/q11/doc_info.csv", help="Document info CSV")
     parser.add_argument("--test-ids", default="tests/data/test_ids.csv", help="Test IDs CSV") 
     parser.add_argument("--output", default="pareto_plot.png", help="Output plot file")
-    parser.add_argument("--title", default="Model Performance vs Cost Trade-off", help="Plot title")
+    parser.add_argument("--title", default="Model Performance vs Cost Trade-off (quiz-identify-vqa)", help="Plot title")
     parser.add_argument("--no-interactive", action="store_true", help="Skip interactive model review")
     parser.add_argument("--hide-non-frontier-labels", action="store_true", 
                        help="Hide labels for non-frontier models (default: show all labels in gray)")
