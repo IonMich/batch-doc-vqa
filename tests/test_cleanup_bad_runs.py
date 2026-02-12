@@ -190,6 +190,60 @@ class TestCleanupBadRuns(unittest.TestCase):
             self.assertEqual(rc, 0)
             self.assertTrue(run_dir.exists())
 
+    def test_main_default_strict_flags_inference_failure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            runs_dir = Path(tmp) / "runs"
+            run_dir = runs_dir / "google-gemma-3-4b-it_20260212_120000"
+            run_dir.mkdir(parents=True)
+            _write_yaml(run_dir / "config.yaml", _base_config())
+            _write_json(
+                run_dir / "results.json",
+                {
+                    "imgs/q11/doc-31-page-3-0R29O2Y6.png": [
+                        {
+                            "student_full_name": "George Washington",
+                            "university_id": "793896380",
+                            "_schema_failed": True,
+                        }
+                    ]
+                },
+            )
+
+            with patch.object(sys, "argv", ["cleanup-bad-runs", "--runs-dir", str(runs_dir)]):
+                rc = main()
+
+            self.assertEqual(rc, 0)
+            self.assertTrue(run_dir.exists())  # dry-run by default
+
+    def test_main_no_strict_keeps_legacy_loose_behavior(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            runs_dir = Path(tmp) / "runs"
+            run_dir = runs_dir / "google-gemma-3-4b-it_20260212_120000"
+            run_dir.mkdir(parents=True)
+            _write_yaml(run_dir / "config.yaml", _base_config())
+            _write_json(
+                run_dir / "results.json",
+                {
+                    "imgs/q11/doc-31-page-3-0R29O2Y6.png": [
+                        {
+                            "student_full_name": "George Washington",
+                            "university_id": "793896380",
+                            "_schema_failed": True,
+                        }
+                    ]
+                },
+            )
+
+            with patch.object(
+                sys,
+                "argv",
+                ["cleanup-bad-runs", "--runs-dir", str(runs_dir), "--no-strict"],
+            ):
+                rc = main()
+
+            self.assertEqual(rc, 0)
+            self.assertTrue(run_dir.exists())  # dry-run by default
+
     def test_main_apply_quarantine_moves_bad_runs(self):
         with tempfile.TemporaryDirectory() as tmp:
             runs_dir = Path(tmp) / "runs"

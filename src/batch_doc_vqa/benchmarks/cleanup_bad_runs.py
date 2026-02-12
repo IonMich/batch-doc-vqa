@@ -343,7 +343,13 @@ def main() -> int:
     parser.add_argument(
         "--strict",
         action="store_true",
-        help="Also classify runs as bad when inference failure markers are present",
+        help="Classify runs as bad when inference failure markers are present (default)",
+    )
+    parser.add_argument(
+        "--no-strict",
+        dest="strict",
+        action="store_false",
+        help="Disable inference-failure checks (legacy loose mode)",
     )
     parser.add_argument(
         "--strict-costs",
@@ -371,6 +377,7 @@ def main() -> int:
         "--report",
         help="Write JSON report to this file",
     )
+    parser.set_defaults(strict=True)
     args = parser.parse_args()
 
     if args.strict_costs and not args.strict:
