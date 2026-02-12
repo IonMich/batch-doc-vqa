@@ -137,8 +137,8 @@ def display_provider_policies(model_id: str, providers_data: Optional[Dict[str, 
     policy_table = Table(show_header=True, header_style="bold cyan")
     policy_table.add_column("Provider", style="yellow", width=15)
     policy_table.add_column("Status", style="green", width=8)
-    policy_table.add_column("Privacy Policy", style="blue", width=40)
-    policy_table.add_column("Terms of Service", style="white", width=40)
+    policy_table.add_column("Privacy Policy", style="blue", width=56, overflow="fold")
+    policy_table.add_column("Terms of Service", style="white", width=56, overflow="fold")
     
     unique_providers = set()
     for endpoint in endpoints:
@@ -161,16 +161,14 @@ def display_provider_policies(model_id: str, providers_data: Optional[Dict[str, 
                 terms_url = provider_info.get("terms_of_service_url", "Not available")
                 break
         
-        # Format URLs as clickable links with full URL preserved
+        # Show raw URLs so users can copy/paste even when terminal hyperlinks are unsupported.
         if privacy_url != "Not available":
-            # Create a shorter display text but preserve full URL for clicking
-            privacy_display = f"[link={privacy_url}]Privacy Policy[/link]"
+            privacy_display = f"[link={privacy_url}]{privacy_url}[/link]"
         else:
             privacy_display = "[dim]Not available[/dim]"
-            
+
         if terms_url != "Not available":
-            # Create a shorter display text but preserve full URL for clicking  
-            terms_display = f"[link={terms_url}]Terms of Service[/link]"
+            terms_display = f"[link={terms_url}]{terms_url}[/link]"
         else:
             terms_display = "[dim]Not available[/dim]"
         
@@ -193,6 +191,7 @@ def display_provider_policies(model_id: str, providers_data: Optional[Dict[str, 
         confirm_text = f"Proceed with {model_id} using these providers?"
     
     console.print("[dim]You can review the privacy policies and terms of service at the URLs above.[/dim]")
+    console.print("[dim]Tip: if links are not clickable in your terminal, copy/paste the URL text directly.[/dim]")
     
     return Confirm.ask(f"\n{confirm_text}", default=True)
 
