@@ -28,6 +28,7 @@ from .api import (
     create_completion, 
     parse_response_content, 
     fetch_openrouter_models,
+    model_supports_image_input,
     batch_update_generation_costs,
 )
 from ..core.prompts import STUDENT_EXTRACTION_PROMPT
@@ -356,6 +357,14 @@ def run_openrouter_inference(model_name: str,
     model_data = None
     if models:
         model_data = next((m for m in models if m.get("id") == model_name), None)
+    if model_data and not model_supports_image_input(model_data):
+        console.print(
+            f"[red]❌ Model {model_name} is not image-capable according to OpenRouter architecture metadata.[/red]"
+        )
+        console.print(
+            "[red]This pipeline requires image-input models; aborting before requests are sent.[/red]"
+        )
+        return ""
     
     # Parse model name
     if "/" in model_name:

@@ -146,22 +146,33 @@ def fetch_openrouter_models() -> Optional[List[Dict[str, Any]]]:
         return None
 
 
+def model_supports_image_input(model: Dict[str, Any]) -> bool:
+    """Return whether a model is image-capable based on architecture metadata."""
+    architecture = model.get("architecture")
+    if not isinstance(architecture, dict):
+        return False
+
+    input_modalities = architecture.get("input_modalities")
+    if isinstance(input_modalities, list):
+        for modality in input_modalities:
+            if not isinstance(modality, str):
+                continue
+            token = modality.strip().lower()
+            if "image" in token or "vision" in token:
+                return True
+
+    modality = architecture.get("modality")
+    if isinstance(modality, str):
+        lowered = modality.strip().lower()
+        if "image" in lowered or "vision" in lowered:
+            return True
+
+    return False
+
+
 def filter_vision_models(models: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Filter models to only include vision-capable models."""
-    vision_models = []
-    for model in models:
-        # Check if model supports images in description or architecture
-        description = model.get("description", "").lower()
-        architecture = model.get("architecture", {})
-        modality = architecture.get("modality", "") if architecture else ""
-        
-        # Look for vision indicators
-        vision_indicators = ["vision", "image", "multimodal", "vlm", "visual"]
-        if any(indicator in description for indicator in vision_indicators) or \
-           any(indicator in modality.lower() for indicator in vision_indicators):
-            vision_models.append(model)
-    
-    return vision_models
+    """Filter models to only include image-capable models."""
+    return [model for model in models if model_supports_image_input(model)]
 
 
 _RETRYABLE_GENERATION_STATUS_CODES = {404, 408, 409, 425, 429}
