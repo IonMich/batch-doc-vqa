@@ -22,6 +22,7 @@ from .cohorts import (
     format_cohort_debug_report,
 )
 from ..utils.string_matching import (
+    D_CUTOFF,
     get_llm_ids_and_fullnames,
     get_llm_distances,
     get_matches,
@@ -33,6 +34,7 @@ class BenchmarkTableGenerator:
 
     DEFAULT_DOC_INFO_FILE = "imgs/q11/doc_info.csv"
     DEFAULT_TEST_IDS_FILE = "tests/data/test_ids.csv"
+    SCORING_VERSION = "relaxed-surname-v1"
     
     # Default rows to include in tables
     DEFAULT_ROWS = [
@@ -292,6 +294,10 @@ class BenchmarkTableGenerator:
                 # Runtime coverage metadata was added later; refresh legacy cached entries once.
                 if "fully_parallelizable_runtime_available" not in cached_stats:
                     needs_recalc = True
+
+                # Scoring rules may evolve; refresh cached results when scorer version changes.
+                if cached_stats.get("_scoring_version") != self.SCORING_VERSION:
+                    needs_recalc = True
                 if (
                     cached_stats.get("fully_parallelizable_runtime_available")
                     and "fully_parallelizable_runtime_seconds" not in cached_stats
@@ -367,6 +373,7 @@ class BenchmarkTableGenerator:
             # Cache provenance: scoring dataset inputs used for this run's stats.
             stats["_dataset_doc_info"] = current_doc_info_norm
             stats["_dataset_test_ids"] = current_test_ids_norm
+            stats["_scoring_version"] = self.SCORING_VERSION
             
             # Save table results for future use
             self.run_manager.save_table_results(run_name, stats)
@@ -401,6 +408,7 @@ class BenchmarkTableGenerator:
         raw_results: Dict = None,
         *,
         expected_docs_count: int = 32,
+        id_d_cutoff: int = D_CUTOFF,
     ) -> Dict:
         """Calculate benchmark statistics from matching results."""
         # Get best matches per document
@@ -448,29 +456,27 @@ class BenchmarkTableGenerator:
             id_avg_lev = 0.0
             lastname_avg_lev = 0.0
         
-        # Calculate docs detected more accurately
+        # Docs detected formula:
+        # detected(doc) = 1[id_distance<=cutoff OR lastname_distance==0]
+        # DocsDetected% = 100 * sum(detected(doc)) / N_expected_docs
         total_expected_docs = max(1, int(expected_docs_count))
-        successful_docs = len(df_best_match)
-        
-        # If we have raw results, count parsing failures and API errors
-        failed_docs = 0
-        if raw_results:
-            failed_images = []
-            for filepath, result_list in raw_results.items():
-                if result_list and len(result_list) > 0:
-                    result = result_list[0]
-                    if any(key.startswith('_') for key in result.keys()):
-                        failed_images.append(filepath)
-            # Count documents with failed page 1 or page 3 processing
-            failed_doc_nums = set()
-            for filepath in failed_images:
-                if 'doc-' in filepath and '-page-' in filepath:
-                    doc_num = filepath.split('doc-')[1].split('-page-')[0]
-                    failed_doc_nums.add(int(doc_num))
-            failed_docs = len(failed_doc_nums)
-        
-        docs_detected = successful_docs / total_expected_docs * 100
-        docs_detected_count = successful_docs
+
+        docs_detected_count = 0
+        if isinstance(df_test, pd.DataFrame) and not df_test.empty and "doc" in df_test.columns:
+            df_doc_distances = (
+                df_test.groupby("doc", as_index=False)[["id_distance", "lastname_distance"]]
+                .min()
+                .copy()
+            )
+            detected_mask = (
+                (df_doc_distances["id_distance"] <= int(id_d_cutoff))
+                | (df_doc_distances["lastname_distance"] == 0)
+            )
+            docs_detected_count = int(detected_mask.sum())
+        else:
+            docs_detected_count = int(len(df_best_match))
+
+        docs_detected = docs_detected_count / total_expected_docs * 100
         
         return {
             "digit_top1": digit_top1,

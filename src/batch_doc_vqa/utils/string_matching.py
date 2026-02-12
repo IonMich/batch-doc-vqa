@@ -36,6 +36,108 @@ def levenshteinDistance(s1, s2):
     return distances[-1]
 
 
+def _split_name_tokens(value: Any) -> list[str]:
+    text = " ".join(str(value or "").strip().split())
+    if not text:
+        return []
+    return [token for token in text.split(" ") if token]
+
+
+def _surname_token_variants(token: str) -> list[str]:
+    token_text = str(token or "").strip()
+    if not token_text:
+        return []
+
+    variants: list[str] = [token_text]
+    if "-" in token_text:
+        parts = [part for part in token_text.split("-") if part]
+        variants.extend(parts)
+        joined = "".join(parts)
+        if joined:
+            variants.append(joined)
+
+    unique: list[str] = []
+    seen: set[str] = set()
+    for candidate in variants:
+        key = candidate.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(candidate)
+    return unique
+
+
+def get_surname_candidates(full_name: Any) -> list[str]:
+    """Return surname candidates from a full name.
+
+    Rules:
+    - 3+ tokens: include last two tokens (compound surname handling)
+    - otherwise: include last token
+    - for each token, include hyphen-aware variants
+    """
+    tokens = _split_name_tokens(full_name)
+    if not tokens:
+        return []
+
+    if len(tokens) >= 3:
+        surname_tokens = tokens[-2:]
+    else:
+        surname_tokens = [tokens[-1]]
+
+    candidates: list[str] = []
+    seen: set[str] = set()
+    for token in surname_tokens:
+        for variant in _surname_token_variants(token):
+            key = variant.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            candidates.append(variant)
+    return candidates
+
+
+def get_relaxed_lastname_match(llm_fullname: Any, gt_fullname: Any) -> dict[str, Any]:
+    """Compute best surname match info using compound/hyphen-aware candidates."""
+    llm_candidates = get_surname_candidates(llm_fullname)
+    gt_candidates = get_surname_candidates(gt_fullname)
+
+    if llm_candidates and gt_candidates:
+        options: list[tuple[int, str, str]] = []
+        for llm_candidate in llm_candidates:
+            for gt_candidate in gt_candidates:
+                options.append(
+                    (
+                        levenshteinDistance(llm_candidate, gt_candidate),
+                        llm_candidate,
+                        gt_candidate,
+                    )
+                )
+        best_distance, best_llm, best_gt = min(options, key=lambda item: item[0])
+        return {
+            "distance": int(best_distance),
+            "llm_surname": str(best_llm),
+            "gt_surname": str(best_gt),
+        }
+
+    if gt_candidates:
+        gt_default = gt_candidates[-1]
+        return {
+            "distance": int(levenshteinDistance("", gt_default)),
+            "llm_surname": "",
+            "gt_surname": str(gt_default),
+        }
+
+    if llm_candidates:
+        llm_default = llm_candidates[-1]
+        return {
+            "distance": int(levenshteinDistance(llm_default, "")),
+            "llm_surname": str(llm_default),
+            "gt_surname": "",
+        }
+
+    return {"distance": 0, "llm_surname": "", "gt_surname": ""}
+
+
 def _load_results(results_filename: str) -> Dict[str, Any]:
     with open(results_filename, "r", encoding="utf-8") as f:
         payload = json.load(f)
@@ -181,14 +283,12 @@ def get_llm_distances(
     df_test["id_distance"] = df_test.apply(
         lambda x: levenshteinDistance(x["llm_id"], x["student_id"]), axis=1
     )
-    # compare last names
-    df_test["lastname_distance"] = df_test.apply(
-        lambda x: levenshteinDistance(
-            x["llm_fullname"].split()[-1] if x["llm_fullname"] else "",
-            x["student_full_name"].split()[-1] if x["student_full_name"] else "",
-        ),
+    # compare last names with compound/hyphen-aware surname candidates
+    lastname_matches = df_test.apply(
+        lambda x: get_relaxed_lastname_match(x["llm_fullname"], x["student_full_name"]),
         axis=1,
     )
+    df_test["lastname_distance"] = lastname_matches.apply(lambda item: int(item["distance"]))
     n_id_correct = df_test["id_distance"].eq(0).sum()
     n_lastname_correct = df_test["lastname_distance"].eq(0).sum()
     print(f"Number of perfect ID matches: {n_id_correct}/{len(df_test)}")
