@@ -793,7 +793,8 @@ class BenchmarkTableGenerator:
                     )
                     for _, data in ordered_models
                 ]
-                row_data = [row_name] + self._format_best_value(values, higher_is_better=False, format_type="markdown")
+                runtime_label = "Runtime (p)" if prefer_fully_parallelizable_runtime else row_name
+                row_data = [runtime_label] + self._format_best_value(values, higher_is_better=False, format_type="markdown")
                 
             elif row_name == "Cost per image":
                 values = [self.OPENCV_CNN_BASELINE[row_name]] + [
