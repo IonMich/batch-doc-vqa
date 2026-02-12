@@ -5,6 +5,7 @@ OpenRouter inference engine and orchestration.
 import time
 import re
 import json
+import requests  # type: ignore[import]
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -73,6 +74,8 @@ def run_openrouter_inference(model_name: str,
                             provider_order: Optional[list[str]] = None,
                             provider_allow_fallbacks: Optional[bool] = None,
                             provider_sort: Optional[str] = None,
+                            provider_data_collection: Optional[str] = None,
+                            provider_zdr: Optional[bool] = None,
                             model_size: Optional[str] = None,
                             open_weights: Optional[bool] = None,
                             license_info: Optional[str] = None,
@@ -87,6 +90,67 @@ def run_openrouter_inference(model_name: str,
     
     # Start timing
     start_time = time.time()
+
+    def _normalize_model_id(value: str) -> str:
+        return value.strip().lower()
+
+    def _model_id_matches(candidate: str, target: str) -> bool:
+        c = _normalize_model_id(candidate)
+        t = _normalize_model_id(target)
+        if c == t:
+            return True
+        # Handle variants like ":free" when one side omits the suffix.
+        return c.split(":", 1)[0] == t.split(":", 1)[0]
+
+    def _fetch_model_provider_names(model_id: str) -> Optional[set[str]]:
+        if "/" not in model_id:
+            return None
+        author, slug = model_id.split("/", 1)
+        url = f"https://openrouter.ai/api/v1/models/{author}/{slug}/endpoints"
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            payload = response.json()
+        except Exception:
+            return None
+
+        endpoints = payload.get("data", {}).get("endpoints", [])
+        if not isinstance(endpoints, list):
+            return None
+
+        providers: set[str] = set()
+        for endpoint in endpoints:
+            if not isinstance(endpoint, dict):
+                continue
+            provider_name = endpoint.get("provider_name")
+            if isinstance(provider_name, str) and provider_name.strip():
+                providers.add(provider_name.strip().lower())
+        return providers if providers else set()
+
+    def _fetch_model_zdr_provider_names(model_id: str) -> Optional[set[str]]:
+        url = "https://openrouter.ai/api/v1/endpoints/zdr"
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            payload = response.json()
+        except Exception:
+            return None
+
+        rows = payload.get("data")
+        if not isinstance(rows, list):
+            return None
+
+        providers: set[str] = set()
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            endpoint_model = row.get("model_id")
+            provider_name = row.get("provider_name")
+            if not isinstance(endpoint_model, str) or not isinstance(provider_name, str):
+                continue
+            if _model_id_matches(endpoint_model, model_id):
+                providers.add(provider_name.strip().lower())
+        return providers if providers else set()
 
     def parse_with_reasoning_fallback(
         primary_content: Optional[str],
@@ -322,6 +386,14 @@ def run_openrouter_inference(model_name: str,
             max_tokens = override_max_tokens
 
     allowed_provider_sorts = {"price", "throughput", "latency"}
+    allowed_data_collection = {"allow", "deny"}
+    data_collection_explicit = provider_data_collection is not None
+
+    if provider_data_collection is None:
+        provider_data_collection = "deny"
+    if provider_zdr is None:
+        provider_zdr = True
+
     normalized_provider_order: list[str] = []
     if provider_order:
         seen_providers: set[str] = set()
@@ -338,6 +410,63 @@ def run_openrouter_inference(model_name: str,
         if candidate_sort in allowed_provider_sorts:
             normalized_provider_sort = candidate_sort
 
+    normalized_data_collection: Optional[str] = None
+    if isinstance(provider_data_collection, str):
+        candidate = provider_data_collection.strip().lower()
+        if candidate in allowed_data_collection:
+            normalized_data_collection = candidate
+
+    normalized_provider_zdr: Optional[bool] = None
+    if provider_zdr is not None:
+        normalized_provider_zdr = bool(provider_zdr)
+
+    if normalized_provider_zdr is True:
+        all_providers = _fetch_model_provider_names(model_name)
+        zdr_providers = _fetch_model_zdr_provider_names(model_name)
+
+        if all_providers is not None and zdr_providers is not None and len(all_providers) > 0:
+            safe_providers = sorted(all_providers.intersection(zdr_providers))
+            unsafe_providers = sorted(all_providers.difference(zdr_providers))
+
+            if safe_providers:
+                console.print(
+                    f"[green]🔐 Privacy-safe providers (ZDR) for this model: {', '.join(safe_providers)}[/green]"
+                )
+                if unsafe_providers:
+                    console.print(
+                        f"[dim]Excluded non-ZDR providers: {', '.join(unsafe_providers)}[/dim]"
+                    )
+            else:
+                console.print(
+                    "[yellow]⚠️ No ZDR endpoints are currently available for this model.[/yellow]"
+                )
+                if interactive:
+                    proceed_relaxed = Confirm.ask(
+                        "Continue by relaxing privacy routing (provider.data_collection=allow, provider.zdr=false)?",
+                        default=False,
+                    )
+                    if not proceed_relaxed:
+                        console.print("[yellow]Run cancelled before start.[/yellow]")
+                        return ""
+
+                    normalized_provider_zdr = False
+                    if not data_collection_explicit:
+                        normalized_data_collection = "allow"
+                    console.print(
+                        "[yellow]Proceeding with relaxed privacy routing by explicit user confirmation.[/yellow]"
+                    )
+                else:
+                    console.print(
+                        "[red]❌ Privacy routing check failed: no ZDR endpoints are available for this model.[/red]"
+                    )
+                    console.print(
+                        "[red]Non-interactive mode will not relax privacy defaults automatically.[/red]"
+                    )
+                    console.print(
+                        "[yellow]Override explicitly with --no-provider-zdr and/or --provider-data-collection allow if desired.[/yellow]"
+                    )
+                    return ""
+
     provider_routing_effective: Dict[str, Any] = {}
     if normalized_provider_order:
         provider_routing_effective["order"] = normalized_provider_order
@@ -345,11 +474,17 @@ def run_openrouter_inference(model_name: str,
         provider_routing_effective["allow_fallbacks"] = provider_allow_fallbacks
     if normalized_provider_sort is not None:
         provider_routing_effective["sort"] = normalized_provider_sort
+    if normalized_data_collection is not None:
+        provider_routing_effective["data_collection"] = normalized_data_collection
+    if normalized_provider_zdr is not None:
+        provider_routing_effective["zdr"] = normalized_provider_zdr
 
     provider_routing_requested = {
         "order": normalized_provider_order,
         "allow_fallbacks": provider_allow_fallbacks,
         "sort": normalized_provider_sort,
+        "data_collection": normalized_data_collection,
+        "zdr": normalized_provider_zdr,
     }
     
     # Extract supported parameters from model data

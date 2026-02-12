@@ -107,6 +107,43 @@ def fetch_model_endpoints(model_id: str) -> Optional[Dict[str, Any]]:
         return None
 
 
+def _model_id_matches(candidate: str, target: str) -> bool:
+    c = candidate.strip().lower()
+    t = target.strip().lower()
+    if c == t:
+        return True
+    # Handle variants like ":free" when one side omits the suffix.
+    return c.split(":", 1)[0] == t.split(":", 1)[0]
+
+
+def fetch_model_zdr_provider_names(model_id: str) -> Optional[set[str]]:
+    """Fetch provider names with ZDR endpoints for a specific model."""
+    try:
+        response = requests.get("https://openrouter.ai/api/v1/endpoints/zdr", timeout=10)
+        response.raise_for_status()
+        payload = response.json()
+    except Exception as e:
+        console.print(f"[dim]Warning: Could not fetch ZDR endpoints: {e}[/dim]")
+        return None
+
+    rows = payload.get("data")
+    if not isinstance(rows, list):
+        return None
+
+    providers: set[str] = set()
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        endpoint_model = row.get("model_id")
+        provider_name = row.get("provider_name")
+        if not isinstance(endpoint_model, str) or not isinstance(provider_name, str):
+            continue
+        if _model_id_matches(endpoint_model, model_id):
+            providers.add(provider_name.strip().lower())
+
+    return providers if providers else set()
+
+
 def display_provider_policies(model_id: str, providers_data: Optional[Dict[str, Any]]) -> bool:
     """Display provider data policies for a selected model. Returns True if user accepts."""
     console.print(f"\n[bold cyan]🔒 Data Policy Review for {model_id}[/bold cyan]")
@@ -123,6 +160,8 @@ def display_provider_policies(model_id: str, providers_data: Optional[Dict[str, 
     if not endpoints:
         console.print("[yellow]⚠️  No endpoints found - proceeding with OpenRouter's automatic provider selection[/yellow]")
         return Confirm.ask("Continue without provider policy review?", default=True)
+
+    zdr_provider_names = fetch_model_zdr_provider_names(model_id)
     
     # Create providers lookup
     providers_lookup = {}
@@ -137,14 +176,21 @@ def display_provider_policies(model_id: str, providers_data: Optional[Dict[str, 
     policy_table = Table(show_header=True, header_style="bold cyan")
     policy_table.add_column("Provider", style="yellow", width=15)
     policy_table.add_column("Status", style="green", width=8)
+    policy_table.add_column("Retention", style="magenta", width=12)
     policy_table.add_column("Privacy Policy", style="blue", width=56, overflow="fold")
     policy_table.add_column("Terms of Service", style="white", width=56, overflow="fold")
     
-    unique_providers = set()
+    safe_provider_count = 0
     for endpoint in endpoints:
         provider_name = endpoint.get("provider_name", "Unknown")
         status = endpoint.get("status", "Unknown")
-        unique_providers.add(provider_name.lower())
+
+        provider_key = str(provider_name).strip().lower()
+        is_zdr_safe: Optional[bool] = None
+        if zdr_provider_names is not None:
+            is_zdr_safe = provider_key in zdr_provider_names
+        if is_zdr_safe:
+            safe_provider_count += 1
         
         # Try to find policy URLs
         privacy_url = "Not available"
@@ -171,10 +217,21 @@ def display_provider_policies(model_id: str, providers_data: Optional[Dict[str, 
             terms_display = f"[link={terms_url}]{terms_url}[/link]"
         else:
             terms_display = "[dim]Not available[/dim]"
+
+        if is_zdr_safe is True:
+            provider_display = f"[green]{provider_name}[/green]"
+            retention_display = "[green]ZDR[/green]"
+        elif is_zdr_safe is False:
+            provider_display = f"[dim][strike]{provider_name}[/strike][/dim]"
+            retention_display = "[dim]Non-ZDR[/dim]"
+        else:
+            provider_display = str(provider_name)
+            retention_display = "[yellow]Unknown[/yellow]"
         
         policy_table.add_row(
-            provider_name,
+            provider_display,
             str(status),
+            retention_display,
             privacy_display,
             terms_display
         )
@@ -189,6 +246,17 @@ def display_provider_policies(model_id: str, providers_data: Optional[Dict[str, 
     else:
         console.print(f"\n[cyan]💡 OpenRouter will automatically select from these {provider_count} providers during inference.[/cyan]")
         confirm_text = f"Proceed with {model_id} using these providers?"
+
+    if zdr_provider_names is not None:
+        if safe_provider_count > 0:
+            console.print(
+                f"[green]Default privacy routing will prefer only ZDR-capable providers "
+                f"({safe_provider_count}/{provider_count} shown as active).[/green]"
+            )
+            console.print("[dim]Non-ZDR providers are dimmed/struck through in the table.[/dim]")
+        else:
+            console.print("[yellow]No ZDR-capable providers detected for this model right now.[/yellow]")
+            console.print("[yellow]You will be asked before running with relaxed privacy constraints.[/yellow]")
     
     console.print("[dim]You can review the privacy policies and terms of service at the URLs above.[/dim]")
     console.print("[dim]Tip: if links are not clickable in your terminal, copy/paste the URL text directly.[/dim]")

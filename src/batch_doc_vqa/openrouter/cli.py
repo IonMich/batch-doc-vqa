@@ -125,6 +125,29 @@ Examples:
         help="Provider sorting preference for OpenRouter routing",
     )
     parser.add_argument(
+        "--provider-data-collection",
+        choices=["allow", "deny"],
+        help=(
+            "Set provider.data_collection routing constraint "
+            "(allow|deny). Example: --provider-data-collection deny"
+        ),
+    )
+    parser.add_argument(
+        "--provider-zdr",
+        dest="provider_zdr",
+        action="store_true",
+        help=(
+            "Set provider.zdr=true to restrict routing to ZDR endpoints"
+        ),
+    )
+    parser.add_argument(
+        "--no-provider-zdr",
+        dest="provider_zdr",
+        action="store_false",
+        help="Set provider.zdr=false explicitly",
+    )
+    parser.set_defaults(provider_zdr=None)
+    parser.add_argument(
         "--skip-reproducibility-checks",
         action="store_true",
         help=(
@@ -179,6 +202,8 @@ Examples:
         provider_order=provider_order if provider_order else None,
         provider_allow_fallbacks=allow_fallbacks,
         provider_sort=args.provider_sort,
+        provider_data_collection=args.provider_data_collection,
+        provider_zdr=args.provider_zdr,
     )
     if not run_name:
         console.print("[yellow]Inference aborted.[/yellow]")
