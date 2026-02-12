@@ -21,6 +21,7 @@ from ..core import (
     create_inference_progress,
     add_inference_task,
     get_imagepaths,
+    get_imagepaths_from_doc_info,
     build_git_dirty_warning_lines,
 )
 from .api import (
@@ -86,7 +87,10 @@ def run_openrouter_inference(model_name: str,
                             concurrency: int = 1,
                             rate_limit: Optional[float] = None,
                             retry_max: int = 3,
-                            retry_base_delay: float = 2.0):
+                            retry_base_delay: float = 2.0,
+                            images_dir: str = "imgs/q11",
+                            doc_info_file: Optional[str] = None,
+                            pages: Optional[list[int]] = None):
     """Run inference using any OpenRouter vision model."""
     
     # Start timing
@@ -520,6 +524,8 @@ def run_openrouter_inference(model_name: str,
     open_weights = open_weights if open_weights is not None else False
     license_info = license_info or "Varies by provider"
     
+    selected_pages = pages if pages else [1, 3]
+
     # Create run configuration (runtime will be updated after inference)
     config = RunConfig(
         org=org,
@@ -548,6 +554,9 @@ def run_openrouter_inference(model_name: str,
             "repetition_penalty": effective_repetition_penalty,
             "provider_routing_requested": provider_routing_requested,
             "provider_routing_effective": provider_routing_effective,
+            "images_dir": images_dir,
+            "doc_info_file": doc_info_file,
+            "pages": selected_pages,
             "prompt_template": STUDENT_EXTRACTION_PROMPT,
             "actual_model_providers": set(),  # Will track actual model providers used
         }
@@ -623,10 +632,15 @@ def run_openrouter_inference(model_name: str,
         print("Provider routing: OpenRouter default")
     
     # Setup inference parameters
-    pages = [1, 3]
-    folder = "imgs/q11/"
-    pattern = r"doc-\d+-page-[" + "".join([str(p) for p in pages]) + "]-[A-Z0-9]+.png"
-    imagepaths = get_imagepaths(folder, pattern)
+    if doc_info_file:
+        imagepaths = get_imagepaths_from_doc_info(
+            doc_info_file,
+            images_dir=images_dir,
+            pages=selected_pages,
+        )
+    else:
+        pattern = r"doc-\d+-page-[" + "".join([str(p) for p in selected_pages]) + "]-[A-Z0-9]+.png"
+        imagepaths = get_imagepaths(images_dir, pattern)
     
     inference_config: Dict[str, Any] = {
         "temperature": temperature,
@@ -760,6 +774,9 @@ def run_openrouter_inference(model_name: str,
     # Run inference with rich progress tracking
     results = defaultdict(list)
     total_images = len(imagepaths)
+    if total_images == 0:
+        console.print("[red]❌ No images matched the selected dataset/pages.[/red]")
+        return ""
     completed_images = 0
     successful_images = 0
     repetition_event_scores: Dict[str, float] = {}

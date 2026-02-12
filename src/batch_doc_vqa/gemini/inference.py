@@ -15,10 +15,11 @@ from ..core import (
     format_runtime,
     create_inference_progress,
     add_inference_task,
+    get_imagepaths,
+    get_imagepaths_from_doc_info,
     build_git_dirty_warning_lines,
 )
-from .api import parse_images, imagepaths, prompt
-from ..openrouter.cli import get_imagepaths
+from ..core.prompts import STUDENT_EXTRACTION_PROMPT
 
 console = Console()
 
@@ -45,7 +46,10 @@ def run_gemini_inference(model_id: str = "gemini-2.5-flash",
                         open_weights: Optional[bool] = None,
                         license_info: Optional[str] = None,
                         interactive: bool = False,
-                        pricing: Optional[dict] = None):
+                        pricing: Optional[dict] = None,
+                        images_dir: str = "imgs/q11",
+                        doc_info_file: Optional[str] = None,
+                        pages: Optional[list[int]] = None):
     """Run inference using Google Gemini API."""
     
     # Start timing
@@ -75,14 +79,19 @@ def run_gemini_inference(model_id: str = "gemini-2.5-flash",
     open_weights = open_weights if open_weights is not None else False  # Gemini is proprietary
     license_info = license_info or "Proprietary (Google)"
     
+    selected_pages = pages if pages else [1, 3]
+
     # Create run configuration
     additional_config = {
         "base_url": "https://generativelanguage.googleapis.com/",
         "endpoint_type": "generateContent",
         "model_id": model_id,
         "concurrency": 1,
-        "prompt_template": prompt,
+        "prompt_template": STUDENT_EXTRACTION_PROMPT,
         "thinking_config": "thinking" in model_id.lower(),
+        "images_dir": images_dir,
+        "doc_info_file": doc_info_file,
+        "pages": selected_pages,
     }
     
     # Add pricing to config if available (like OpenRouter)
@@ -120,26 +129,30 @@ def run_gemini_inference(model_id: str = "gemini-2.5-flash",
     print(f"Model: {model_id}")
     print(f"Run directory: {run_dir}")
     
-    # Setup inference parameters - use same as OpenRouter
-    pages = [1, 3]
-    folder = "imgs/q11/"
-    pattern = r"doc-\d+-page-[" + "".join([str(p) for p in pages]) + "]-[A-Z0-9]+.png"
-    imagepaths = get_imagepaths(folder, pattern)
-    
+    # Setup inference parameters - use same defaults as OpenRouter
+    if doc_info_file:
+        imagepaths = get_imagepaths_from_doc_info(
+            doc_info_file,
+            images_dir=images_dir,
+            pages=selected_pages,
+        )
+    else:
+        pattern = r"doc-\d+-page-[" + "".join([str(p) for p in selected_pages]) + "]-[A-Z0-9]+.png"
+        imagepaths = get_imagepaths(images_dir, pattern)
+
     # Run inference with rich progress tracking
     results = defaultdict(list)
     total_images = len(imagepaths)
+    if total_images == 0:
+        console.print("[red]❌ No images matched the selected dataset/pages.[/red]")
+        return ""
     successful_images = 0
     
     # Create progress bar with live status (matching OpenRouter)
     with create_inference_progress() as progress:
         task = add_inference_task(progress, total_images)
         
-        # Import and run the existing Gemini API logic
-        from .api import parse_images
-        
-        # We need to adapt parse_images to work with our progress tracking
-        # For now, let's create a wrapper that processes one image at a time
+        # Process one image at a time to keep progress + per-image metadata.
         for i, imagepath in enumerate(imagepaths, 1):
             image_started_epoch = time.time()
             image_started_at_utc = datetime.now(timezone.utc).isoformat()

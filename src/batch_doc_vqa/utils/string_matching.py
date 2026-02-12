@@ -1,10 +1,14 @@
 import argparse
+import json
 
 import pandas as pd
-import sys
 from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent.parent.parent))
-from batch_extract import json_load_results, get_imagepaths
+from typing import Any, Dict, Optional, Sequence
+
+try:
+    from ..core import get_imagepaths_from_doc_info
+except ImportError:  # pragma: no cover - fallback for direct script execution
+    from batch_doc_vqa.core import get_imagepaths_from_doc_info
 
 D_CUTOFF = 3
 
@@ -32,22 +36,112 @@ def levenshteinDistance(s1, s2):
     return distances[-1]
 
 
-def get_llm_ids_and_fullnames(results_filename):
-    pages = [1, 3]
-    results = json_load_results(results_filename)
-    folder = "imgs/q11"
-    pattern = r"doc-\d+-page-[" + "|".join([str(p) for p in pages]) + r"]-[A-Z0-9]+.png"
-    print(f"Pattern: {pattern}")
-    filenames = get_imagepaths(folder, pattern)
+def _load_results(results_filename: str) -> Dict[str, Any]:
+    with open(results_filename, "r", encoding="utf-8") as f:
+        payload = json.load(f)
+    if not isinstance(payload, dict):
+        raise ValueError("Results JSON must be an object keyed by image path")
+    return payload
+
+
+def _resolve_doc_filename(raw_filename: Any, *, doc_info_filename: str, images_dir: Optional[str]) -> str:
+    filename = str(raw_filename or "").strip()
+    path = Path(filename)
+    if path.is_absolute():
+        return str(path)
+
+    if images_dir:
+        return str(Path(images_dir) / path)
+
+    return str(Path(doc_info_filename).parent / path)
+
+
+def _load_doc_info_df(
+    doc_info_filename: str,
+    *,
+    pages: Optional[Sequence[int]],
+    images_dir: Optional[str],
+) -> pd.DataFrame:
+    df = pd.read_csv(doc_info_filename)
+    if pages is not None:
+        df = df[df["page"].isin(list(pages))]
+    df = df.copy()
+    df["filename"] = df["filename"].apply(
+        lambda item: _resolve_doc_filename(item, doc_info_filename=doc_info_filename, images_dir=images_dir)
+    )
+    return df
+
+
+def _lookup_result_entry(
+    *,
+    results: Dict[str, Any],
+    basename_map: Dict[str, Optional[Any]],
+    filename: str,
+) -> Optional[Any]:
+    candidates = [
+        filename,
+        str(Path(filename)),
+        Path(filename).as_posix(),
+    ]
+
+    path_obj = Path(filename)
+    if path_obj.exists():
+        candidates.append(str(path_obj.resolve()))
+
+    for candidate in candidates:
+        if candidate in results:
+            return results[candidate]
+
+    by_basename = basename_map.get(path_obj.name)
+    if by_basename is not None:
+        return by_basename
+    return None
+
+
+def _build_basename_index(results: Dict[str, Any]) -> Dict[str, Optional[Any]]:
+    basename_map: Dict[str, Optional[Any]] = {}
+    for key, value in results.items():
+        base = Path(str(key)).name
+        if base in basename_map:
+            basename_map[base] = None
+            continue
+        basename_map[base] = value
+    return basename_map
+
+
+def get_llm_ids_and_fullnames(
+    results_filename: str,
+    doc_info_filename: str = "imgs/q11/doc_info.csv",
+    *,
+    pages: Optional[Sequence[int]] = (1, 3),
+    images_dir: Optional[str] = None,
+):
+    results = _load_results(results_filename)
+    filenames = get_imagepaths_from_doc_info(
+        doc_info_filename,
+        images_dir=images_dir,
+        pages=pages,
+    )
+    basename_map = _build_basename_index(results)
     llm_ids = {}
     llm_fullnames = {}
     
     for filename in filenames:
-        if filename in results and results[filename]:
+        result_entry = _lookup_result_entry(
+            results=results,
+            basename_map=basename_map,
+            filename=filename,
+        )
+
+        if isinstance(result_entry, list) and result_entry:
+            first_entry = result_entry[0]
+        else:
+            first_entry = result_entry
+
+        if isinstance(first_entry, dict):
             # Get the first valid result (skip failed entries)
-            result = results[filename][0]
-            llm_ids[filename] = result.get("university_id", "")
-            llm_fullnames[filename] = result.get("student_full_name", "")
+            llm_ids[filename] = first_entry.get("university_id", "")
+            llm_fullnames[filename] = first_entry.get("student_full_name", "")
         else:
             # Handle missing or empty results
             print(f"Warning: No results found for {filename}")
@@ -62,13 +156,19 @@ def get_llm_ids_and_fullnames(results_filename):
     return df
 
 
-def get_llm_distances(df_llm, doc_info_filename, ids_filename):
-    pages = [1, 3]
-    df_filenames = pd.read_csv(doc_info_filename)
-    # TODO: fix filepaths
-    df_filenames["filename"] = "imgs/q11/" + df_filenames["filename"]
-    query_str = " or ".join([f"page == {i}" for i in pages])
-    df_filenames = df_filenames.query(query_str)
+def get_llm_distances(
+    df_llm,
+    doc_info_filename,
+    ids_filename,
+    *,
+    pages: Optional[Sequence[int]] = (1, 3),
+    images_dir: Optional[str] = None,
+):
+    df_filenames = _load_doc_info_df(
+        doc_info_filename,
+        pages=pages,
+        images_dir=images_dir,
+    )
     df_llm = df_llm.merge(df_filenames, on="filename")
 
     df_test = pd.read_csv(ids_filename)
@@ -124,9 +224,22 @@ def parse_llm_pipe(
     ids_filename,
     store_filename,
     id_d_cutoff=D_CUTOFF,
+    pages: Optional[Sequence[int]] = (1, 3),
+    images_dir: Optional[str] = None,
 ):
-    df_llm = get_llm_ids_and_fullnames(results_filename)
-    df_test = get_llm_distances(df_llm, doc_info_filename, ids_filename)
+    df_llm = get_llm_ids_and_fullnames(
+        results_filename,
+        doc_info_filename,
+        pages=pages,
+        images_dir=images_dir,
+    )
+    df_test = get_llm_distances(
+        df_llm,
+        doc_info_filename,
+        ids_filename,
+        pages=pages,
+        images_dir=images_dir,
+    )
     df_matching = get_matches(df_test, id_d_cutoff)
     df_matching.to_csv(store_filename, index=False)
     return df_matching
@@ -158,12 +271,27 @@ if __name__ == "__main__":
         default="tests/output/qwen2-VL-2B-matching_results.csv",
         help="Filename to store the matching results",
     )
+    parser.add_argument(
+        "--images_dir",
+        type=str,
+        default=None,
+        help="Optional images directory for resolving relative filenames in doc_info.csv",
+    )
+    parser.add_argument(
+        "--pages",
+        type=str,
+        default="1,3",
+        help="Comma-separated page numbers to include (default: 1,3)",
+    )
 
     args = parser.parse_args()
+    pages = tuple(int(p.strip()) for p in args.pages.split(",") if p.strip())
     df_matching = parse_llm_pipe(
         args.results_fname,
         args.doc_info_fname,
         args.ids_fname,
         args.store_fname,
+        pages=pages,
+        images_dir=args.images_dir,
     )
     print(df_matching)

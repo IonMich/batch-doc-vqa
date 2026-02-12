@@ -30,6 +30,31 @@ def parse_provider_order(raw_value: str | None) -> list[str]:
     return providers
 
 
+def parse_pages(raw_value: str | None) -> list[int]:
+    """Parse comma-separated page numbers."""
+    if not raw_value:
+        return [1, 3]
+
+    pages: list[int] = []
+    seen: set[int] = set()
+    for chunk in raw_value.split(","):
+        value = chunk.strip()
+        if not value:
+            continue
+        try:
+            page = int(value)
+        except ValueError as exc:
+            raise ValueError(f"Invalid page value: {value!r}") from exc
+        if page <= 0 or page in seen:
+            continue
+        seen.add(page)
+        pages.append(page)
+
+    if not pages:
+        raise ValueError("At least one valid page is required")
+    return pages
+
+
 # Import shared utilities from core
 def list_model_overrides():
     """List models with special configuration overrides."""
@@ -110,6 +135,23 @@ Examples:
     parser.add_argument("--retry-max", type=int, default=3, help="Max retries per image for 5xx errors (default: 3)")
     parser.add_argument("--retry-base-delay", type=float, default=2.0, help="Base delay (seconds) for exponential backoff on 5xx (default: 2.0)")
     parser.add_argument(
+        "--images-dir",
+        type=str,
+        default="imgs/q11",
+        help="Directory containing document page images (default: imgs/q11)",
+    )
+    parser.add_argument(
+        "--doc-info",
+        type=str,
+        help="Optional doc_info.csv path. If provided, image list is derived from this CSV.",
+    )
+    parser.add_argument(
+        "--pages",
+        type=str,
+        default="1,3",
+        help="Comma-separated page numbers to include (default: 1,3)",
+    )
+    parser.add_argument(
         "--provider-order",
         type=str,
         help="Comma-separated OpenRouter provider slugs (preferred order, e.g. deepinfra,crusoe)",
@@ -177,6 +219,11 @@ Examples:
         model_selected_interactively = True
 
     provider_order = parse_provider_order(args.provider_order)
+    try:
+        pages = parse_pages(args.pages)
+    except ValueError as exc:
+        parser.error(str(exc))
+        return
     allow_fallbacks = False if args.no_fallbacks else None
 
     from .inference import run_openrouter_inference
@@ -199,6 +246,9 @@ Examples:
         rate_limit=args.rate_limit,
         retry_max=args.retry_max,
         retry_base_delay=args.retry_base_delay,
+        images_dir=args.images_dir,
+        doc_info_file=args.doc_info,
+        pages=pages,
         provider_order=provider_order if provider_order else None,
         provider_allow_fallbacks=allow_fallbacks,
         provider_sort=args.provider_sort,

@@ -236,7 +236,10 @@ class BenchmarkTableGenerator:
                 json.dump(results, f)
             
             # Process using existing string matching functions
-            df_llm = get_llm_ids_and_fullnames(temp_results_file)
+            df_llm = get_llm_ids_and_fullnames(
+                temp_results_file,
+                doc_info_file,
+            )
             df_test = get_llm_distances(df_llm, doc_info_file, test_ids_file)
             df_matching = get_matches(df_test)
             
