@@ -172,13 +172,20 @@ def display_provider_policies(model_id: str, providers_data: Optional[Dict[str, 
     
     # Show provider table with policies
     console.print(f"\n[cyan]Available providers for {model_id}:[/cyan]")
-    
+    terminal_width = getattr(getattr(console, "size", None), "width", None) or console.width
+    compact_layout = terminal_width < 150
+
     policy_table = Table(show_header=True, header_style="bold cyan")
-    policy_table.add_column("Provider", style="yellow", width=15)
-    policy_table.add_column("Status", style="green", width=8)
-    policy_table.add_column("Retention", style="magenta", width=12)
-    policy_table.add_column("Privacy Policy", style="blue", width=56, overflow="fold")
-    policy_table.add_column("Terms of Service", style="white", width=56, overflow="fold")
+    if compact_layout:
+        policy_table.add_column("Provider", style="yellow", width=20, overflow="fold")
+        policy_table.add_column("Ret", style="magenta", width=8)
+        policy_table.add_column("Policy Links", style="blue", width=max(40, terminal_width - 36), overflow="fold")
+    else:
+        policy_table.add_column("Provider", style="yellow", width=15)
+        policy_table.add_column("Status", style="green", width=8)
+        policy_table.add_column("Retention", style="magenta", width=12)
+        policy_table.add_column("Privacy Policy", style="blue", width=56, overflow="fold")
+        policy_table.add_column("Terms of Service", style="white", width=56, overflow="fold")
     
     safe_provider_count = 0
     for endpoint in endpoints:
@@ -228,13 +235,18 @@ def display_provider_policies(model_id: str, providers_data: Optional[Dict[str, 
             provider_display = str(provider_name)
             retention_display = "[yellow]Unknown[/yellow]"
         
-        policy_table.add_row(
-            provider_display,
-            str(status),
-            retention_display,
-            privacy_display,
-            terms_display
-        )
+        if compact_layout:
+            provider_cell = f"{provider_display}\n[dim]status:{status}[/dim]"
+            links_cell = f"{privacy_display}\n{terms_display}"
+            policy_table.add_row(provider_cell, retention_display, links_cell)
+        else:
+            policy_table.add_row(
+                provider_display,
+                str(status),
+                retention_display,
+                privacy_display,
+                terms_display
+            )
     
     console.print(policy_table)
     
