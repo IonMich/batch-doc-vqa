@@ -134,6 +134,7 @@ Examples:
     # Check for API key first (before showing provider selection)
     setup_api_key()
     
+    model_selected_interactively = False
     if not args.model:
         # Interactive provider and model selection
         from .ui import interactive_provider_model_selection
@@ -142,6 +143,7 @@ Examples:
             return
         # Set the selected model for inference
         args.model = selected_model
+        model_selected_interactively = True
 
     provider_order = parse_provider_order(args.provider_order)
     allow_fallbacks = False if args.no_fallbacks else None
@@ -157,6 +159,7 @@ Examples:
         open_weights=args.open_weights,
         license_info=args.license_info,
         interactive=args.interactive,
+        confirm_reproducibility_warnings=(model_selected_interactively or args.interactive),
         concurrency=args.concurrency,
         rate_limit=args.rate_limit,
         retry_max=args.retry_max,
@@ -165,6 +168,9 @@ Examples:
         provider_allow_fallbacks=allow_fallbacks,
         provider_sort=args.provider_sort,
     )
+    if not run_name:
+        console.print("[yellow]Inference aborted.[/yellow]")
+        return
     
     print(f"\nRun completed: {run_name}")
     print("Generate benchmark table with:")

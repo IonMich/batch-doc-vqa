@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, cast
 
 from rich.console import Console
+from rich.prompt import Confirm
 
 from ..core import (
     RunManager,
@@ -76,6 +77,7 @@ def run_openrouter_inference(model_name: str,
                             open_weights: Optional[bool] = None,
                             license_info: Optional[str] = None,
                             interactive: bool = False,
+                            confirm_reproducibility_warnings: bool = False,
                             concurrency: int = 1,
                             rate_limit: Optional[float] = None,
                             retry_max: int = 3,
@@ -408,6 +410,20 @@ def run_openrouter_inference(model_name: str,
 
     for warning_line in build_git_dirty_warning_lines(config):
         console.print(warning_line)
+
+    if confirm_reproducibility_warnings and config.git_dirty_relevant:
+        console.print("\n[bold yellow]Pre-run reproducibility check[/bold yellow]")
+        console.print(
+            "[yellow]This run has reproducibility-relevant uncommitted changes "
+            "and may not be comparable to clean runs.[/yellow]"
+        )
+        proceed_anyway = Confirm.ask(
+            "Start this run anyway?",
+            default=False,
+        )
+        if not proceed_anyway:
+            console.print("[yellow]Run cancelled before start.[/yellow]")
+            return ""
     
     # Create run directory
     manager = RunManager()
