@@ -6,6 +6,7 @@ import time
 import re
 import json
 from collections import Counter, defaultdict
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional, cast
 
@@ -390,6 +391,12 @@ def run_openrouter_inference(model_name: str,
             "endpoint_type": "chat_completions",
             "response_format": response_format,
             "model_name": model_name,
+            "concurrency": int(max(1, concurrency)),
+            "rate_limit": rate_limit,
+            "retry_max": int(max(0, retry_max)),
+            "retry_base_delay": float(max(0.0, retry_base_delay)),
+            "schema_retry_max": int(schema_retry_max),
+            "cost_fetch_max_workers": int(max(1, concurrency)),
             "top_p": top_p,
             "repetition_penalty": effective_repetition_penalty,
             "provider_routing_requested": provider_routing_requested,
@@ -592,6 +599,30 @@ def run_openrouter_inference(model_name: str,
         local_providers: set[str] = set()
         local_rep_score: float = 0.0
         status_msg: str = ""
+        image_started_epoch = time.time()
+        image_started_at_utc = datetime.now(timezone.utc).isoformat()
+
+        def finalize_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
+            """Attach per-image wall-clock timing to payload and result entries."""
+            image_finished_at_utc = datetime.now(timezone.utc).isoformat()
+            elapsed_seconds = max(0.0, time.time() - image_started_epoch)
+            payload["_image_timing"] = {
+                "started_at_utc": image_started_at_utc,
+                "finished_at_utc": image_finished_at_utc,
+                "elapsed_seconds": elapsed_seconds,
+            }
+
+            result_entries = payload.get("results")
+            if isinstance(result_entries, list):
+                for entry in result_entries:
+                    if not isinstance(entry, dict):
+                        continue
+                    entry["_timing"] = {
+                        "started_at_utc": image_started_at_utc,
+                        "finished_at_utc": image_finished_at_utc,
+                        "elapsed_seconds": elapsed_seconds,
+                    }
+            return payload
 
         # Copy base inference config for this image
         local_inference_config: Dict[str, Any] = dict(inference_config)
@@ -605,15 +636,15 @@ def run_openrouter_inference(model_name: str,
 
             # Hard-stop critical errors
             if response.status_code == 402:
-                return {
+                return finalize_payload({
                     "critical_error": (402, "Insufficient funds"),
                     "imagepath": imagepath,
-                }
+                })
             if response.status_code == 401:
-                return {
+                return finalize_payload({
                     "critical_error": (401, "Invalid API key"),
                     "imagepath": imagepath,
-                }
+                })
 
             # Retry transient server errors (5xx) per image with backoff
             server_attempts = 0
@@ -642,14 +673,14 @@ def run_openrouter_inference(model_name: str,
                     }
                 })
                 status_msg = f"[red]Server error {response.status_code} - continuing[/red]"
-                return {
+                return finalize_payload({
                     "imagepath": imagepath,
                     "results": local_results,
                     "providers": list(local_providers),
                     "rep_score": local_rep_score,
                     "status_msg": status_msg,
                     "success": False,
-                }
+                })
 
             if response.status_code >= 400:
                 try:
@@ -668,14 +699,14 @@ def run_openrouter_inference(model_name: str,
                     }
                 })
                 status_msg = f"[red]API Error {response.status_code}[/red]"
-                return {
+                return finalize_payload({
                     "imagepath": imagepath,
                     "results": local_results,
                     "providers": list(local_providers),
                     "rep_score": local_rep_score,
                     "status_msg": status_msg,
                     "success": False,
-                }
+                })
 
             response_json = response.json()
             if "provider" in response_json:
@@ -720,14 +751,14 @@ def run_openrouter_inference(model_name: str,
                         }
                     })
                     status_msg = "[red]No response[/red]"
-                    return {
+                    return finalize_payload({
                         "imagepath": imagepath,
                         "results": local_results,
                         "providers": list(local_providers),
                         "rep_score": local_rep_score,
                         "status_msg": status_msg,
                         "success": False,
-                    }
+                    })
 
             message = response_json["choices"][0]["message"]
             content = message.get("content", "")
@@ -810,14 +841,14 @@ def run_openrouter_inference(model_name: str,
                                 "_retry_failed": True
                             })
                             status_msg = "[red]Empty after retry[/red]"
-                            return {
+                            return finalize_payload({
                                 "imagepath": imagepath,
                                 "results": local_results,
                                 "providers": list(local_providers),
                                 "rep_score": local_rep_score,
                                 "status_msg": status_msg,
                                 "success": False,
-                            }
+                            })
                 else:
                     local_results.append({
                         "student_full_name": "",
@@ -827,14 +858,14 @@ def run_openrouter_inference(model_name: str,
                         "_retry_failed": True
                     })
                     status_msg = "[red]Retry failed[/red]"
-                    return {
+                    return finalize_payload({
                         "imagepath": imagepath,
                         "results": local_results,
                         "providers": list(local_providers),
                         "rep_score": local_rep_score,
                         "status_msg": status_msg,
                         "success": False,
-                    }
+                    })
 
             json_obj = parse_with_reasoning_fallback(content, reasoning_text, log_image=imagepath)
             target_parse_tokens = min(max_tokens_ceiling, 16384)
@@ -928,14 +959,14 @@ def run_openrouter_inference(model_name: str,
                     local_rep_score = max(local_rep_score, repetition_score)
                 local_results.append(parse_failure_entry)
                 status_msg = "[red]Parse failed[/red]"
-                return {
+                return finalize_payload({
                     "imagepath": imagepath,
                     "results": local_results,
                     "providers": list(local_providers),
                     "rep_score": local_rep_score,
                     "status_msg": status_msg,
                     "success": False,
-                }
+                })
 
             normalized_obj, schema_errors = normalize_extraction_output(json_obj)
             schema_retry_attempts = 0
@@ -1010,14 +1041,14 @@ def run_openrouter_inference(model_name: str,
                     local_results.append(coerced_obj)
                     name = coerced_obj.get("student_full_name", "N/A")
                     status_msg = f"✓ {name} (schema coerced)"
-                    return {
+                    return finalize_payload({
                         "imagepath": imagepath,
                         "results": local_results,
                         "providers": list(local_providers),
                         "rep_score": local_rep_score,
                         "status_msg": status_msg,
                         "success": True,
-                    }
+                    })
 
                 schema_message = response_json.get("choices", [{}])[0].get("message")
                 if not isinstance(schema_message, dict):
@@ -1055,14 +1086,14 @@ def run_openrouter_inference(model_name: str,
                     local_rep_score = max(local_rep_score, repetition_score)
                 local_results.append(schema_failure_entry)
                 status_msg = "[red]Schema failed[/red]"
-                return {
+                return finalize_payload({
                     "imagepath": imagepath,
                     "results": local_results,
                     "providers": list(local_providers),
                     "rep_score": local_rep_score,
                     "status_msg": status_msg,
                     "success": False,
-                }
+                })
 
             if not isinstance(normalized_obj, dict):
                 normalized_obj = {
@@ -1090,14 +1121,14 @@ def run_openrouter_inference(model_name: str,
             ufid = json_obj.get('university_id', '')
             status_msg = f"✓ {name} (ID: {ufid})" if ufid else f"✓ {name}"
 
-            return {
+            return finalize_payload({
                 "imagepath": imagepath,
                 "results": local_results,
                 "providers": list(local_providers),
                 "rep_score": local_rep_score,
                 "status_msg": status_msg,
                 "success": True,
-            }
+            })
 
         except Exception as e:
             local_results.append({
@@ -1106,14 +1137,14 @@ def run_openrouter_inference(model_name: str,
                 "section_number": "",
                 "_exception": str(e)
             })
-            return {
+            return finalize_payload({
                 "imagepath": imagepath,
                 "results": local_results,
                 "providers": list(local_providers),
                 "rep_score": local_rep_score,
                 "status_msg": f"[red]Error: {str(e)[:20]}...[/red]",
                 "success": False,
-            }
+            })
 
     # Create progress bar with live status, then dispatch tasks
     with create_inference_progress() as progress:

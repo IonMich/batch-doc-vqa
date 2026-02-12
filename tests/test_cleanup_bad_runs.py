@@ -52,7 +52,12 @@ class TestCleanupBadRuns(unittest.TestCase):
             run_dir.mkdir(parents=True)
             _write_yaml(run_dir / "config.yaml", _base_config(runtime="TBD"))
 
-            diagnosis = diagnose_run(run_dir, strict=False, strict_costs=False)
+            diagnosis = diagnose_run(
+                run_dir,
+                strict=False,
+                strict_costs=False,
+                strict_reproducibility=False,
+            )
 
             self.assertTrue(diagnosis.is_bad)
             self.assertIn("run incomplete (runtime=TBD)", diagnosis.reasons)
@@ -76,8 +81,18 @@ class TestCleanupBadRuns(unittest.TestCase):
                 },
             )
 
-            loose = diagnose_run(run_dir, strict=False, strict_costs=False)
-            strict = diagnose_run(run_dir, strict=True, strict_costs=False)
+            loose = diagnose_run(
+                run_dir,
+                strict=False,
+                strict_costs=False,
+                strict_reproducibility=False,
+            )
+            strict = diagnose_run(
+                run_dir,
+                strict=True,
+                strict_costs=False,
+                strict_reproducibility=False,
+            )
 
             self.assertFalse(any("inference failures" in reason for reason in loose.reasons))
             self.assertTrue(any("inference failures" in reason for reason in strict.reasons))
@@ -110,11 +125,57 @@ class TestCleanupBadRuns(unittest.TestCase):
                 },
             )
 
-            diagnosis = diagnose_run(run_dir, strict=True, strict_costs=True)
+            diagnosis = diagnose_run(
+                run_dir,
+                strict=True,
+                strict_costs=True,
+                strict_reproducibility=False,
+            )
 
             self.assertTrue(any("cost fetch failed" in reason for reason in diagnosis.reasons))
             self.assertTrue(any("missing actual_cost" in reason for reason in diagnosis.reasons))
             self.assertTrue(any("generation_id still present" in reason for reason in diagnosis.reasons))
+
+    def test_diagnose_strict_reproducibility_detects_git_dirty_relevant(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            run_dir = Path(tmp) / "google-gemma-3-4b-it_20260212_120000"
+            run_dir.mkdir(parents=True)
+            cfg = _base_config()
+            cfg["run_info"]["reproducibility"].update(  # type: ignore[index]
+                {
+                    "git_dirty_relevant": True,
+                    "git_dirty_relevant_count": 2,
+                }
+            )
+            _write_yaml(run_dir / "config.yaml", cfg)
+            _write_json(
+                run_dir / "results.json",
+                {
+                    "imgs/q11/doc-0-page-1-VHX7P2D0.png": [
+                        {
+                            "student_full_name": "Harry S. Truman",
+                            "university_id": "11800",
+                            "section_number": "A",
+                        }
+                    ]
+                },
+            )
+
+            loose = diagnose_run(
+                run_dir,
+                strict=False,
+                strict_costs=False,
+                strict_reproducibility=False,
+            )
+            strict_repro = diagnose_run(
+                run_dir,
+                strict=False,
+                strict_costs=False,
+                strict_reproducibility=True,
+            )
+
+            self.assertFalse(any("git_dirty_relevant" in reason for reason in loose.reasons))
+            self.assertTrue(any("git_dirty_relevant=true" in reason for reason in strict_repro.reasons))
 
     def test_main_dry_run_keeps_directories(self):
         with tempfile.TemporaryDirectory() as tmp:

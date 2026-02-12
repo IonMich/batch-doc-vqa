@@ -198,10 +198,24 @@ class BenchmarkTableGenerator:
             # Check if table results already exist and have cost data
             if run_info["has_table_results"]:
                 cached_stats = self.run_manager.load_table_results(run_name)
+                needs_recalc = False
+
                 # If cached stats don't have cost data, recalculate
                 if "cost_per_image" not in cached_stats or "total_cost" not in cached_stats:
-                    print(f"  Updating cached results with cost data for {run_name}")
-                    # Continue to recalculate with cost data
+                    needs_recalc = True
+
+                # Runtime coverage metadata was added later; refresh legacy cached entries once.
+                if "fully_parallelizable_runtime_available" not in cached_stats:
+                    needs_recalc = True
+                if (
+                    cached_stats.get("fully_parallelizable_runtime_available")
+                    and "fully_parallelizable_runtime_seconds" not in cached_stats
+                ):
+                    needs_recalc = True
+
+                if needs_recalc:
+                    print(f"  Updating cached results with runtime/cost data for {run_name}")
+                    # Continue to recalculate with latest runtime+cost metadata.
                 else:
                     return cached_stats
             
@@ -228,6 +242,10 @@ class BenchmarkTableGenerator:
             
             # Calculate statistics with failure-aware logic
             stats = self._calculate_stats(df_matching, df_test, results)
+
+            # Add fully-parallelizable runtime (max per-image elapsed) when complete per-image timing exists.
+            runtime_data = self._calculate_fully_parallelizable_runtime(results)
+            stats.update(runtime_data)
             
             # Add actual cost information based on real token usage
             cost_data = self._calculate_actual_costs(run_info, results)
@@ -457,6 +475,25 @@ class BenchmarkTableGenerator:
         if runtime_values:
             aggregated["runtime_seconds"] = float(statistics.median(runtime_values))
 
+        fp_runtime_values: List[float] = []
+        fp_runtime_complete = True
+        for entry in cohort_entries:
+            entry_stats = entry.get("stats", {})
+            if not isinstance(entry_stats, dict):
+                fp_runtime_complete = False
+                continue
+            fp_available = bool(entry_stats.get("fully_parallelizable_runtime_available"))
+            fp_runtime = entry_stats.get("fully_parallelizable_runtime_seconds")
+            if fp_available and isinstance(fp_runtime, (int, float)):
+                fp_runtime_values.append(float(fp_runtime))
+            else:
+                fp_runtime_complete = False
+        if fp_runtime_complete and len(fp_runtime_values) == len(cohort_entries) and fp_runtime_values:
+            aggregated["fully_parallelizable_runtime_seconds"] = float(statistics.median(fp_runtime_values))
+            aggregated["fully_parallelizable_runtime_complete"] = True
+        else:
+            aggregated["fully_parallelizable_runtime_complete"] = False
+
         return aggregated
 
     def _format_metric_cell(
@@ -500,10 +537,21 @@ class BenchmarkTableGenerator:
             return f"{base} (n={n_runs})"
         return base
 
-    def _format_runtime_cell(self, data: Dict[str, Any]) -> str:
+    def _format_runtime_cell(self, data: Dict[str, Any], *, prefer_fully_parallelizable: bool = False) -> str:
         stats = data["stats"]
         runtime_seconds = stats.get("runtime_seconds")
         n_runs = int(stats.get("n_runs", 1) or 1)
+
+        if prefer_fully_parallelizable:
+            fp_runtime_complete = bool(stats.get("fully_parallelizable_runtime_complete"))
+            fp_runtime_seconds = stats.get("fully_parallelizable_runtime_seconds")
+            if fp_runtime_complete and isinstance(fp_runtime_seconds, (int, float)):
+                runtime_text = format_runtime(float(fp_runtime_seconds))
+                if n_runs > 1:
+                    return f"{runtime_text} (n={n_runs})"
+                return runtime_text
+            return "N/A"
+
         if isinstance(runtime_seconds, (int, float)):
             runtime_text = format_runtime(float(runtime_seconds))
             if n_runs > 1:
@@ -634,7 +682,12 @@ class BenchmarkTableGenerator:
         else:
             raise ValueError(f"Unknown output format: {output_format}")
     
-    def _generate_markdown_table(self, run_stats: Dict) -> str:
+    def _generate_markdown_table(
+        self,
+        run_stats: Dict,
+        *,
+        prefer_fully_parallelizable_runtime: bool = False,
+    ) -> str:
         """Generate markdown table from run statistics with models grouped by organization."""
         # Group models by organization
         models_by_org = {}
@@ -734,7 +787,10 @@ class BenchmarkTableGenerator:
                 
             elif row_name == "Runtime":
                 values = [self.OPENCV_CNN_BASELINE[row_name]] + [
-                    self._format_runtime_cell(data)
+                    self._format_runtime_cell(
+                        data,
+                        prefer_fully_parallelizable=prefer_fully_parallelizable_runtime,
+                    )
                     for _, data in ordered_models
                 ]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=False, format_type="markdown")
@@ -803,6 +859,47 @@ class BenchmarkTableGenerator:
             pass
         
         return float('-inf')
+
+    def _calculate_fully_parallelizable_runtime(self, raw_results: Dict) -> Dict[str, Any]:
+        """Compute max per-image elapsed runtime when all images include timing metadata."""
+        if not raw_results:
+            return {
+                "fully_parallelizable_runtime_available": False,
+                "timed_images": 0,
+                "total_images": 0,
+            }
+
+        total_images = 0
+        timed_images = 0
+        elapsed_values: List[float] = []
+
+        for _filepath, result_list in raw_results.items():
+            total_images += 1
+            if not result_list or not isinstance(result_list[0], dict):
+                continue
+            entry = result_list[0]
+            timing = entry.get("_timing")
+            if not isinstance(timing, dict):
+                continue
+            elapsed = timing.get("elapsed_seconds")
+            if isinstance(elapsed, (int, float)) and elapsed >= 0:
+                timed_images += 1
+                elapsed_values.append(float(elapsed))
+
+        all_timed = total_images > 0 and timed_images == total_images and bool(elapsed_values)
+        if all_timed:
+            return {
+                "fully_parallelizable_runtime_available": True,
+                "fully_parallelizable_runtime_seconds": max(elapsed_values),
+                "timed_images": timed_images,
+                "total_images": total_images,
+            }
+
+        return {
+            "fully_parallelizable_runtime_available": False,
+            "timed_images": timed_images,
+            "total_images": total_images,
+        }
     
     def _calculate_actual_costs(self, run_info: Dict, raw_results: Dict) -> Dict:
         """Calculate actual costs based on real token usage and cost data from API responses."""
@@ -1105,7 +1202,10 @@ class BenchmarkTableGenerator:
             return "No models found for README table."
         
         # Generate table using existing markdown generation logic
-        return self._generate_markdown_table(readme_stats)
+        return self._generate_markdown_table(
+            readme_stats,
+            prefer_fully_parallelizable_runtime=True,
+        )
 
 
 def main():

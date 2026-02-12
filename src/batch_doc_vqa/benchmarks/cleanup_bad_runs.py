@@ -181,7 +181,13 @@ def _count_cost_issues(results: Dict[str, Any]) -> tuple[int, int, int]:
     return failed_fetches, missing_actual_cost, generation_id_leftovers
 
 
-def diagnose_run(run_dir: Path, *, strict: bool, strict_costs: bool) -> RunDiagnosis:
+def diagnose_run(
+    run_dir: Path,
+    *,
+    strict: bool,
+    strict_costs: bool,
+    strict_reproducibility: bool,
+) -> RunDiagnosis:
     reasons: List[str] = []
     run_name = run_dir.name
     config_path = run_dir / "config.yaml"
@@ -204,6 +210,20 @@ def diagnose_run(run_dir: Path, *, strict: bool, strict_costs: bool) -> RunDiagn
         )
         if isinstance(runtime, str) and runtime.strip().upper() == "TBD":
             reasons.append("run incomplete (runtime=TBD)")
+
+        if strict_reproducibility:
+            run_info = config.get("run_info")
+            if isinstance(run_info, dict):
+                reproducibility = run_info.get("reproducibility")
+                if isinstance(reproducibility, dict):
+                    if reproducibility.get("git_dirty_relevant") is True:
+                        relevant_count = reproducibility.get("git_dirty_relevant_count")
+                        if isinstance(relevant_count, int) and relevant_count >= 0:
+                            reasons.append(
+                                f"reproducibility warning (git_dirty_relevant=true, paths={relevant_count})"
+                            )
+                        else:
+                            reasons.append("reproducibility warning (git_dirty_relevant=true)")
 
     results, results_error = _load_results(results_path)
     if results_error:
@@ -331,6 +351,14 @@ def main() -> int:
         help="With --strict, also classify missing precise costs as bad",
     )
     parser.add_argument(
+        "--strict-reproducibility",
+        action="store_true",
+        help=(
+            "Classify runs as bad when run_info.reproducibility.git_dirty_relevant is true "
+            "(useful for strict comparability cohorts)"
+        ),
+    )
+    parser.add_argument(
         "--apply",
         action="store_true",
         help="Apply cleanup (default is dry-run preview only)",
@@ -374,6 +402,7 @@ def main() -> int:
             run_dir,
             strict=args.strict,
             strict_costs=args.strict_costs,
+            strict_reproducibility=args.strict_reproducibility,
         )
         if not _matches_filters(
             diagnosis,
@@ -449,6 +478,7 @@ def main() -> int:
                 "until": args.until,
                 "strict": bool(args.strict),
                 "strict_costs": bool(args.strict_costs),
+                "strict_reproducibility": bool(args.strict_reproducibility),
             },
             "summary": summary,
             "bad_runs": [

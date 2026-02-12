@@ -4,6 +4,7 @@ Gemini inference engine and orchestration.
 """
 import time
 from collections import defaultdict
+from datetime import datetime, timezone
 from typing import Optional
 
 from rich.console import Console
@@ -79,6 +80,7 @@ def run_gemini_inference(model_id: str = "gemini-2.5-flash",
         "base_url": "https://generativelanguage.googleapis.com/",
         "endpoint_type": "generateContent",
         "model_id": model_id,
+        "concurrency": 1,
         "prompt_template": prompt,
         "thinking_config": "thinking" in model_id.lower(),
     }
@@ -139,11 +141,20 @@ def run_gemini_inference(model_id: str = "gemini-2.5-flash",
         # We need to adapt parse_images to work with our progress tracking
         # For now, let's create a wrapper that processes one image at a time
         for i, imagepath in enumerate(imagepaths, 1):
+            image_started_epoch = time.time()
+            image_started_at_utc = datetime.now(timezone.utc).isoformat()
             try:
                 # Process single image with pricing information
                 result = process_single_image(model_id, temperature, imagepath, pricing)
                 
                 if result:
+                    image_finished_at_utc = datetime.now(timezone.utc).isoformat()
+                    elapsed_seconds = max(0.0, time.time() - image_started_epoch)
+                    result["_timing"] = {
+                        "started_at_utc": image_started_at_utc,
+                        "finished_at_utc": image_finished_at_utc,
+                        "elapsed_seconds": elapsed_seconds,
+                    }
                     results[imagepath].append(result)
                     successful_images += 1
                     
@@ -175,11 +186,18 @@ def run_gemini_inference(model_id: str = "gemini-2.5-flash",
                 console.print(f"[dim]Error: {str(e)}[/dim]")
                 
                 # Add empty entry to preserve zero results
+                image_finished_at_utc = datetime.now(timezone.utc).isoformat()
+                elapsed_seconds = max(0.0, time.time() - image_started_epoch)
                 results[imagepath].append({
                     "student_full_name": "",
                     "university_id": "",
                     "section_number": "",
-                    "_exception": str(e)
+                    "_exception": str(e),
+                    "_timing": {
+                        "started_at_utc": image_started_at_utc,
+                        "finished_at_utc": image_finished_at_utc,
+                        "elapsed_seconds": elapsed_seconds,
+                    },
                 })
                 
                 progress.update(task, 
