@@ -234,6 +234,16 @@
       "open_weights": true,
       "model_size": "12B",
       "license": "Gemma"
+    },
+    "qwen/qwen2.5-vl-72b-instruct": {
+      "open_weights": true,
+      "model_size": "72B",
+      "license": "qwen"
+    },
+    "qwen/qwen-vl-plus": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
     }
   },
   "needs_review": []
