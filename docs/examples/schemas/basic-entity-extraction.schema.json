@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "entities"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "entities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "text",
+          "label",
+          "page",
+          "confidence"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1
+          },
+          "label": {
+            "type": "string",
+            "enum": [
+              "PERSON",
+              "ORG",
+              "LOCATION",
+              "DATE",
+              "ID_NUMBER",
+              "OTHER"
+            ]
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      }
+    }
+  }
+}

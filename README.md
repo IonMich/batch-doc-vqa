@@ -34,179 +34,233 @@ The table below shows the top performing models by category. See [BENCHMARKS.md]
 
 This repository uses Large Language Models with vision capabilities to extract information from collections of documents and reports performance within a clearly specified document‑VQA setup. The goal is to create a fully local pipeline that runs on a single machine, and can be used to extract information from document collections for usage in downstream tasks.
 
-## How to use
+## Run Benchmark: Included Dataset (No Code Changes)
 
-### Installation
+Run the built-in q11 benchmark end-to-end using the default `default_student` extraction task.
 
-1. Run the following commands to clone the repository:
+This repo includes benchmark inputs, but not pre-rendered benchmark images:
 
-    ```bash
-    git clone https://github.com/IonMich/batch-doc-vqa.git
-    cd batch-doc-vqa
-    ```
+- Source PDF: `imgs/quiz11-presidents.pdf`
+- Ground truth: `tests/data/test_ids.csv`
 
-2. Install dependencies using uv (recommended) or pip:
+You will generate `doc_info.csv` and page images locally in one command.
 
-    **With uv (recommended):**
-
-    ```bash
-    # Install uv if you haven't already
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-    
-    # Install dependencies
-    uv sync
-    ```
-
-    **Or with conda/pip:**
-
-    ```bash
-    conda create -n batch python=3.11
-    conda activate batch
-    pip install -r requirements.txt
-    ```
-
-### Prepare the documents
-
-It is common for a batch of documents to be stored in a single large PDF file. Since multimodal LLMs can only process images, the first step is to convert the PDF file into a collection of images. (Of course, if you already have a collection of images, you can skip this step.) This can be done using the `pdf_to_imgs` utility. For example, to convert a batch of 4-page documents into images stored in a single PDF file `imgs/quiz11-presidents.pdf` to images at 300 DPI, you can run the following command:
+### 1. Clone the repository
 
 ```bash
-uv run pdf-to-imgs --filepath imgs/quiz11-presidents.pdf --pages_i 4 --dpi 300 --output_dir imgs/q11/
+git clone https://github.com/IonMich/batch-doc-vqa.git
+cd batch-doc-vqa
 ```
 
-This will create a directory `imgs/q11/` containing the images of the 4-page documents. Set the `--pages_i` argument to the number of pages in each document. The images will follow the naming convention `doc-0-page-1-*.png`, ..., `doc-0-page-4-*.png`, `doc-1-page-1-*.png`, ..., etc. A CSV file `imgs/q11/doc_info.csv` will also be created, containing the metadata of the images (the page number and the document number).
-
-### Example Usage
-
-The `outlines_quiz.py` script can be used to extract information from a collection of documents using local Vision LLMs. For example, to extract the 8-digit university IDs from the documents in the `imgs/q11/` directory, you can run the following command:
+### 2. Install `uv`
 
 ```bash
-    python outlines_quiz.py
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-By default, this pipeline will use the `Qwen2-VL-2B-Instruct` model to extract full names, 8-digit university IDs, and section numbers from the documents. You can change the model used by setting the `--model` argument. You can change the information extracted by modifying the Pydantic schema in `outlines_quiz.py`. The extracted information will be saved in a JSON file in the `tests/output/` directory.
+After `uv` is installed, run commands directly with `uv run ...`.
+No `uv sync`, `pip install`, or conda setup is required for this workflow.
 
-### Post-processing
-
-You can analyze the extracted information using string matching algorithms. For example, take a look at the `stringmatching.ipynb` notebook to see how to match the extracted last names and university IDs to a list of entries in a CSV file.
-
-### Testing New Models with OpenRouter
-
-To test new vision models and add them to the benchmark tables:
-
-1. **Run inference** on your dataset with a new model:
-
-   ```bash
-   # The script will automatically prompt for API key setup if needed
-   uv run openrouter-inference --concurrency 64 --rate-limit 64
-   ```
-
-   For deterministic routing experiments, you can pin provider behavior:
-
-   ```bash
-   uv run openrouter-inference \
-     --model google/gemma-3-4b-it \
-     --concurrency 1 \
-     --provider-order deepinfra \
-     --no-fallbacks \
-     --provider-sort latency
-   ```
-
-   The script will:
-   - Check for `OPENROUTER_API_KEY` in environment or `.env` file
-   - If not found, prompt you to enter it interactively
-   - Without a key: only free models with limited requests are available
-   - With a key: access to all models and higher rate limits
-   - Offer to save the key to `.env` file for future use
-   - Get your API key from: [openrouter.ai/keys](https://openrouter.ai/keys)
-   - Launch an interactive TUI to select provider/model if `--model` is omitted
-   - Fetch precise per-request costs and store safe generation metadata in `results.json`
-   - Remove `generation_id` from saved artifacts by default (set `OPENROUTER_KEEP_GENERATION_ID=1` only for local debugging/repair workflows)
-
-2. **Update benchmark tables** with the new results:
-
-   ```bash
-   uv run update-benchmarks
-   ```
-
-   Optional quick summary for one model in a recent window:
-
-   ```bash
-   uv run summarize-model-runs --model google/gemma-3-4b-it --window-hours 24
-   uv run summarize-model-runs --model google/gemma-3-4b-it --window-minutes 180
-   ```
-
-3. **Interactive model classification**: When you run the benchmark generator with a new model, you'll be prompted to classify it:
-   - Is it open-weights? (y/n)
-   - Number of parameters (e.g., "7B", "70A8" for MoE models)  
-   - License (for open-weight models)
-
-The system automatically saves this metadata and uses it for proper categorization in benchmark tables.
-
-![Probability calibration curves for OpenCV+CNN and for LLama3.2-Vision 11B](tests/output/public/calibration_curves.png)
-
-> [!NOTE]  
-> See details in the associated [wiki](https://github.com/IonMich/batch-doc-vqa/wiki/Row-of-Digits-OCR:-OpenCV-CNN-versus-LLMs) article.
-
-## [OLD] Ollama + Llama3.2-Vision 11B
-
-### Ollama Installation
-
-1. First, install Ollama via the official [installation instructions](https://ollama.com/).
-
-2. Pull the Llama3.2-Vision 11B model (or another model of your choice) on the Ollama server:
-
-    ```bash
-    ollama pull llama3.2-vision
-    ```
-
-3. Install the Python Ollama wrapper. You can do this via pip in a dedicated [conda](https://docs.anaconda.com/miniconda/) environment:
-
-    ```bash
-    conda create -n ollama python=3.11
-    conda activate ollama
-    pip install ollama
-    ```
-
-4. Clone this repository. There are no additional dependencies.
-
-    ```bash
-    git clone https://github.com/IonMich/batch-doc-vqa
-    cd batch-doc-vqa
-    ```
-
-5. Start the Ollama server. On MacOS this can be done by simply opening the Ollama app. On Linux run `ollama server` in the terminal.
-
-6. Check the `SYSTEM_MESSAGES` variable in `llamavision.py`. These are the prompts that the model will use to generate its responses (by default the prompt at index `0`). Leave the prompt unchanged if you want to check the installation on the test images. Feel free to add your own images to the `imgs` directory, or to change the `--filepath` command line argument to point to a different directory.
-
-7. That's it! You're ready to use the pipeline:
-
-    ```bash
-    python llamavision.py --filepath imgs/sub-page-3.png --n_trials 10
-    ```
-
-### Usage
-
-The Ollama pipeline is a Python script with the following command line usage:
+### 3. Generate benchmark images + `doc_info.csv`
 
 ```bash
-    python llamavision.py [-h] [--filepath FILEPATH] [--pattern PATTERN] [--n_trials N_TRIALS] [--system SYSTEM] [--model MODEL] [--no-stream] [--top_k TOP_K]
+uv run --with pymupdf pdf-to-imgs \
+  --filepath imgs/quiz11-presidents.pdf \
+  --pages_i 4 \
+  --dpi 300 \
+  --output_dir imgs/q11
 ```
 
-The pipeline has the following options:
+What this does:
 
-- `--filepath`: (str) The path to the directory containing the images to be processed. If the path is a PNG file, the pipeline will process that single image. If the path is a directory, the pipeline will process (by default) all images in that directory.
+- Splits the source PDF into PNG page images in `imgs/q11/`.
+- Treats every `4` pages as one document (`--pages_i 4`), so filenames map to `doc-<index>-page-<n>-*.png`.
+- Writes `imgs/q11/doc_info.csv` with `doc,page,filename` so downstream commands know exactly which images belong to each document.
 
-- `--pattern`: (str) A string that is used to filter the images in the directory. E.g. `--pattern "page-3"` will only process PNG files that contain the string `page-3` in their filename. By default, this is set to `""`, which means that all images in the directory will be processed. This option is ignored if the `--filepath` is a single PNG file.
+### 4. Run OpenRouter inference (interactive organization + model selection, then provider approval)
 
-- `--n_trials`: (int) The number of trials to run for each image. This can be useful to do multi-shot inference on the same image, or to get a sense of the variance in the model's predictions.
+```bash
+uv run openrouter-inference \
+  --concurrency 64 \
+  --rate-limit 64
+```
 
-- `--system`: (str) The system prompt index to use, which selects the prompt from a list of system prompts. By default, this is set to 0. See `SYSTEM_PROMPTS` in `llamavision.py` for the list of some example system prompts, and replace these with your own prompts.
+The command checks for `OPENROUTER_API_KEY` and prompts for setup if missing ([openrouter.ai/keys](https://openrouter.ai/keys)).
 
-- `--model`: (str) The model to use. By default, this is set to `llama3.2-vision`, but any LLM with vision capabilities can be used.
+![OpenRouter interactive terminal UI (organization selection)](docs/assets/openrouter-org-selection.png)
+![OpenRouter interactive terminal UI (model selection)](docs/assets/openrouter-model-selection.png)
 
-- `--top_k`: (int) The number of top answers to return. By default, this is set to 10. Lowering this number decreases creativity and variance in the model's predictions. Note that this is less than the Ollama default of 40.
+What this command does by default:
 
-- `--no-stream`: (flag) If set, the pipeline will not stream the LLM responses in chunks. Instead, the pipeline will wait for the model to finish processing the image before printing the responses. Default (when this flag is omitted) is to stream the responses.
+- Since `--model` is omitted, the terminal UI asks you to choose organization + model.
+- Uses preset `default_student`.
+- Uses images from `imgs/q11`.
+- Auto-detects dataset manifest at `imgs/q11/doc_info.csv` when present.
+- Uses pages `1,3` by default for this preset.
+
+Optional overrides:
+
+- Use a different preset: `--preset <preset_id>`
+- Use a different image directory: `--images-dir /path/to/images` (auto-detects `/path/to/images/doc_info.csv` when present)
+- Use a different manifest path: `--dataset-manifest /path/to/doc_info.csv`
+- Override page selection: `--pages 1,3`
+
+Interactive flow:
+
+1. Run the command above.
+2. If prompted, enter your OpenRouter API key (and optionally save it to `.env`).
+3. In the terminal UI, choose the model organization (the model creator).
+4. Choose the model from that organization.
+5. Review provider policies for hosts serving that model and approve to continue.
+6. Confirm and start the run.
+
+### 5. Regenerate benchmark artifacts
+
+```bash
+uv run update-benchmarks
+```
+
+This updates `BENCHMARKS.md`, `pareto_plot.png`, and the benchmark section in `README.md`.
+
+## Run Benchmark: Your Dataset (default_student, No Code Changes)
+
+Use this when you have a labeled dataset compatible with the default student benchmark task and want benchmark tables/plots.
+
+### 1. Convert your PDF batch to images
+
+```bash
+uv run --with pymupdf pdf-to-imgs \
+  --filepath /path/to/new-batch.pdf \
+  --pages_i 4 \
+  --dpi 300 \
+  --output_dir /tmp/my_benchmark/images
+```
+
+This creates `/tmp/my_benchmark/images/doc_info.csv`.
+Use `--pages_i` equal to the number of pages per logical document in your batch.
+
+### 2. Prepare `/tmp/my_benchmark/test_ids.csv`
+
+Create this CSV in Excel/Google Sheets and export as CSV.
+Required columns and format:
+
+```csv
+doc,student_id,student_full_name
+0,33206068,Harry S. Truman
+1,89797090,Franklin D. Roosevelt
+2,98470266,Herbert Hoover
+```
+
+Notes:
+
+- `doc` must match the document index used in `doc_info.csv` (`doc-0-*`, `doc-1-*`, ...).
+- Keep one row per document.
+- `student_id` should be the 8-digit ground-truth ID as text.
+
+### 3. Run inference on the new dataset
+
+```bash
+uv run openrouter-inference \
+  --preset default_student \
+  --model qwen/qwen3-vl-8b-instruct \
+  --images-dir /tmp/my_benchmark/images \
+  --concurrency 64 \
+  --rate-limit 64
+```
+
+Because `pdf-to-imgs` wrote `/tmp/my_benchmark/images/doc_info.csv`, the manifest is auto-detected.
+
+### 4. Generate benchmark markdown + Pareto plot for that dataset
+
+```bash
+uv run generate-benchmark-table \
+  --doc-info /tmp/my_benchmark/images/doc_info.csv \
+  --test-ids /tmp/my_benchmark/test_ids.csv \
+  --format markdown \
+  --output /tmp/my_benchmark/BENCHMARKS.md
+
+uv run generate-pareto-plot \
+  --doc-info /tmp/my_benchmark/images/doc_info.csv \
+  --test-ids /tmp/my_benchmark/test_ids.csv \
+  --output /tmp/my_benchmark/pareto_plot.png \
+  --title "Model Performance vs Cost Trade-off (my benchmark)"
+```
+
+## Run Extraction: Your Dataset (default_student, No Code Changes)
+
+Use this when you want structured JSON extraction only (no benchmark scoring/plots) with the built-in student task.
+
+Default extracted fields are:
+
+- `student_full_name`
+- `university_id`
+- `section_number`
+
+If these fields match your use case, run:
+
+```bash
+uv run openrouter-inference \
+  --preset default_student \
+  --model qwen/qwen3-vl-8b-instruct \
+  --images-dir /path/to/images \
+  --concurrency 32 \
+  --rate-limit 32
+```
+
+If your manifest is not at `/path/to/images/doc_info.csv`, pass `--dataset-manifest /path/to/manifest.csv`.
+If your target pages differ from the preset default, pass `--pages ...`.
+
+Results are saved under `tests/output/runs/<run_name>/results.json`.
+
+To tune extraction behavior for your documents while keeping the same fields, edit the default preset:
+
+- `src/batch_doc_vqa/openrouter/presets/student.py`
+
+If you need different output fields but do not want to edit code, use a custom prompt + schema.
+
+## Run Extraction: Your Dataset (Custom Prompt + Schema, No Code Changes)
+
+Use this when you want extraction-only JSON outputs with your own prompt and schema, without editing Python code.
+
+Example files included in this repo:
+
+- `docs/examples/prompts/basic-entity-extraction.md`
+- `docs/examples/schemas/basic-entity-extraction.schema.json`
+
+```bash
+uv run openrouter-inference \
+  --model qwen/qwen3-vl-8b-instruct \
+  --images-dir /path/to/images \
+  --prompt-file docs/examples/prompts/basic-entity-extraction.md \
+  --schema-file docs/examples/schemas/basic-entity-extraction.schema.json \
+  --output-json /tmp/custom_entities.json \
+  --concurrency 32 \
+  --rate-limit 32
+```
+
+Notes:
+
+- If your manifest is not at `/path/to/images/doc_info.csv`, pass `--dataset-manifest /path/to/manifest.csv`.
+- Page selection still applies; pass `--pages ...` for your dataset.
+- When `--schema-file` is provided, strict schema mode is enabled by default. Use `--no-strict-schema` for best-effort passthrough.
+
+## Define New Task: Preset + Benchmark Logic (Code Changes)
+
+Use this when you want a new reusable task integrated into the codebase (not just a one-off run).
+
+For a different extraction schema or different scoring rules, update:
+
+1. Create a new preset module (copy and adapt `src/batch_doc_vqa/openrouter/presets/student.py`)
+2. Register it in `src/batch_doc_vqa/openrouter/presets/__init__.py`
+3. Run inference with `uv run openrouter-inference --preset <your_preset> ...`
+4. Ground-truth matching logic: `src/batch_doc_vqa/utils/string_matching.py`
+5. Benchmark table metrics/rows: `src/batch_doc_vqa/benchmarks/table_generator.py`
+
+## Other Investigations
+
+- Statistical calibration (legacy experiment): see `statistical-calibration.md`.
+- Full analysis: [Row-of-Digits-OCR: OpenCV-CNN versus LLMs](https://github.com/IonMich/batch-doc-vqa/wiki/Row-of-Digits-OCR:-OpenCV-CNN-versus-LLMs#llm-pipeline-2-ollama--llama-32-11b-vision).
+- Calibration artifact used in that analysis: `tests/output/public/calibration_curves.png`.
 
 ## Motivations
 
