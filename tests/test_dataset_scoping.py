@@ -67,6 +67,71 @@ class DatasetScopingTests(unittest.TestCase):
         self.assertTrue(ok)
         self.assertIsNone(reason)
 
+    def test_non_default_dataset_table_hides_opencv_baseline_column(self) -> None:
+        run_stats = {
+            "google/gemma-3-27b-it": {
+                "run_info": {
+                    "config": {
+                        "model": {
+                            "org": "google",
+                            "model": "gemma-3-27b-it",
+                            "variant": None,
+                            "model_size": "27B",
+                            "open_weights": True,
+                        },
+                        "environment": {"runtime": "56 seconds"},
+                    }
+                },
+                "stats": {
+                    "digit_top1": 80.17,
+                    "id_top1": 45.28,
+                    "lastname_top1": 84.28,
+                    "id_avg_lev": 1.1887,
+                    "lastname_avg_lev": 0.6478,
+                    "docs_detected": 94.64,
+                    "docs_detected_count": 159,
+                    "expected_docs_count": 168,
+                    "cost_per_image": 0.000053,
+                    "total_cost": 0.0179,
+                },
+            }
+        }
+        markdown = self.generator._generate_markdown_table(run_stats, include_baseline=False)
+        self.assertNotIn("**OpenCV+CNN**", markdown)
+        self.assertIn("**google**<br>gemma-3-27b-it", markdown)
+
+    def test_default_dataset_table_keeps_opencv_baseline_column(self) -> None:
+        run_stats = {
+            "google/gemma-3-27b-it": {
+                "run_info": {
+                    "config": {
+                        "model": {
+                            "org": "google",
+                            "model": "gemma-3-27b-it",
+                            "variant": None,
+                            "model_size": "27B",
+                            "open_weights": True,
+                        },
+                        "environment": {"runtime": "56 seconds"},
+                    }
+                },
+                "stats": {
+                    "digit_top1": 80.17,
+                    "id_top1": 45.28,
+                    "lastname_top1": 84.28,
+                    "id_avg_lev": 1.1887,
+                    "lastname_avg_lev": 0.6478,
+                    "docs_detected": 94.64,
+                    "docs_detected_count": 159,
+                    "expected_docs_count": 168,
+                    "cost_per_image": 0.000053,
+                    "total_cost": 0.0179,
+                },
+            }
+        }
+        markdown = self.generator._generate_markdown_table(run_stats, include_baseline=True)
+        self.assertIn("**OpenCV+CNN**", markdown)
+
 
 if __name__ == "__main__":
     unittest.main()

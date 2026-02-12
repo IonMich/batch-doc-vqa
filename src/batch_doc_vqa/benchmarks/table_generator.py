@@ -800,6 +800,7 @@ class BenchmarkTableGenerator:
                                cohort_window_hours: float = 24.0,
                                debug_cohorts: bool = False) -> str:
         """Generate benchmark table for specified run patterns."""
+        include_baseline = self._is_default_dataset_request(doc_info_file, test_ids_file)
         run_stats = self.build_run_stats(
             run_patterns=run_patterns,
             doc_info_file=doc_info_file,
@@ -813,13 +814,13 @@ class BenchmarkTableGenerator:
         
         # Generate table based on format
         if output_format == "markdown":
-            return self._generate_markdown_table(run_stats)
+            return self._generate_markdown_table(run_stats, include_baseline=include_baseline)
         elif output_format == "rich":
             # For rich format, display table and return markdown for file output
-            rich_table = self._generate_rich_table(run_stats)
+            rich_table = self._generate_rich_table(run_stats, include_baseline=include_baseline)
             self.console.print("\n[bold blue]🏆 BENCHMARK RESULTS[/bold blue]")
             self.console.print(rich_table)
-            return self._generate_markdown_table(run_stats)  # Still return markdown for file output
+            return self._generate_markdown_table(run_stats, include_baseline=include_baseline)  # Still return markdown for file output
         else:
             raise ValueError(f"Unknown output format: {output_format}")
     
@@ -827,6 +828,7 @@ class BenchmarkTableGenerator:
         self,
         run_stats: Dict,
         *,
+        include_baseline: bool = True,
         prefer_fully_parallelizable_runtime: bool = False,
     ) -> str:
         """Generate markdown table from run statistics with models grouped by organization."""
@@ -844,7 +846,9 @@ class BenchmarkTableGenerator:
             models_by_org[org].append((model_key, model_name, data))
         
         # Create single header row with org/model format
-        headers = ["**Metric**", "**OpenCV+CNN**"]
+        headers = ["**Metric**"]
+        if include_baseline:
+            headers.append("**OpenCV+CNN**")
         
         for org, models in models_by_org.items():
             for model_key, model_name, data in models:
@@ -864,7 +868,10 @@ class BenchmarkTableGenerator:
                 ordered_models.append((model_key, data))
         
         for row_name in self.included_rows:
-            row_data = [row_name, self.OPENCV_CNN_BASELINE.get(row_name, "N/A")]
+            row_data = [row_name]
+            baseline_value = self.OPENCV_CNN_BASELINE.get(row_name, "N/A")
+            if include_baseline:
+                row_data.append(baseline_value)
             
             if row_name == "LLM model size":
                 for model_key, data in ordered_models:
@@ -885,49 +892,63 @@ class BenchmarkTableGenerator:
                         row_data.append("Yes" if config.get("open_weights", False) else "No")
                         
             elif row_name == "digit_top1":
-                values = [self.OPENCV_CNN_BASELINE[row_name]] + [
+                values = (
+                    [baseline_value] if include_baseline else []
+                ) + [
                     self._format_metric_cell(data["stats"], "digit_top1", decimals=2, suffix="%")
                     for _, data in ordered_models
                 ]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=True, format_type="markdown")
                 
             elif row_name == "8-digit id_top1":
-                values = [self.OPENCV_CNN_BASELINE[row_name]] + [
+                values = (
+                    [baseline_value] if include_baseline else []
+                ) + [
                     self._format_metric_cell(data["stats"], "id_top1", decimals=2, suffix="%")
                     for _, data in ordered_models
                 ]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=True, format_type="markdown")
                 
             elif row_name == "lastname_top1":
-                values = [self.OPENCV_CNN_BASELINE[row_name]] + [
+                values = (
+                    [baseline_value] if include_baseline else []
+                ) + [
                     self._format_metric_cell(data["stats"], "lastname_top1", decimals=2, suffix="%")
                     for _, data in ordered_models
                 ]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=True, format_type="markdown")
                 
             elif row_name == "ID Avg d_Lev":
-                values = [self.OPENCV_CNN_BASELINE[row_name]] + [
+                values = (
+                    [baseline_value] if include_baseline else []
+                ) + [
                     self._format_metric_cell(data["stats"], "id_avg_lev", decimals=4)
                     for _, data in ordered_models
                 ]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=False, format_type="markdown")
                 
             elif row_name == "Lastname Avg d_Lev":
-                values = [self.OPENCV_CNN_BASELINE[row_name]] + [
+                values = (
+                    [baseline_value] if include_baseline else []
+                ) + [
                     self._format_metric_cell(data["stats"], "lastname_avg_lev", decimals=4)
                     for _, data in ordered_models
                 ]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=False, format_type="markdown")
                 
             elif row_name == "Docs detected":
-                values = [self.OPENCV_CNN_BASELINE[row_name]] + [
+                values = (
+                    [baseline_value] if include_baseline else []
+                ) + [
                     self._format_docs_detected_cell(data["stats"])
                     for _, data in ordered_models
                 ]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=True, format_type="markdown")
                 
             elif row_name == "Runtime":
-                values = [self.OPENCV_CNN_BASELINE[row_name]] + [
+                values = (
+                    [baseline_value] if include_baseline else []
+                ) + [
                     self._format_runtime_cell(
                         data,
                         prefer_fully_parallelizable=prefer_fully_parallelizable_runtime,
@@ -938,14 +959,18 @@ class BenchmarkTableGenerator:
                 row_data = [runtime_label] + self._format_best_value(values, higher_is_better=False, format_type="markdown")
                 
             elif row_name == "Cost per image":
-                values = [self.OPENCV_CNN_BASELINE[row_name]] + [
+                values = (
+                    [baseline_value] if include_baseline else []
+                ) + [
                     self._format_metric_cell(data["stats"], "cost_per_image", decimals=6, prefix="$")
                     for _, data in ordered_models
                 ]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=False, format_type="markdown")
                 
             elif row_name == "Total cost":
-                values = [self.OPENCV_CNN_BASELINE[row_name]] + [
+                values = (
+                    [baseline_value] if include_baseline else []
+                ) + [
                     self._format_metric_cell(data["stats"], "total_cost", decimals=4, prefix="$")
                     for _, data in ordered_models
                 ]
@@ -1158,7 +1183,7 @@ class BenchmarkTableGenerator:
         
         return formatted_values
     
-    def _generate_rich_table(self, run_stats: Dict) -> Table:
+    def _generate_rich_table(self, run_stats: Dict, *, include_baseline: bool = True) -> Table:
         """Generate rich table from run statistics with models grouped by organization."""
         # Group models by organization (same as markdown)
         models_by_org = {}
@@ -1178,7 +1203,8 @@ class BenchmarkTableGenerator:
         
         # Add columns - remove style from data columns to allow conditional formatting
         table.add_column("Metric", style="yellow", no_wrap=True)
-        table.add_column("OpenCV+CNN", style="white", justify="right")
+        if include_baseline:
+            table.add_column("OpenCV+CNN", style="white", justify="right")
         
         # Add columns grouped by organization
         for org, models in models_by_org.items():
@@ -1213,8 +1239,8 @@ class BenchmarkTableGenerator:
                 ordered_models.append((model_key, data))
         
         # Add non-numeric rows (no highlighting) - use metadata if available
-        model_sizes = ["N/A"]
-        open_weights = ["N/A"]
+        model_sizes = ["N/A"] if include_baseline else []
+        open_weights = ["N/A"] if include_baseline else []
         
         for model_key, data in ordered_models:
             # Use metadata if available, otherwise fall back to config
@@ -1232,59 +1258,59 @@ class BenchmarkTableGenerator:
         table.add_row("Open-weights", *open_weights)
         
         # Performance metrics with best value highlighting (higher is better)
-        digit_top1_values = ["85.16%"] + [
+        digit_top1_values = (["85.16%"] if include_baseline else []) + [
             self._format_metric_cell(data["stats"], "digit_top1", decimals=2, suffix="%")
             for _, data in ordered_models
         ]
         table.add_row("digit_top1", *self._format_best_value(digit_top1_values, higher_is_better=True))
         
-        id_top1_values = ["??"] + [
+        id_top1_values = (["??"] if include_baseline else []) + [
             self._format_metric_cell(data["stats"], "id_top1", decimals=2, suffix="%")
             for _, data in ordered_models
         ]
         table.add_row("8-digit id_top1", *self._format_best_value(id_top1_values, higher_is_better=True))
         
-        lastname_top1_values = ["N/A"] + [
+        lastname_top1_values = (["N/A"] if include_baseline else []) + [
             self._format_metric_cell(data["stats"], "lastname_top1", decimals=2, suffix="%")
             for _, data in ordered_models
         ]
         table.add_row("lastname_top1", *self._format_best_value(lastname_top1_values, higher_is_better=True))
         
         # Distance metrics (lower is better)
-        id_avg_lev_values = ["N/A"] + [
+        id_avg_lev_values = (["N/A"] if include_baseline else []) + [
             self._format_metric_cell(data["stats"], "id_avg_lev", decimals=4)
             for _, data in ordered_models
         ]
         table.add_row("ID Avg d_Lev", *self._format_best_value(id_avg_lev_values, higher_is_better=False))
         
-        lastname_avg_lev_values = ["N/A"] + [
+        lastname_avg_lev_values = (["N/A"] if include_baseline else []) + [
             self._format_metric_cell(data["stats"], "lastname_avg_lev", decimals=4)
             for _, data in ordered_models
         ]
         table.add_row("Lastname Avg d_Lev", *self._format_best_value(lastname_avg_lev_values, higher_is_better=False))
         
         # Detection metrics (higher is better)
-        docs_detected_values = ["90.62% (29/32)"] + [
+        docs_detected_values = (["90.62% (29/32)"] if include_baseline else []) + [
             self._format_docs_detected_cell(data["stats"])
             for _, data in ordered_models
         ]
         table.add_row("Docs detected", *self._format_best_value(docs_detected_values, higher_is_better=True))
         
         # Runtime (lower is better)
-        runtime_values = ["~1 second"] + [
+        runtime_values = (["~1 second"] if include_baseline else []) + [
             self._format_runtime_cell(data)
             for _, data in ordered_models
         ]
         table.add_row("Runtime", *self._format_best_value(runtime_values, higher_is_better=False))
         
         # Cost metrics (lower is better) - handle missing cost data for backward compatibility
-        cost_per_image_values = ["$0.00"] + [
+        cost_per_image_values = (["$0.00"] if include_baseline else []) + [
             self._format_metric_cell(data["stats"], "cost_per_image", decimals=6, prefix="$")
             for _, data in ordered_models
         ]
         table.add_row("Cost per image", *self._format_best_value(cost_per_image_values, higher_is_better=False))
         
-        total_cost_values = ["$0.00"] + [
+        total_cost_values = (["$0.00"] if include_baseline else []) + [
             self._format_metric_cell(data["stats"], "total_cost", decimals=4, prefix="$")
             for _, data in ordered_models
         ]
@@ -1346,6 +1372,7 @@ class BenchmarkTableGenerator:
         # Generate table using existing markdown generation logic
         return self._generate_markdown_table(
             readme_stats,
+            include_baseline=self._is_default_dataset_request(doc_info_file, test_ids_file),
             prefer_fully_parallelizable_runtime=True,
         )
 
