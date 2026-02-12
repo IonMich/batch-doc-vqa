@@ -32,8 +32,10 @@ from .api import (
     model_supports_image_input,
     batch_update_generation_costs,
 )
-from ..core.prompts import STUDENT_EXTRACTION_PROMPT
 from .ui import interactive_config_prompt
+from .defaults import DEFAULT_EXTRACTION_PRESET_ID, DEFAULT_IMAGES_DIR
+from .spec import load_extraction_spec
+from .extraction_adapter import build_extraction_adapter
 
 console = Console()
 
@@ -69,6 +71,7 @@ def assess_repetition(text: str, *, min_tokens: int = 80) -> tuple[bool, float]:
 
 
 def run_openrouter_inference(model_name: str, 
+                            preset_id: str = DEFAULT_EXTRACTION_PRESET_ID,
                             temperature: float = 0.0,
                             max_tokens: int = 4096,
                             top_p: float = 1.0,
@@ -88,13 +91,69 @@ def run_openrouter_inference(model_name: str,
                             rate_limit: Optional[float] = None,
                             retry_max: int = 3,
                             retry_base_delay: float = 2.0,
-                            images_dir: str = "imgs/q11",
+                            images_dir: Optional[str] = None,
+                            dataset_manifest_file: Optional[str] = None,
                             doc_info_file: Optional[str] = None,
-                            pages: Optional[list[int]] = None):
+                            pages: Optional[list[int]] = None,
+                            prompt_file: Optional[str] = None,
+                            schema_file: Optional[str] = None,
+                            output_json: Optional[str] = None,
+                            strict_schema: Optional[bool] = None):
     """Run inference using any OpenRouter vision model."""
     
     # Start timing
     start_time = time.time()
+
+    try:
+        extraction_spec = load_extraction_spec(
+            preset_id=preset_id,
+            prompt_file=prompt_file,
+            schema_file=schema_file,
+        )
+    except Exception as exc:
+        console.print(f"[red]❌ Failed to load extraction spec: {exc}[/red]")
+        return ""
+
+    effective_strict_schema = (
+        extraction_spec.strict_schema_default
+        if strict_schema is None
+        else bool(strict_schema)
+    )
+
+    schema_validator: Optional[Any] = None
+    if extraction_spec.mode == "custom":
+        try:
+            from jsonschema import Draft202012Validator
+            Draft202012Validator.check_schema(extraction_spec.schema)
+            schema_validator = Draft202012Validator(extraction_spec.schema)
+        except Exception as exc:
+            console.print(f"[red]❌ Invalid custom schema: {exc}[/red]")
+            return ""
+
+    extraction_adapter = build_extraction_adapter(
+        spec=extraction_spec,
+        schema_validator=schema_validator,
+    )
+
+    effective_images_dir = (
+        images_dir.strip()
+        if isinstance(images_dir, str) and images_dir.strip()
+        else DEFAULT_IMAGES_DIR
+    )
+    if dataset_manifest_file and doc_info_file and dataset_manifest_file != doc_info_file:
+        console.print(
+            "[yellow]⚠️ Both dataset_manifest_file and doc_info_file were provided; using dataset_manifest_file.[/yellow]"
+        )
+    effective_dataset_manifest = dataset_manifest_file or doc_info_file
+    dataset_manifest_autodiscovered = False
+    if not effective_dataset_manifest:
+        candidate_manifest = Path(effective_images_dir) / "doc_info.csv"
+        if candidate_manifest.exists() and candidate_manifest.is_file():
+            effective_dataset_manifest = str(candidate_manifest.resolve(strict=False))
+            dataset_manifest_autodiscovered = True
+            console.print(
+                f"[dim]Auto-detected dataset manifest: {effective_dataset_manifest}[/dim]"
+            )
 
     def _normalize_model_id(value: str) -> str:
         return value.strip().lower()
@@ -224,138 +283,6 @@ def run_openrouter_inference(model_name: str,
 
         return steps
 
-    def normalize_extraction_output(parsed_obj: Any) -> tuple[Optional[Dict[str, Any]], list[str]]:
-        """Normalize parsed output to expected fields and validate basic schema."""
-        if not isinstance(parsed_obj, dict):
-            return None, ["Top-level JSON must be an object."]
-
-        normalized: Dict[str, Any] = dict(parsed_obj)
-        if "university_id" not in normalized and "ufid" in normalized:
-            normalized["university_id"] = normalized.pop("ufid")
-
-        # Ensure expected keys are string-typed.
-        for field in ("student_full_name", "university_id", "section_number"):
-            value = normalized.get(field, "")
-            if value is None:
-                value = ""
-            elif not isinstance(value, str):
-                value = str(value)
-            normalized[field] = value.strip()
-
-        schema_errors: list[str] = []
-        university_id = normalized.get("university_id", "")
-        section_number = normalized.get("section_number", "")
-
-        if university_id and not re.fullmatch(r"\d{1,8}", university_id):
-            schema_errors.append(
-                f'university_id must contain only digits (1-8 chars) or be empty; got "{university_id}"'
-            )
-
-        if section_number and not re.fullmatch(r"\d{1,5}", section_number):
-            schema_errors.append(
-                f'section_number must contain only digits (1-5 chars) or be empty; got "{section_number}"'
-            )
-
-        return normalized, schema_errors
-
-    def coerce_schema_invalid_fields(parsed_obj: Optional[Dict[str, Any]]) -> tuple[Optional[Dict[str, Any]], list[str]]:
-        """Coerce known invalid schema fields to safe empty values as a final fallback."""
-        if not isinstance(parsed_obj, dict):
-            return None, []
-
-        coerced: Dict[str, Any] = dict(parsed_obj)
-        corrections: list[str] = []
-
-        for field in ("student_full_name", "university_id", "section_number"):
-            value = coerced.get(field, "")
-            if value is None:
-                value = ""
-            elif not isinstance(value, str):
-                value = str(value)
-            coerced[field] = value.strip()
-
-        university_id = coerced.get("university_id", "")
-        if university_id and not re.fullmatch(r"\d{1,8}", university_id):
-            corrections.append(f'university_id "{university_id}" -> ""')
-            coerced["university_id"] = ""
-
-        section_number = coerced.get("section_number", "")
-        if section_number and not re.fullmatch(r"\d{1,5}", section_number):
-            corrections.append(f'section_number "{section_number}" -> ""')
-            coerced["section_number"] = ""
-
-        return coerced, corrections
-
-    def build_schema_retry_prompt(
-        previous_output: Any,
-        schema_errors: list[str],
-        *,
-        attempt_number: int,
-    ) -> str:
-        """Build a focused retry prompt when parsed output violates schema."""
-        try:
-            previous_output_json = json.dumps(previous_output, ensure_ascii=False)
-        except TypeError:
-            previous_output_json = str(previous_output)
-
-        issues = "\n".join(f"- {error}" for error in schema_errors) or "- Output did not satisfy schema."
-        correction_hints: list[str] = []
-
-        if isinstance(previous_output, dict):
-            ufid_value = previous_output.get("ufid", previous_output.get("university_id", ""))
-            if isinstance(ufid_value, str) and ufid_value:
-                if ufid_value.isdigit() and len(ufid_value) > 8:
-                    correction_hints.append(
-                        f'- Your previous ufid "{ufid_value}" has {len(ufid_value)} digits; maximum allowed is 8.'
-                    )
-                elif not ufid_value.isdigit():
-                    correction_hints.append(
-                        f'- Your previous ufid "{ufid_value}" contains non-digit characters; use digits only.'
-                    )
-
-            section_value = previous_output.get("section_number", "")
-            if isinstance(section_value, str) and section_value:
-                if section_value.isdigit() and len(section_value) > 5:
-                    correction_hints.append(
-                        f'- Your previous section_number "{section_value}" has {len(section_value)} digits; maximum allowed is 5.'
-                    )
-                elif not section_value.isdigit():
-                    correction_hints.append(
-                        f'- Your previous section_number "{section_value}" contains non-digit characters; use digits only.'
-                    )
-
-        hint_block = ""
-        if correction_hints:
-            hint_block = "Specific corrections:\n" + "\n".join(correction_hints) + "\n\n"
-
-        escalation_block = ""
-        if attempt_number >= 2:
-            escalation_block = (
-                f"This is correction retry attempt #{attempt_number}. "
-                "You repeated an invalid schema previously.\n"
-                "Do not repeat the same invalid value.\n\n"
-            )
-
-        return (
-            "You previously returned invalid structured output for this same image.\n\n"
-            f"{escalation_block}"
-            f"Previous invalid output:\n{previous_output_json}\n\n"
-            f"Schema issues:\n{issues}\n\n"
-            f"{hint_block}"
-            "Return ONLY valid JSON in this exact format:\n"
-            "{\n"
-            '  "student_full_name": "Full name of the student",\n'
-            '  "ufid": "8-digit UFID number if present, empty string if missing",\n'
-            '  "section_number": "5-digit section number"\n'
-            "}\n\n"
-            "Rules:\n"
-            "- ufid must be digits only (0-9) and 1-8 characters, or empty string.\n"
-            "- section_number must be digits only (0-9) and 1-5 characters, or empty string.\n"
-            "- If ufid is longer than 8 digits or uncertain, return empty string instead of invalid value.\n"
-            "- If section_number is longer than 5 digits or uncertain, return empty string instead of invalid value.\n"
-            "- Do not include markdown, code fences, or explanations."
-        )
-    
     # Fetch model data to get supported parameters
     models = fetch_openrouter_models()
     model_data = None
@@ -524,7 +451,7 @@ def run_openrouter_inference(model_name: str,
     open_weights = open_weights if open_weights is not None else False
     license_info = license_info or "Varies by provider"
     
-    selected_pages = pages if pages else [1, 3]
+    selected_pages = list(pages) if pages else list(extraction_spec.default_pages)
 
     # Create run configuration (runtime will be updated after inference)
     config = RunConfig(
@@ -554,10 +481,19 @@ def run_openrouter_inference(model_name: str,
             "repetition_penalty": effective_repetition_penalty,
             "provider_routing_requested": provider_routing_requested,
             "provider_routing_effective": provider_routing_effective,
-            "images_dir": images_dir,
-            "doc_info_file": doc_info_file,
+            "images_dir": effective_images_dir,
+            "dataset_manifest_file": effective_dataset_manifest,
+            "doc_info_file": effective_dataset_manifest,
+            "dataset_manifest_autodiscovered": dataset_manifest_autodiscovered,
             "pages": selected_pages,
-            "prompt_template": STUDENT_EXTRACTION_PROMPT,
+            "prompt_template": extraction_spec.prompt_text,
+            "prompt_source_file": extraction_spec.prompt_source,
+            "preset_id": extraction_spec.preset_id,
+            "extraction_mode": extraction_spec.mode,
+            "schema_source_file": extraction_spec.schema_source,
+            "schema_hash": extraction_spec.schema_hash,
+            "strict_schema": effective_strict_schema,
+            "output_json": output_json,
             "actual_model_providers": set(),  # Will track actual model providers used
         }
     )
@@ -632,15 +568,15 @@ def run_openrouter_inference(model_name: str,
         print("Provider routing: OpenRouter default")
     
     # Setup inference parameters
-    if doc_info_file:
+    if effective_dataset_manifest:
         imagepaths = get_imagepaths_from_doc_info(
-            doc_info_file,
-            images_dir=images_dir,
+            effective_dataset_manifest,
+            images_dir=effective_images_dir,
             pages=selected_pages,
         )
     else:
         pattern = r"doc-\d+-page-[" + "".join([str(p) for p in selected_pages]) + "]-[A-Z0-9]+.png"
-        imagepaths = get_imagepaths(images_dir, pattern)
+        imagepaths = get_imagepaths(effective_images_dir, pattern)
     
     inference_config: Dict[str, Any] = {
         "temperature": temperature,
@@ -721,6 +657,8 @@ def run_openrouter_inference(model_name: str,
             return f"exception: {entry.get('_exception')}"
         return "inference failed"
 
+    base_result_entry = extraction_adapter.base_result_entry
+
     def is_retryable_transport_exception(exc: Exception) -> bool:
         if isinstance(exc, (TimeoutError, ConnectionError, OSError)):
             return True
@@ -757,6 +695,8 @@ def run_openrouter_inference(model_name: str,
         while True:
             rate_limiter.acquire()
             try:
+                if prompt_text is None:
+                    prompt_text = extraction_spec.prompt_text
                 return create_completion(local_model_name, local_config, img_path, prompt_text=prompt_text)
             except Exception as exc:
                 retryable = is_retryable_transport_exception(exc)
@@ -850,10 +790,8 @@ def run_openrouter_inference(model_name: str,
                     error_usage = response.json().get("usage", {})
                 except Exception:
                     error_usage = {}
-                local_results.append({
-                    "student_full_name": "",
-                    "university_id": "",
-                    "section_number": "",
+                server_error_entry = base_result_entry()
+                server_error_entry.update({
                     "_api_error": response.status_code,
                     "_server_error": True,
                     "_token_usage": {
@@ -862,6 +800,7 @@ def run_openrouter_inference(model_name: str,
                         "total_tokens": error_usage.get("total_tokens", 0)
                     }
                 })
+                local_results.append(server_error_entry)
                 status_msg = f"[red]Server error {response.status_code} - continuing[/red]"
                 return finalize_payload({
                     "imagepath": imagepath,
@@ -877,10 +816,8 @@ def run_openrouter_inference(model_name: str,
                     error_usage = response.json().get("usage", {})
                 except Exception:
                     error_usage = {}
-                local_results.append({
-                    "student_full_name": "",
-                    "university_id": "",
-                    "section_number": "",
+                api_error_entry = base_result_entry()
+                api_error_entry.update({
                     "_api_error": response.status_code,
                     "_token_usage": {
                         "prompt_tokens": error_usage.get("prompt_tokens", 0),
@@ -888,6 +825,7 @@ def run_openrouter_inference(model_name: str,
                         "total_tokens": error_usage.get("total_tokens", 0)
                     }
                 })
+                local_results.append(api_error_entry)
                 status_msg = f"[red]API Error {response.status_code}[/red]"
                 return finalize_payload({
                     "imagepath": imagepath,
@@ -928,10 +866,8 @@ def run_openrouter_inference(model_name: str,
                 if missing_choices:
                     usage = response_json.get("usage", {})
                     error_details = response_json.get("error", {})
-                    local_results.append({
-                        "student_full_name": "",
-                        "university_id": "",
-                        "section_number": "",
+                    no_response_entry = base_result_entry()
+                    no_response_entry.update({
                         "_no_response": True,
                         "_no_response_error": error_details,
                         "_token_usage": {
@@ -940,6 +876,7 @@ def run_openrouter_inference(model_name: str,
                             "total_tokens": usage.get("total_tokens", 0)
                         }
                     })
+                    local_results.append(no_response_entry)
                     status_msg = "[red]No response[/red]"
                     return finalize_payload({
                         "imagepath": imagepath,
@@ -1023,13 +960,12 @@ def run_openrouter_inference(model_name: str,
                             reasoning_text = retry_message.get("reasoning")
                             update_repetition_metrics(content, reasoning_text)
                         else:
-                            local_results.append({
-                                "student_full_name": "",
-                                "university_id": "",
-                                "section_number": "",
+                            empty_retry_entry = base_result_entry()
+                            empty_retry_entry.update({
                                 "_empty_response": True,
                                 "_retry_failed": True
                             })
+                            local_results.append(empty_retry_entry)
                             status_msg = "[red]Empty after retry[/red]"
                             return finalize_payload({
                                 "imagepath": imagepath,
@@ -1040,13 +976,12 @@ def run_openrouter_inference(model_name: str,
                                 "success": False,
                             })
                 else:
-                    local_results.append({
-                        "student_full_name": "",
-                        "university_id": "",
-                        "section_number": "",
+                    retry_failed_entry = base_result_entry()
+                    retry_failed_entry.update({
                         "_empty_response": True,
                         "_retry_failed": True
                     })
+                    local_results.append(retry_failed_entry)
                     status_msg = "[red]Retry failed[/red]"
                     return finalize_payload({
                         "imagepath": imagepath,
@@ -1132,17 +1067,15 @@ def run_openrouter_inference(model_name: str,
             if json_obj is None:
                 log_reasoning_trace(imagepath, message, response_json, retry_stage="parse_failure")
                 usage = response_json.get("usage", {})
-                parse_failure_entry = {
-                    "student_full_name": "",
-                    "university_id": "",
-                    "section_number": "",
+                parse_failure_entry = base_result_entry()
+                parse_failure_entry.update({
                     "_parse_failed": True,
                     "_token_usage": {
                         "prompt_tokens": usage.get("prompt_tokens", 0),
                         "completion_tokens": usage.get("completion_tokens", 0),
                         "total_tokens": usage.get("total_tokens", 0)
                     }
-                }
+                })
                 if repetition_detected:
                     parse_failure_entry["_repetition_detected"] = True
                     parse_failure_entry["_repetition_score"] = round(repetition_score, 3)
@@ -1158,12 +1091,12 @@ def run_openrouter_inference(model_name: str,
                     "success": False,
                 })
 
-            normalized_obj, schema_errors = normalize_extraction_output(json_obj)
+            normalized_obj, schema_errors = extraction_adapter.normalize_output(json_obj)
             schema_retry_attempts = 0
 
             while schema_errors and schema_retry_attempts < schema_retry_max:
                 schema_retry_attempts += 1
-                retry_prompt = build_schema_retry_prompt(
+                retry_prompt = extraction_adapter.build_schema_retry_prompt(
                     normalized_obj if normalized_obj is not None else json_obj,
                     schema_errors,
                     attempt_number=schema_retry_attempts,
@@ -1206,31 +1139,62 @@ def run_openrouter_inference(model_name: str,
                     schema_errors = ["Retry response could not be parsed as JSON."]
                     continue
 
-                normalized_obj, schema_errors = normalize_extraction_output(retry_json_obj)
+                normalized_obj, schema_errors = extraction_adapter.normalize_output(retry_json_obj)
                 json_obj = retry_json_obj
 
             if schema_errors:
-                coerced_obj, coercions = coerce_schema_invalid_fields(normalized_obj)
-                if isinstance(coerced_obj, dict) and coercions:
-                    usage = response_json.get("usage", {})
-                    generation_id = response_json.get("id")
-                    coerced_obj["_schema_coerced"] = True
-                    coerced_obj["_schema_errors"] = schema_errors
-                    coerced_obj["_schema_retry_attempts"] = schema_retry_attempts
-                    coerced_obj["_schema_corrections"] = coercions
-                    coerced_obj["_token_usage"] = {
+                usage = response_json.get("usage", {})
+                generation_id = response_json.get("id")
+
+                if not effective_strict_schema:
+                    coerced_obj, coercions = extraction_adapter.coerce_invalid_output(normalized_obj)
+                    if isinstance(coerced_obj, dict) and coercions:
+                        coerced_obj["_schema_coerced"] = True
+                        coerced_obj["_schema_errors"] = schema_errors
+                        coerced_obj["_schema_retry_attempts"] = schema_retry_attempts
+                        coerced_obj["_schema_corrections"] = coercions
+                        coerced_obj["_token_usage"] = {
+                            "prompt_tokens": usage.get("prompt_tokens", 0),
+                            "completion_tokens": usage.get("completion_tokens", 0),
+                            "total_tokens": usage.get("total_tokens", 0),
+                            "generation_id": generation_id,
+                        }
+                        if repetition_detected:
+                            coerced_obj["_repetition_detected"] = True
+                            coerced_obj["_repetition_score"] = round(repetition_score, 3)
+                            local_rep_score = max(local_rep_score, repetition_score)
+                        local_results.append(coerced_obj)
+                        status_msg = extraction_adapter.format_success_status(
+                            coerced_obj,
+                            schema_coerced=True,
+                        )
+                        return finalize_payload({
+                            "imagepath": imagepath,
+                            "results": local_results,
+                            "providers": list(local_providers),
+                            "rep_score": local_rep_score,
+                            "status_msg": status_msg,
+                            "success": True,
+                        })
+
+                if not effective_strict_schema and isinstance(normalized_obj, dict):
+                    schema_passthrough_entry = dict(normalized_obj)
+                    schema_passthrough_entry["_schema_failed"] = True
+                    schema_passthrough_entry["_schema_passthrough"] = True
+                    schema_passthrough_entry["_schema_errors"] = schema_errors
+                    schema_passthrough_entry["_schema_retry_attempts"] = schema_retry_attempts
+                    schema_passthrough_entry["_token_usage"] = {
                         "prompt_tokens": usage.get("prompt_tokens", 0),
                         "completion_tokens": usage.get("completion_tokens", 0),
                         "total_tokens": usage.get("total_tokens", 0),
                         "generation_id": generation_id,
                     }
                     if repetition_detected:
-                        coerced_obj["_repetition_detected"] = True
-                        coerced_obj["_repetition_score"] = round(repetition_score, 3)
+                        schema_passthrough_entry["_repetition_detected"] = True
+                        schema_passthrough_entry["_repetition_score"] = round(repetition_score, 3)
                         local_rep_score = max(local_rep_score, repetition_score)
-                    local_results.append(coerced_obj)
-                    name = coerced_obj.get("student_full_name", "N/A")
-                    status_msg = f"✓ {name} (schema coerced)"
+                    local_results.append(schema_passthrough_entry)
+                    status_msg = "[yellow]Schema mismatch (passthrough)[/yellow]"
                     return finalize_payload({
                         "imagepath": imagepath,
                         "results": local_results,
@@ -1250,17 +1214,11 @@ def run_openrouter_inference(model_name: str,
                     retry_stage="schema_failure",
                 )
 
-                usage = response_json.get("usage", {})
-                generation_id = response_json.get("id")
                 schema_failure_entry: Dict[str, Any]
                 if isinstance(normalized_obj, dict):
                     schema_failure_entry = dict(normalized_obj)
                 else:
-                    schema_failure_entry = {
-                        "student_full_name": "",
-                        "university_id": "",
-                        "section_number": "",
-                    }
+                    schema_failure_entry = base_result_entry()
                 schema_failure_entry["_schema_failed"] = True
                 schema_failure_entry["_schema_errors"] = schema_errors
                 schema_failure_entry["_schema_retry_attempts"] = schema_retry_attempts
@@ -1286,11 +1244,7 @@ def run_openrouter_inference(model_name: str,
                 })
 
             if not isinstance(normalized_obj, dict):
-                normalized_obj = {
-                    "student_full_name": "",
-                    "university_id": "",
-                    "section_number": "",
-                }
+                normalized_obj = base_result_entry()
             json_obj = normalized_obj
 
             usage = response_json.get("usage", {})
@@ -1307,9 +1261,7 @@ def run_openrouter_inference(model_name: str,
                 local_rep_score = max(local_rep_score, repetition_score)
             local_results.append(json_obj)
 
-            name = json_obj.get('student_full_name', 'N/A')
-            ufid = json_obj.get('university_id', '')
-            status_msg = f"✓ {name} (ID: {ufid})" if ufid else f"✓ {name}"
+            status_msg = extraction_adapter.format_success_status(json_obj)
 
             return finalize_payload({
                 "imagepath": imagepath,
@@ -1321,12 +1273,11 @@ def run_openrouter_inference(model_name: str,
             })
 
         except Exception as e:
-            local_results.append({
-                "student_full_name": "",
-                "university_id": "",
-                "section_number": "",
+            exception_entry = base_result_entry()
+            exception_entry.update({
                 "_exception": str(e)
             })
+            local_results.append(exception_entry)
             return finalize_payload({
                 "imagepath": imagepath,
                 "results": local_results,
@@ -1489,6 +1440,8 @@ def run_openrouter_inference(model_name: str,
     results_table.add_row("[cyan]Success rate:[/cyan]", f"{successful_images/total_images*100:.1f}%")
     results_table.add_row("[cyan]Runtime:[/cyan]", f"[bold]{runtime_formatted}[/bold]")
     results_table.add_row("[cyan]API Router:[/cyan]", "OpenRouter")
+    results_table.add_row("[cyan]Extraction mode:[/cyan]", extraction_spec.mode)
+    results_table.add_row("[cyan]Strict schema:[/cyan]", str(effective_strict_schema))
     if provider_routing_effective:
         results_table.add_row("[cyan]Routing config:[/cyan]", json.dumps(provider_routing_effective, sort_keys=True))
     else:
@@ -1555,6 +1508,17 @@ def run_openrouter_inference(model_name: str,
     
     # Always save the updated results (includes cost fetch metadata for any unrecovered failures)
     manager.save_results(config.run_name, updated_results)
+
+    external_output_path: Optional[str] = None
+    if output_json:
+        try:
+            output_path = Path(output_json).expanduser().resolve(strict=False)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(output_path, "w", encoding="utf-8") as f:
+                json.dump(updated_results, f, indent=2, ensure_ascii=False)
+            external_output_path = str(output_path)
+        except Exception as exc:
+            console.print(f"[yellow]⚠️ Failed to write --output-json file: {exc}[/yellow]")
     
     # Count how many actually got precise costs
     cost_count = 0
@@ -1569,6 +1533,9 @@ def run_openrouter_inference(model_name: str,
         console.print(f"[green]✅ Added precise costs to {cost_count} results[/green]")
     else:
         console.print("[yellow]⚠️ No precise costs could be retrieved[/yellow]")
+
+    if external_output_path:
+        console.print(f"[green]✅ Wrote output JSON copy to {external_output_path}[/green]")
     
     return config.run_name
 

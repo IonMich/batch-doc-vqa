@@ -9,6 +9,14 @@ import dotenv
 from rich.console import Console
 from rich.prompt import Prompt, Confirm
 
+from .defaults import (
+    DEFAULT_DATASET_MANIFEST_FILE,
+    DEFAULT_EXTRACTION_PRESET_ID,
+    DEFAULT_IMAGES_DIR,
+    DEFAULT_PAGES,
+)
+from .presets import available_preset_ids, resolve_preset_definition
+
 dotenv.load_dotenv()
 
 console = Console()
@@ -30,10 +38,10 @@ def parse_provider_order(raw_value: str | None) -> list[str]:
     return providers
 
 
-def parse_pages(raw_value: str | None) -> list[int]:
+def parse_pages(raw_value: str | None, *, default_selection: list[int]) -> list[int]:
     """Parse comma-separated page numbers."""
     if not raw_value:
-        return [1, 3]
+        return list(default_selection)
 
     pages: list[int] = []
     seen: set[int] = set()
@@ -135,22 +143,72 @@ Examples:
     parser.add_argument("--retry-max", type=int, default=3, help="Max retries per image for 5xx errors (default: 3)")
     parser.add_argument("--retry-base-delay", type=float, default=2.0, help="Base delay (seconds) for exponential backoff on 5xx (default: 2.0)")
     parser.add_argument(
-        "--images-dir",
+        "--preset",
         type=str,
-        default="imgs/q11",
-        help="Directory containing document page images (default: imgs/q11)",
+        default=DEFAULT_EXTRACTION_PRESET_ID,
+        help=(
+            "Extraction preset id (controls default prompt/schema and default pages) "
+            f"(default: {DEFAULT_EXTRACTION_PRESET_ID}; available: {', '.join(available_preset_ids())})"
+        ),
     )
     parser.add_argument(
-        "--doc-info",
+        "--images-dir",
         type=str,
-        help="Optional doc_info.csv path. If provided, image list is derived from this CSV.",
+        default=DEFAULT_IMAGES_DIR,
+        help=(
+            "Directory containing document page images "
+            f"(default: {DEFAULT_IMAGES_DIR}; auto-detects doc_info.csv when present)"
+        ),
+    )
+    parser.add_argument(
+        "--dataset-manifest",
+        "--doc-info",
+        dest="dataset_manifest",
+        type=str,
+        default=DEFAULT_DATASET_MANIFEST_FILE,
+        help=(
+            "Optional dataset manifest CSV (doc,page,filename). "
+            "Backward-compatible alias: --doc-info."
+        ),
     )
     parser.add_argument(
         "--pages",
         type=str,
-        default="1,3",
-        help="Comma-separated page numbers to include (default: 1,3)",
+        default=None,
+        help=(
+            "Comma-separated page numbers to include (overrides preset default pages) "
+            f"(default: {','.join(str(p) for p in DEFAULT_PAGES)})"
+        ),
     )
+    parser.add_argument(
+        "--prompt-file",
+        type=str,
+        help="Path to prompt text file used for extraction instructions.",
+    )
+    parser.add_argument(
+        "--schema-file",
+        type=str,
+        help="Path to JSON Schema file that validates model output.",
+    )
+    parser.add_argument(
+        "--output-json",
+        type=str,
+        help="Optional output path for a copy of final results JSON.",
+    )
+    strict_schema_group = parser.add_mutually_exclusive_group()
+    strict_schema_group.add_argument(
+        "--strict-schema",
+        dest="strict_schema",
+        action="store_true",
+        help="Fail images that do not satisfy schema after retries.",
+    )
+    strict_schema_group.add_argument(
+        "--no-strict-schema",
+        dest="strict_schema",
+        action="store_false",
+        help="Allow non-schema-conforming output to continue (best-effort mode).",
+    )
+    parser.set_defaults(strict_schema=None)
     parser.add_argument(
         "--provider-order",
         type=str,
@@ -218,9 +276,15 @@ Examples:
         args.model = selected_model
         model_selected_interactively = True
 
+    try:
+        preset_definition = resolve_preset_definition(args.preset)
+    except ValueError as exc:
+        parser.error(str(exc))
+        return
+
     provider_order = parse_provider_order(args.provider_order)
     try:
-        pages = parse_pages(args.pages)
+        pages = parse_pages(args.pages, default_selection=list(preset_definition.default_pages))
     except ValueError as exc:
         parser.error(str(exc))
         return
@@ -229,6 +293,7 @@ Examples:
     from .inference import run_openrouter_inference
     run_name = run_openrouter_inference(
         model_name=args.model,
+        preset_id=preset_definition.preset_id,
         temperature=args.temperature,
         max_tokens=args.max_tokens,
         top_p=args.top_p,
@@ -247,8 +312,12 @@ Examples:
         retry_max=args.retry_max,
         retry_base_delay=args.retry_base_delay,
         images_dir=args.images_dir,
-        doc_info_file=args.doc_info,
+        dataset_manifest_file=args.dataset_manifest,
         pages=pages,
+        prompt_file=args.prompt_file,
+        schema_file=args.schema_file,
+        output_json=args.output_json,
+        strict_schema=args.strict_schema,
         provider_order=provider_order if provider_order else None,
         provider_allow_fallbacks=allow_fallbacks,
         provider_sort=args.provider_sort,

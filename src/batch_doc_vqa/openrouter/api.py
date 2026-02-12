@@ -10,12 +10,10 @@ import requests  # type: ignore[import]
 from typing import Dict, Any, Optional, List
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
-from ..core.prompts import STUDENT_EXTRACTION_PROMPT
+from .presets import resolve_preset_definition
 from ..core import filepath_to_base64
 
 console = Console()
-
-# Prompt is now centralized in core.prompts module
 
 # Model-specific configurations for special cases
 MODEL_CONFIG_OVERRIDES = {
@@ -36,10 +34,13 @@ def create_completion(
     """Create a completion request to OpenRouter."""
     request_config = dict(config)
     # Internal-only key (if present) should not be forwarded to the API payload.
-    request_config.pop("prompt_template", None)
+    template_from_config = request_config.pop("prompt_template", None)
 
     if prompt_text is None:
-        prompt_text = STUDENT_EXTRACTION_PROMPT
+        if isinstance(template_from_config, str) and template_from_config.strip():
+            prompt_text = template_from_config
+        else:
+            prompt_text = resolve_preset_definition().prompt_text
 
     response = requests.post(
         url="https://openrouter.ai/api/v1/chat/completions",
@@ -113,13 +114,17 @@ def parse_response_content(content: str, response_format: str) -> Optional[Dict[
             except json.JSONDecodeError:
                 pass
         
-        # Try to extract any JSON-like structure
-        json_match = re.search(r'(\{[^{}]*"student_full_name"[^{}]*\})', content, re.DOTALL)
-        if json_match:
+        # Generic fallback: scan for first decodable JSON object in the text.
+        decoder = json.JSONDecoder()
+        for idx, char in enumerate(content):
+            if char != "{":
+                continue
             try:
-                return json.loads(json_match.group(1))
+                candidate, _ = decoder.raw_decode(content[idx:])
             except json.JSONDecodeError:
-                pass
+                continue
+            if isinstance(candidate, dict):
+                return candidate
                 
         return None
 
