@@ -9,6 +9,7 @@ import argparse
 import json
 import random
 import statistics
+from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
 
 from rich.console import Console
@@ -29,6 +30,9 @@ from ..utils.string_matching import (
 
 class BenchmarkTableGenerator:
     """Enhanced benchmark table generator using run management system."""
+
+    DEFAULT_DOC_INFO_FILE = "imgs/q11/doc_info.csv"
+    DEFAULT_TEST_IDS_FILE = "tests/data/test_ids.csv"
     
     # Default rows to include in tables
     DEFAULT_ROWS = [
@@ -81,6 +85,7 @@ class BenchmarkTableGenerator:
         self.interactive = interactive
         self.included_rows = included_rows or self.DEFAULT_ROWS
         self.model_metadata = self._load_model_metadata()
+        self._expected_docs_cache: Dict[str, int] = {}
         
     def _load_model_metadata(self) -> Dict:
         """Load model metadata from JSON file."""
@@ -189,10 +194,90 @@ class BenchmarkTableGenerator:
             print(f"✅ Added metadata for {model} (saved)")
         
         print("\n💾 All model metadata saved!")
+
+    def _normalize_path(self, path_value: Optional[str]) -> Optional[str]:
+        """Normalize path values for reliable cross-run dataset comparisons."""
+        if not isinstance(path_value, str) or not path_value.strip():
+            return None
+        return str(Path(path_value).expanduser().resolve(strict=False))
+
+    def _requested_doc_info_norm(self, doc_info_file: str) -> str:
+        return self._normalize_path(doc_info_file) or doc_info_file
+
+    def _requested_test_ids_norm(self, test_ids_file: str) -> str:
+        return self._normalize_path(test_ids_file) or test_ids_file
+
+    def _requested_images_dir_norm(self, doc_info_file: str) -> str:
+        parent_dir = str(Path(doc_info_file).expanduser().resolve(strict=False).parent)
+        return parent_dir
+
+    def _is_default_dataset_request(self, doc_info_file: str, test_ids_file: str) -> bool:
+        default_doc_info = self._normalize_path(self.DEFAULT_DOC_INFO_FILE)
+        default_test_ids = self._normalize_path(self.DEFAULT_TEST_IDS_FILE)
+        return (
+            self._requested_doc_info_norm(doc_info_file) == default_doc_info
+            and self._requested_test_ids_norm(test_ids_file) == default_test_ids
+        )
+
+    def _matches_requested_dataset(
+        self,
+        run_info: Dict[str, Any],
+        *,
+        doc_info_file: str,
+        test_ids_file: str,
+    ) -> Tuple[bool, Optional[str]]:
+        """Return whether run dataset metadata matches requested scoring dataset."""
+        config = run_info.get("config", {})
+        additional = config.get("additional", {}) if isinstance(config, dict) else {}
+        if not isinstance(additional, dict):
+            additional = {}
+
+        run_doc_info = self._normalize_path(additional.get("doc_info_file"))
+        run_images_dir = self._normalize_path(additional.get("images_dir"))
+
+        requested_doc_info = self._requested_doc_info_norm(doc_info_file)
+        requested_images_dir = self._requested_images_dir_norm(doc_info_file)
+        is_default_request = self._is_default_dataset_request(doc_info_file, test_ids_file)
+
+        if run_doc_info:
+            if run_doc_info != requested_doc_info:
+                return False, f"dataset mismatch (run doc_info={run_doc_info})"
+            return True, None
+
+        if run_images_dir:
+            if run_images_dir != requested_images_dir:
+                return False, f"dataset mismatch (run images_dir={run_images_dir})"
+            return True, None
+
+        # Legacy runs without explicit dataset metadata are treated as q11-only.
+        if is_default_request:
+            return True, None
+        return False, "dataset mismatch (legacy run without dataset metadata)"
+
+    def _get_expected_docs_count(self, test_ids_file: str) -> int:
+        normalized = self._requested_test_ids_norm(test_ids_file)
+        cached = self._expected_docs_cache.get(normalized)
+        if cached is not None:
+            return cached
+
+        try:
+            df_ids = pd.read_csv(test_ids_file)
+            if "doc" in df_ids.columns:
+                expected_docs = int(df_ids["doc"].nunique())
+            else:
+                expected_docs = int(len(df_ids))
+        except Exception:
+            expected_docs = 32
+
+        expected_docs = max(1, expected_docs)
+        self._expected_docs_cache[normalized] = expected_docs
+        return expected_docs
     
     def compute_run_stats(self, run_info: Dict, doc_info_file: str, test_ids_file: str) -> Optional[Dict]:
         """Compute statistics for a single run."""
         run_name = run_info["run_name"]
+        current_doc_info_norm = self._requested_doc_info_norm(doc_info_file)
+        current_test_ids_norm = self._requested_test_ids_norm(test_ids_file)
         
         try:
             # Check if table results already exist and have cost data
@@ -211,6 +296,12 @@ class BenchmarkTableGenerator:
                     cached_stats.get("fully_parallelizable_runtime_available")
                     and "fully_parallelizable_runtime_seconds" not in cached_stats
                 ):
+                    needs_recalc = True
+
+                # Cache is dataset-specific; invalidate when scoring inputs differ.
+                if cached_stats.get("_dataset_doc_info") != current_doc_info_norm:
+                    needs_recalc = True
+                if cached_stats.get("_dataset_test_ids") != current_test_ids_norm:
                     needs_recalc = True
 
                 if needs_recalc:
@@ -234,17 +325,36 @@ class BenchmarkTableGenerator:
             with open(temp_results_file, 'w') as f:
                 import json
                 json.dump(results, f)
+
+            run_config = run_info.get("config", {})
+            run_additional = run_config.get("additional", {}) if isinstance(run_config, dict) else {}
+            images_dir_hint = run_additional.get("images_dir") if isinstance(run_additional, dict) else None
+            if not isinstance(images_dir_hint, str):
+                images_dir_hint = None
             
             # Process using existing string matching functions
             df_llm = get_llm_ids_and_fullnames(
                 temp_results_file,
                 doc_info_file,
+                images_dir=images_dir_hint,
             )
-            df_test = get_llm_distances(df_llm, doc_info_file, test_ids_file)
+            df_test = get_llm_distances(
+                df_llm,
+                doc_info_file,
+                test_ids_file,
+                images_dir=images_dir_hint,
+            )
             df_matching = get_matches(df_test)
+
+            expected_docs_count = self._get_expected_docs_count(test_ids_file)
             
             # Calculate statistics with failure-aware logic
-            stats = self._calculate_stats(df_matching, df_test, results)
+            stats = self._calculate_stats(
+                df_matching,
+                df_test,
+                results,
+                expected_docs_count=expected_docs_count,
+            )
 
             # Add fully-parallelizable runtime (max per-image elapsed) when complete per-image timing exists.
             runtime_data = self._calculate_fully_parallelizable_runtime(results)
@@ -253,6 +363,10 @@ class BenchmarkTableGenerator:
             # Add actual cost information based on real token usage
             cost_data = self._calculate_actual_costs(run_info, results)
             stats.update(cost_data)
+
+            # Cache provenance: scoring dataset inputs used for this run's stats.
+            stats["_dataset_doc_info"] = current_doc_info_norm
+            stats["_dataset_test_ids"] = current_test_ids_norm
             
             # Save table results for future use
             self.run_manager.save_table_results(run_name, stats)
@@ -280,7 +394,14 @@ class BenchmarkTableGenerator:
             "total_cost": 0.0,
         }
     
-    def _calculate_stats(self, df_matching: pd.DataFrame, df_test: pd.DataFrame, raw_results: Dict = None) -> Dict:
+    def _calculate_stats(
+        self,
+        df_matching: pd.DataFrame,
+        df_test: pd.DataFrame,
+        raw_results: Dict = None,
+        *,
+        expected_docs_count: int = 32,
+    ) -> Dict:
         """Calculate benchmark statistics from matching results."""
         # Get best matches per document
         df_best_match = df_matching.loc[df_matching.groupby("doc")["id_distance"].idxmin()]
@@ -328,7 +449,7 @@ class BenchmarkTableGenerator:
             lastname_avg_lev = 0.0
         
         # Calculate docs detected more accurately
-        total_expected_docs = 32
+        total_expected_docs = max(1, int(expected_docs_count))
         successful_docs = len(df_best_match)
         
         # If we have raw results, count parsing failures and API errors
@@ -359,6 +480,7 @@ class BenchmarkTableGenerator:
             "lastname_avg_lev": lastname_avg_lev,
             "docs_detected": docs_detected,
             "docs_detected_count": docs_detected_count,
+            "expected_docs_count": total_expected_docs,
         }
 
     def _collect_matching_runs(self, run_patterns: Optional[List[str]] = None) -> List[Dict[str, Any]]:
@@ -442,6 +564,7 @@ class BenchmarkTableGenerator:
             "lastname_avg_lev",
             "docs_detected",
             "docs_detected_count",
+            "expected_docs_count",
             "cost_per_image",
             "total_cost",
         ]
@@ -528,11 +651,13 @@ class BenchmarkTableGenerator:
     def _format_docs_detected_cell(self, stats: Dict[str, Any]) -> str:
         value = stats.get("docs_detected")
         count = stats.get("docs_detected_count")
+        expected = stats.get("expected_docs_count", 32)
         if value is None or count is None:
             return "N/A"
         n_runs = int(stats.get("n_runs", 1) or 1)
         count_int = int(round(float(count)))
-        base = f"{float(value):.2f}% ({count_int}/32)"
+        expected_int = max(1, int(round(float(expected)))) if isinstance(expected, (int, float)) else 32
+        base = f"{float(value):.2f}% ({count_int}/{expected_int})"
         ci = stats.get("ci", {}).get("docs_detected")
         if isinstance(ci, list) and len(ci) == 2 and n_runs >= 3:
             return f"{base} [{float(ci[0]):.2f}%, {float(ci[1]):.2f}%] (n={n_runs})"
@@ -583,14 +708,27 @@ class BenchmarkTableGenerator:
         eligible_runs: List[Dict[str, Any]] = []
         excluded_runs: List[Tuple[str, str]] = []
         for run_info in discovered_runs:
+            dataset_ok, dataset_reason = self._matches_requested_dataset(
+                run_info,
+                doc_info_file=doc_info_file,
+                test_ids_file=test_ids_file,
+            )
+            if not dataset_ok:
+                excluded_runs.append((run_info.get("run_name", "unknown"), dataset_reason or "dataset mismatch"))
+                continue
+
             is_eligible, reason = self._is_run_eligible_for_cohort(run_info)
             if is_eligible:
                 eligible_runs.append(run_info)
             else:
                 excluded_runs.append((run_info.get("run_name", "unknown"), reason or "ineligible"))
 
+        if excluded_runs:
+            if debug_cohorts:
+                print("Excluded runs from cohort selection:")
+            else:
+                print(f"Excluded {len(excluded_runs)} run(s) that do not match requested dataset or eligibility checks.")
         if debug_cohorts and excluded_runs:
-            print("Excluded runs from cohort selection:")
             for run_name, reason in excluded_runs:
                 print(f"- {run_name}: {reason}")
 
