@@ -3,7 +3,6 @@
 OpenRouter inference engine and orchestration.
 """
 import time
-import yaml  # type: ignore[import]
 import re
 import json
 from collections import Counter, defaultdict
@@ -12,7 +11,15 @@ from typing import Any, Dict, Optional, cast
 
 from rich.console import Console
 
-from ..core import RunManager, RunConfig, format_runtime, create_inference_progress, add_inference_task, get_imagepaths
+from ..core import (
+    RunManager,
+    RunConfig,
+    format_runtime,
+    create_inference_progress,
+    add_inference_task,
+    get_imagepaths,
+    build_git_dirty_warning_lines,
+)
 from .api import (
     MODEL_CONFIG_OVERRIDES, 
     create_completion, 
@@ -61,6 +68,9 @@ def run_openrouter_inference(model_name: str,
                             max_tokens: int = 4096,
                             top_p: float = 1.0,
                             repetition_penalty: Optional[float] = None,
+                            provider_order: Optional[list[str]] = None,
+                            provider_allow_fallbacks: Optional[bool] = None,
+                            provider_sort: Optional[str] = None,
                             model_size: Optional[str] = None,
                             open_weights: Optional[bool] = None,
                             license_info: Optional[str] = None,
@@ -140,6 +150,138 @@ def run_openrouter_inference(model_name: str,
             })
 
         return steps
+
+    def normalize_extraction_output(parsed_obj: Any) -> tuple[Optional[Dict[str, Any]], list[str]]:
+        """Normalize parsed output to expected fields and validate basic schema."""
+        if not isinstance(parsed_obj, dict):
+            return None, ["Top-level JSON must be an object."]
+
+        normalized: Dict[str, Any] = dict(parsed_obj)
+        if "university_id" not in normalized and "ufid" in normalized:
+            normalized["university_id"] = normalized.pop("ufid")
+
+        # Ensure expected keys are string-typed.
+        for field in ("student_full_name", "university_id", "section_number"):
+            value = normalized.get(field, "")
+            if value is None:
+                value = ""
+            elif not isinstance(value, str):
+                value = str(value)
+            normalized[field] = value.strip()
+
+        schema_errors: list[str] = []
+        university_id = normalized.get("university_id", "")
+        section_number = normalized.get("section_number", "")
+
+        if university_id and not re.fullmatch(r"\d{1,8}", university_id):
+            schema_errors.append(
+                f'university_id must contain only digits (1-8 chars) or be empty; got "{university_id}"'
+            )
+
+        if section_number and not re.fullmatch(r"\d{1,5}", section_number):
+            schema_errors.append(
+                f'section_number must contain only digits (1-5 chars) or be empty; got "{section_number}"'
+            )
+
+        return normalized, schema_errors
+
+    def coerce_schema_invalid_fields(parsed_obj: Optional[Dict[str, Any]]) -> tuple[Optional[Dict[str, Any]], list[str]]:
+        """Coerce known invalid schema fields to safe empty values as a final fallback."""
+        if not isinstance(parsed_obj, dict):
+            return None, []
+
+        coerced: Dict[str, Any] = dict(parsed_obj)
+        corrections: list[str] = []
+
+        for field in ("student_full_name", "university_id", "section_number"):
+            value = coerced.get(field, "")
+            if value is None:
+                value = ""
+            elif not isinstance(value, str):
+                value = str(value)
+            coerced[field] = value.strip()
+
+        university_id = coerced.get("university_id", "")
+        if university_id and not re.fullmatch(r"\d{1,8}", university_id):
+            corrections.append(f'university_id "{university_id}" -> ""')
+            coerced["university_id"] = ""
+
+        section_number = coerced.get("section_number", "")
+        if section_number and not re.fullmatch(r"\d{1,5}", section_number):
+            corrections.append(f'section_number "{section_number}" -> ""')
+            coerced["section_number"] = ""
+
+        return coerced, corrections
+
+    def build_schema_retry_prompt(
+        previous_output: Any,
+        schema_errors: list[str],
+        *,
+        attempt_number: int,
+    ) -> str:
+        """Build a focused retry prompt when parsed output violates schema."""
+        try:
+            previous_output_json = json.dumps(previous_output, ensure_ascii=False)
+        except TypeError:
+            previous_output_json = str(previous_output)
+
+        issues = "\n".join(f"- {error}" for error in schema_errors) or "- Output did not satisfy schema."
+        correction_hints: list[str] = []
+
+        if isinstance(previous_output, dict):
+            ufid_value = previous_output.get("ufid", previous_output.get("university_id", ""))
+            if isinstance(ufid_value, str) and ufid_value:
+                if ufid_value.isdigit() and len(ufid_value) > 8:
+                    correction_hints.append(
+                        f'- Your previous ufid "{ufid_value}" has {len(ufid_value)} digits; maximum allowed is 8.'
+                    )
+                elif not ufid_value.isdigit():
+                    correction_hints.append(
+                        f'- Your previous ufid "{ufid_value}" contains non-digit characters; use digits only.'
+                    )
+
+            section_value = previous_output.get("section_number", "")
+            if isinstance(section_value, str) and section_value:
+                if section_value.isdigit() and len(section_value) > 5:
+                    correction_hints.append(
+                        f'- Your previous section_number "{section_value}" has {len(section_value)} digits; maximum allowed is 5.'
+                    )
+                elif not section_value.isdigit():
+                    correction_hints.append(
+                        f'- Your previous section_number "{section_value}" contains non-digit characters; use digits only.'
+                    )
+
+        hint_block = ""
+        if correction_hints:
+            hint_block = "Specific corrections:\n" + "\n".join(correction_hints) + "\n\n"
+
+        escalation_block = ""
+        if attempt_number >= 2:
+            escalation_block = (
+                f"This is correction retry attempt #{attempt_number}. "
+                "You repeated an invalid schema previously.\n"
+                "Do not repeat the same invalid value.\n\n"
+            )
+
+        return (
+            "You previously returned invalid structured output for this same image.\n\n"
+            f"{escalation_block}"
+            f"Previous invalid output:\n{previous_output_json}\n\n"
+            f"Schema issues:\n{issues}\n\n"
+            f"{hint_block}"
+            "Return ONLY valid JSON in this exact format:\n"
+            "{\n"
+            '  "student_full_name": "Full name of the student",\n'
+            '  "ufid": "8-digit UFID number if present, empty string if missing",\n'
+            '  "section_number": "5-digit section number"\n'
+            "}\n\n"
+            "Rules:\n"
+            "- ufid must be digits only (0-9) and 1-8 characters, or empty string.\n"
+            "- section_number must be digits only (0-9) and 1-5 characters, or empty string.\n"
+            "- If ufid is longer than 8 digits or uncertain, return empty string instead of invalid value.\n"
+            "- If section_number is longer than 5 digits or uncertain, return empty string instead of invalid value.\n"
+            "- Do not include markdown, code fences, or explanations."
+        )
     
     # Fetch model data to get supported parameters
     models = fetch_openrouter_models()
@@ -155,6 +297,10 @@ def run_openrouter_inference(model_name: str,
     
     # Get model-specific overrides if they exist
     overrides = cast(Dict[str, Any], MODEL_CONFIG_OVERRIDES.get(model_name, {}))
+    default_schema_retry_max = 2
+    schema_retry_max = overrides.get("schema_retry_max", default_schema_retry_max)
+    if not isinstance(schema_retry_max, int) or schema_retry_max < 0:
+        schema_retry_max = default_schema_retry_max
 
     effective_repetition_penalty: Optional[float] = repetition_penalty
     if effective_repetition_penalty is None:
@@ -170,6 +316,37 @@ def run_openrouter_inference(model_name: str,
         override_max_tokens = overrides.get("max_tokens")
         if isinstance(override_max_tokens, int):
             max_tokens = override_max_tokens
+
+    allowed_provider_sorts = {"price", "throughput", "latency"}
+    normalized_provider_order: list[str] = []
+    if provider_order:
+        seen_providers: set[str] = set()
+        for provider_slug in provider_order:
+            normalized = str(provider_slug).strip().lower()
+            if not normalized or normalized in seen_providers:
+                continue
+            seen_providers.add(normalized)
+            normalized_provider_order.append(normalized)
+
+    normalized_provider_sort: Optional[str] = None
+    if isinstance(provider_sort, str):
+        candidate_sort = provider_sort.strip().lower()
+        if candidate_sort in allowed_provider_sorts:
+            normalized_provider_sort = candidate_sort
+
+    provider_routing_effective: Dict[str, Any] = {}
+    if normalized_provider_order:
+        provider_routing_effective["order"] = normalized_provider_order
+    if provider_allow_fallbacks is not None:
+        provider_routing_effective["allow_fallbacks"] = provider_allow_fallbacks
+    if normalized_provider_sort is not None:
+        provider_routing_effective["sort"] = normalized_provider_sort
+
+    provider_routing_requested = {
+        "order": normalized_provider_order,
+        "allow_fallbacks": provider_allow_fallbacks,
+        "sort": normalized_provider_sort,
+    }
     
     # Extract supported parameters from model data
     supported_parameters = []
@@ -215,10 +392,15 @@ def run_openrouter_inference(model_name: str,
             "model_name": model_name,
             "top_p": top_p,
             "repetition_penalty": effective_repetition_penalty,
+            "provider_routing_requested": provider_routing_requested,
+            "provider_routing_effective": provider_routing_effective,
             "prompt_template": STUDENT_EXTRACTION_PROMPT,
             "actual_model_providers": set(),  # Will track actual model providers used
         }
     )
+
+    for warning_line in build_git_dirty_warning_lines(config):
+        console.print(warning_line)
     
     # Create run directory
     manager = RunManager()
@@ -255,6 +437,10 @@ def run_openrouter_inference(model_name: str,
     print(f"Starting OpenRouter inference run: {config.run_name}")
     print(f"Model: {model_name}")
     print(f"Run directory: {run_dir}")
+    if provider_routing_effective:
+        print(f"Provider routing: {provider_routing_effective}")
+    else:
+        print("Provider routing: OpenRouter default")
     
     # Setup inference parameters
     pages = [1, 3]
@@ -267,6 +453,8 @@ def run_openrouter_inference(model_name: str,
         "top_p": top_p,
         "max_tokens": max_tokens,
     }
+    if provider_routing_effective:
+        inference_config["provider"] = provider_routing_effective
 
     max_no_choice_retries = overrides.get("no_choice_retries", 2)
     if not isinstance(max_no_choice_retries, int) or max_no_choice_retries < 0:
@@ -311,9 +499,83 @@ def run_openrouter_inference(model_name: str,
 
     rate_limiter = RateLimiter(rate_limit)
 
-    def guarded_create_completion(local_model_name: str, local_config: Dict[str, Any], img_path: str):
-        rate_limiter.acquire()
-        return create_completion(local_model_name, local_config, img_path)
+    def summarize_failure_reason(result_entries: list[Dict[str, Any]]) -> str:
+        if not result_entries:
+            return "unknown failure"
+
+        entry = result_entries[0]
+        if not isinstance(entry, dict):
+            return "unknown failure"
+
+        if entry.get("_schema_failed"):
+            errors = entry.get("_schema_errors")
+            if isinstance(errors, list) and errors:
+                return f"schema: {errors[0]}"
+            return "schema validation failed"
+        if entry.get("_parse_failed"):
+            return "parse failed"
+        if entry.get("_no_response"):
+            return "no response from model"
+        if entry.get("_empty_response"):
+            return "empty response"
+        if entry.get("_server_error"):
+            code = entry.get("_api_error")
+            return f"server error {code}" if code is not None else "server error"
+        if entry.get("_api_error") is not None:
+            return f"api error {entry.get('_api_error')}"
+        if entry.get("_exception"):
+            return f"exception: {entry.get('_exception')}"
+        return "inference failed"
+
+    def is_retryable_transport_exception(exc: Exception) -> bool:
+        if isinstance(exc, (TimeoutError, ConnectionError, OSError)):
+            return True
+
+        error_text = str(exc).lower()
+        retryable_markers = (
+            "connection reset",
+            "connection aborted",
+            "connection broken",
+            "read timed out",
+            "timed out",
+            "timeout",
+            "temporarily unavailable",
+            "remote end closed",
+            "failed to establish a new connection",
+            "connection refused",
+            "name resolution",
+            "name or service not known",
+            "nodename nor servname",
+        )
+        return any(marker in error_text for marker in retryable_markers)
+
+    def guarded_create_completion(
+        local_model_name: str,
+        local_config: Dict[str, Any],
+        img_path: str,
+        *,
+        prompt_text: Optional[str] = None,
+    ):
+        max_transport_retries = max(0, retry_max)
+        base_delay = max(0.1, retry_base_delay)
+        attempt = 0
+
+        while True:
+            rate_limiter.acquire()
+            try:
+                return create_completion(local_model_name, local_config, img_path, prompt_text=prompt_text)
+            except Exception as exc:
+                retryable = is_retryable_transport_exception(exc)
+                if not retryable or attempt >= max_transport_retries:
+                    if retryable and attempt > 0:
+                        raise RuntimeError(
+                            f"Transport error after {attempt + 1} attempts: {exc}"
+                        ) from exc
+                    raise
+
+                delay = min(60.0, base_delay * (2 ** attempt))
+                time.sleep(delay)
+                attempt += 1
 
     # Run inference with rich progress tracking
     results = defaultdict(list)
@@ -321,6 +583,7 @@ def run_openrouter_inference(model_name: str,
     completed_images = 0
     successful_images = 0
     repetition_event_scores: Dict[str, float] = {}
+    failed_images: list[tuple[str, str]] = []
     provider_lock = threading.Lock()
 
     # Per-image worker encapsulating the existing logic. Avoids disk writes and progress updates.
@@ -593,7 +856,6 @@ def run_openrouter_inference(model_name: str,
                 retry_message = retry_response_json["choices"][0]["message"]
                 content = retry_message.get("content", "")
                 reasoning_text = retry_message.get("reasoning")
-                choice = retry_response_json["choices"][0]
                 response_json = retry_response_json
                 update_repetition_metrics(content, reasoning_text)
                 current_max_tokens = new_max_tokens
@@ -675,8 +937,141 @@ def run_openrouter_inference(model_name: str,
                     "success": False,
                 }
 
-            if "ufid" in json_obj:
-                json_obj["university_id"] = json_obj.pop("ufid", "")
+            normalized_obj, schema_errors = normalize_extraction_output(json_obj)
+            schema_retry_attempts = 0
+
+            while schema_errors and schema_retry_attempts < schema_retry_max:
+                schema_retry_attempts += 1
+                retry_prompt = build_schema_retry_prompt(
+                    normalized_obj if normalized_obj is not None else json_obj,
+                    schema_errors,
+                    attempt_number=schema_retry_attempts,
+                )
+                time.sleep(2)
+                retry_response = guarded_create_completion(
+                    model_name,
+                    local_inference_config,
+                    imagepath,
+                    prompt_text=retry_prompt,
+                )
+                if retry_response.status_code == 429:
+                    time.sleep(10)
+                    retry_response = guarded_create_completion(
+                        model_name,
+                        local_inference_config,
+                        imagepath,
+                        prompt_text=retry_prompt,
+                    )
+                if retry_response.status_code >= 500:
+                    continue
+                if retry_response.status_code != 200:
+                    continue
+
+                retry_response_json = retry_response.json()
+                if "provider" in retry_response_json:
+                    local_providers.add(retry_response_json["provider"])
+                if "choices" not in retry_response_json or not retry_response_json["choices"]:
+                    continue
+
+                retry_message = retry_response_json["choices"][0]["message"]
+                content = retry_message.get("content", "")
+                reasoning_text = retry_message.get("reasoning")
+                response_json = retry_response_json
+                update_repetition_metrics(content, reasoning_text)
+
+                retry_json_obj = parse_with_reasoning_fallback(content, reasoning_text, log_image=imagepath)
+                if retry_json_obj is None:
+                    normalized_obj = None
+                    schema_errors = ["Retry response could not be parsed as JSON."]
+                    continue
+
+                normalized_obj, schema_errors = normalize_extraction_output(retry_json_obj)
+                json_obj = retry_json_obj
+
+            if schema_errors:
+                coerced_obj, coercions = coerce_schema_invalid_fields(normalized_obj)
+                if isinstance(coerced_obj, dict) and coercions:
+                    usage = response_json.get("usage", {})
+                    generation_id = response_json.get("id")
+                    coerced_obj["_schema_coerced"] = True
+                    coerced_obj["_schema_errors"] = schema_errors
+                    coerced_obj["_schema_retry_attempts"] = schema_retry_attempts
+                    coerced_obj["_schema_corrections"] = coercions
+                    coerced_obj["_token_usage"] = {
+                        "prompt_tokens": usage.get("prompt_tokens", 0),
+                        "completion_tokens": usage.get("completion_tokens", 0),
+                        "total_tokens": usage.get("total_tokens", 0),
+                        "generation_id": generation_id,
+                    }
+                    if repetition_detected:
+                        coerced_obj["_repetition_detected"] = True
+                        coerced_obj["_repetition_score"] = round(repetition_score, 3)
+                        local_rep_score = max(local_rep_score, repetition_score)
+                    local_results.append(coerced_obj)
+                    name = coerced_obj.get("student_full_name", "N/A")
+                    status_msg = f"✓ {name} (schema coerced)"
+                    return {
+                        "imagepath": imagepath,
+                        "results": local_results,
+                        "providers": list(local_providers),
+                        "rep_score": local_rep_score,
+                        "status_msg": status_msg,
+                        "success": True,
+                    }
+
+                schema_message = response_json.get("choices", [{}])[0].get("message")
+                if not isinstance(schema_message, dict):
+                    schema_message = {"content": str(schema_message or "")}
+                log_reasoning_trace(
+                    imagepath,
+                    cast(Dict[str, Any], schema_message),
+                    response_json,
+                    retry_stage="schema_failure",
+                )
+
+                usage = response_json.get("usage", {})
+                generation_id = response_json.get("id")
+                schema_failure_entry: Dict[str, Any]
+                if isinstance(normalized_obj, dict):
+                    schema_failure_entry = dict(normalized_obj)
+                else:
+                    schema_failure_entry = {
+                        "student_full_name": "",
+                        "university_id": "",
+                        "section_number": "",
+                    }
+                schema_failure_entry["_schema_failed"] = True
+                schema_failure_entry["_schema_errors"] = schema_errors
+                schema_failure_entry["_schema_retry_attempts"] = schema_retry_attempts
+                schema_failure_entry["_token_usage"] = {
+                    "prompt_tokens": usage.get("prompt_tokens", 0),
+                    "completion_tokens": usage.get("completion_tokens", 0),
+                    "total_tokens": usage.get("total_tokens", 0),
+                    "generation_id": generation_id,
+                }
+                if repetition_detected:
+                    schema_failure_entry["_repetition_detected"] = True
+                    schema_failure_entry["_repetition_score"] = round(repetition_score, 3)
+                    local_rep_score = max(local_rep_score, repetition_score)
+                local_results.append(schema_failure_entry)
+                status_msg = "[red]Schema failed[/red]"
+                return {
+                    "imagepath": imagepath,
+                    "results": local_results,
+                    "providers": list(local_providers),
+                    "rep_score": local_rep_score,
+                    "status_msg": status_msg,
+                    "success": False,
+                }
+
+            if not isinstance(normalized_obj, dict):
+                normalized_obj = {
+                    "student_full_name": "",
+                    "university_id": "",
+                    "section_number": "",
+                }
+            json_obj = normalized_obj
+
             usage = response_json.get("usage", {})
             generation_id = response_json.get("id")
             json_obj["_token_usage"] = {
@@ -755,6 +1150,8 @@ def run_openrouter_inference(model_name: str,
                 completed_images += 1
                 if success:
                     successful_images += 1
+                else:
+                    failed_images.append((img, summarize_failure_reason(local_results)))
 
                 # Save incrementally
                 manager.save_results(config.run_name, dict(results))
@@ -835,41 +1232,107 @@ def run_openrouter_inference(model_name: str,
     if model_pricing:
         config_dict["additional"]["model_pricing"] = model_pricing
     
-    # Save updated config
-    config_path = Path(run_dir) / "config.yaml"
-    with open(config_path, 'w') as f:
-        yaml.dump(config_dict, f, default_flow_style=False, sort_keys=False)
+    # Save updated config and refresh manifest metadata
+    manager.save_run_config(config.run_name, config_dict)
     
     # Final results save (incremental saves were done during processing)
     results_dict = dict(results)
     manager.save_results(config.run_name, results_dict)
+
+    schema_failed_images: list[tuple[str, list[str], int]] = []
+    schema_coerced_images: list[tuple[str, list[str], int]] = []
+    for imagepath, result_list in results_dict.items():
+        if not result_list or not isinstance(result_list[0], dict):
+            continue
+        entry = result_list[0]
+        retry_attempts_raw = entry.get("_schema_retry_attempts", 0)
+        retry_attempts = int(retry_attempts_raw) if isinstance(retry_attempts_raw, (int, float)) else 0
+
+        if entry.get("_schema_failed"):
+            errors_raw = entry.get("_schema_errors")
+            errors = [str(err) for err in errors_raw] if isinstance(errors_raw, list) else []
+            schema_failed_images.append((imagepath, errors, retry_attempts))
+        elif entry.get("_schema_coerced"):
+            corrections_raw = entry.get("_schema_corrections")
+            corrections = [str(c) for c in corrections_raw] if isinstance(corrections_raw, list) else []
+            schema_coerced_images.append((imagepath, corrections, retry_attempts))
     
     # Display results with rich formatting
     console.print("\n[bold green]✅ Inference Complete![/bold green]")
     
     from rich.table import Table
     results_table = Table(show_header=False, box=None)
-    results_table.add_row("[cyan]Processed:[/cyan]", f"{successful_images}/{total_images} images")
+    failed_count = total_images - successful_images
+    results_table.add_row("[cyan]Successful:[/cyan]", f"{successful_images}/{total_images} images")
+    results_table.add_row("[cyan]Failed:[/cyan]", f"{failed_count}/{total_images} images")
     results_table.add_row("[cyan]Success rate:[/cyan]", f"{successful_images/total_images*100:.1f}%")
     results_table.add_row("[cyan]Runtime:[/cyan]", f"[bold]{runtime_formatted}[/bold]")
     results_table.add_row("[cyan]API Router:[/cyan]", "OpenRouter")
+    if provider_routing_effective:
+        results_table.add_row("[cyan]Routing config:[/cyan]", json.dumps(provider_routing_effective, sort_keys=True))
+    else:
+        results_table.add_row("[cyan]Routing config:[/cyan]", "OpenRouter default")
     
     # Show actual model providers used
     actual_providers = sorted(list(config.additional_config.get("actual_model_providers", set())))
     if actual_providers:
         results_table.add_row("[cyan]Model Providers:[/cyan]", ", ".join(actual_providers))
+    if schema_failed_images:
+        results_table.add_row("[yellow]Schema failures:[/yellow]", f"{len(schema_failed_images)}/{total_images} images")
+    if schema_coerced_images:
+        results_table.add_row("[yellow]Schema coerced:[/yellow]", f"{len(schema_coerced_images)}/{total_images} images")
     
     results_table.add_row("[cyan]Results saved:[/cyan]", f"{run_dir}/results.json")
     results_table.add_row("[cyan]Run name:[/cyan]", f"[bold]{config.run_name}[/bold]")
     
     console.print(results_table)
+
+    if schema_failed_images:
+        console.print(
+            f"\n[yellow]⚠️ Schema validation failed for {len(schema_failed_images)} image(s) after retries.[/yellow]"
+        )
+
+    if schema_coerced_images:
+        console.print(
+            f"\n[yellow]⚠️ Schema coercion applied for {len(schema_coerced_images)} image(s) "
+            "(invalid fields were set to empty string).[/yellow]"
+        )
+        from rich.table import Table as RichTable
+        coercion_table = RichTable(show_header=True, header_style="bold yellow")
+        coercion_table.add_column("Image", style="cyan")
+        coercion_table.add_column("Corrections", style="white")
+        coercion_table.add_column("Retries", style="magenta")
+        max_rows = 8
+        for imagepath, corrections, retries in schema_coerced_images[:max_rows]:
+            correction_text = "; ".join(corrections) if corrections else "field coercion applied"
+            coercion_table.add_row(Path(imagepath).name, correction_text, str(retries))
+        console.print(coercion_table)
+        remaining = len(schema_coerced_images) - max_rows
+        if remaining > 0:
+            console.print(f"[dim]... and {remaining} more coerced image(s).[/dim]")
+
+    if failed_images:
+        console.print("\n[yellow]⚠️ Failed image summary:[/yellow]")
+        failure_table = Table(show_header=True, header_style="bold yellow")
+        failure_table.add_column("Image", style="cyan")
+        failure_table.add_column("Reason", style="white")
+        max_rows = 12
+        for imagepath, reason in failed_images[:max_rows]:
+            failure_table.add_row(Path(imagepath).name, reason)
+        console.print(failure_table)
+        remaining = len(failed_images) - max_rows
+        if remaining > 0:
+            console.print(f"[dim]... and {remaining} more failed image(s).[/dim]")
     
     # After inference is complete, batch process generation IDs for precise costs
     console.print("\n[cyan]🔍 Fetching precise cost data...[/cyan]")
     original_results = dict(results)
-    updated_results = batch_update_generation_costs(original_results)
+    updated_results = batch_update_generation_costs(
+        original_results,
+        max_workers=max(1, concurrency),
+    )
     
-    # Always save the updated results (generation IDs should be removed even if no costs added)
+    # Always save the updated results (includes cost fetch metadata for any unrecovered failures)
     manager.save_results(config.run_name, updated_results)
     
     # Count how many actually got precise costs

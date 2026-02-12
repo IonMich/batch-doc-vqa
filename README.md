@@ -100,6 +100,17 @@ To test new vision models and add them to the benchmark tables:
    uv run openrouter-inference --concurrency 64 --rate-limit 64
    ```
 
+   For deterministic routing experiments, you can pin provider behavior:
+
+   ```bash
+   uv run openrouter-inference \
+     --model google/gemma-3-4b-it \
+     --concurrency 1 \
+     --provider-order deepinfra \
+     --no-fallbacks \
+     --provider-sort latency
+   ```
+
    The script will:
    - Check for `OPENROUTER_API_KEY` in environment or `.env` file
    - If not found, prompt you to enter it interactively
@@ -108,11 +119,20 @@ To test new vision models and add them to the benchmark tables:
    - Offer to save the key to `.env` file for future use
    - Get your API key from: [openrouter.ai/keys](https://openrouter.ai/keys)
    - Launch an interactive TUI to select provider/model if `--model` is omitted
+   - Fetch precise per-request costs and store safe generation metadata in `results.json`
+   - Remove `generation_id` from saved artifacts by default (set `OPENROUTER_KEEP_GENERATION_ID=1` only for local debugging/repair workflows)
 
 2. **Update benchmark tables** with the new results:
 
    ```bash
    uv run update-benchmarks
+   ```
+
+   Optional quick summary for one model in a recent window:
+
+   ```bash
+   uv run summarize-model-runs --model google/gemma-3-4b-it --window-hours 24
+   uv run summarize-model-runs --model google/gemma-3-4b-it --window-minutes 180
    ```
 
 3. **Interactive model classification**: When you run the benchmark generator with a new model, you'll be prompted to classify it:

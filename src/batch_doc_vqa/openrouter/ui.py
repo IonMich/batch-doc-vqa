@@ -2,6 +2,7 @@
 """
 OpenRouter interactive user interface components.
 """
+from datetime import datetime
 import requests
 from typing import Dict, Any, List, Optional
 from collections import defaultdict
@@ -10,6 +11,7 @@ from rich.prompt import Prompt, Confirm
 from rich.table import Table
 
 from .api import fetch_openrouter_providers, fetch_openrouter_models, filter_vision_models
+from ..core.run_manager import RunManager
 
 console = Console()
 
@@ -29,6 +31,63 @@ def group_models_by_organization(models: List[Dict[str, Any]]) -> Dict[str, List
         organizations[org].append(model)
     
     return dict(organizations)
+
+
+def _format_benchmark_date(run_info: Dict[str, Any]) -> str:
+    """Format a run timestamp for compact table display."""
+    timestamp_iso = run_info.get("timestamp_iso")
+    if timestamp_iso:
+        try:
+            dt = datetime.fromisoformat(timestamp_iso.replace("Z", "+00:00"))
+            return dt.strftime("%Y-%m-%d")
+        except ValueError:
+            pass
+
+    timestamp = run_info.get("timestamp")
+    if timestamp:
+        try:
+            dt = datetime.strptime(timestamp, "%Y%m%d_%H%M%S")
+            return dt.strftime("%Y-%m-%d")
+        except ValueError:
+            return str(timestamp)
+
+    return "Unknown"
+
+
+def build_last_benchmarked_lookup() -> Dict[str, str]:
+    """Build model-id -> most recent benchmark date from local run history."""
+    try:
+        runs = RunManager().list_runs()
+    except Exception:
+        return {}
+
+    last_benchmarked: Dict[str, str] = {}
+    for run in runs:
+        config = run.get("config", {})
+        run_info = config.get("run_info", {})
+        model_cfg = config.get("model", {})
+        additional_cfg = config.get("additional", {})
+
+        model_ids: List[str] = []
+        org = model_cfg.get("org")
+        model_name = model_cfg.get("model")
+        if org and model_name:
+            model_ids.append(f"{org}/{model_name}")
+
+        additional_model_name = additional_cfg.get("model_name")
+        if isinstance(additional_model_name, str) and additional_model_name:
+            model_ids.append(additional_model_name)
+
+        if not model_ids:
+            continue
+
+        date_value = _format_benchmark_date(run_info)
+        # Runs are sorted newest-first, so first hit is the latest for each model.
+        for model_id in model_ids:
+            if model_id not in last_benchmarked:
+                last_benchmarked[model_id] = date_value
+
+    return last_benchmarked
 
 
 def fetch_model_endpoints(model_id: str) -> Optional[Dict[str, Any]]:
@@ -160,6 +219,7 @@ def interactive_organization_model_selection(show_all_orgs: bool = False):
     # Group by organization
     organizations = group_models_by_organization(vision_models)
     console.print(f"[green]✅ Found {len(organizations)} organizations with vision models[/green]")
+    last_benchmarked_lookup = build_last_benchmarked_lookup()
     
     # Define organization display names and trusted organizations
     org_display_names = {
@@ -266,15 +326,39 @@ def interactive_organization_model_selection(show_all_orgs: bool = False):
     org_display_name = org_display_names.get(selected_org, selected_org.replace("-", " ").title())
     console.print(f"\n[bold cyan]🤖 Models from {org_display_name}:[/bold cyan]")
     
-    model_table = Table(show_header=True, header_style="bold cyan")
-    model_table.add_column("No.", style="cyan", width=3)
-    model_table.add_column("Model Name", style="green", width=30)
-    model_table.add_column("Input $/M", style="yellow", justify="right", width=12)
-    model_table.add_column("Output $/M", style="orange3", justify="right", width=12)
-    model_table.add_column("Input Img. $/K", style="magenta", justify="right", width=15)
-    model_table.add_column("Context", style="blue", justify="right", width=10)
+    terminal_width = console.size.width
+    show_pricing = terminal_width >= 86
+    show_image_cost = terminal_width >= 104
+    show_context = terminal_width >= 114
+    show_benchmark_date = terminal_width >= 74
+
+    model_table = Table(
+        show_header=True,
+        header_style="bold cyan",
+        pad_edge=False,
+        collapse_padding=True,
+    )
+    # Keep selection index readable even in narrow terminals.
+    model_table.add_column("No.", style="cyan", justify="right", width=3, min_width=3, max_width=3, no_wrap=True)
+    model_table.add_column("Model Name", style="green", min_width=18 if show_pricing else 12, overflow="ellipsis")
+
+    if show_pricing:
+        model_table.add_column("In $/M", style="yellow", justify="right", width=8, min_width=6, no_wrap=True)
+        model_table.add_column("Out $/M", style="orange3", justify="right", width=8, min_width=6, no_wrap=True)
+    if show_image_cost:
+        model_table.add_column("Img $/K", style="magenta", justify="right", width=8, min_width=6, no_wrap=True)
+    if show_context:
+        model_table.add_column("Ctx", style="blue", justify="right", width=8, min_width=5, no_wrap=True)
+    if show_benchmark_date:
+        model_table.add_column("Benchmarked", style="cyan", justify="center", width=11, min_width=8, no_wrap=True)
+
+    if not show_context or not show_image_cost or not show_pricing or not show_benchmark_date:
+        console.print(
+            "[dim]Compact view enabled for terminal width: prioritizing selection number + model name.[/dim]"
+        )
     
     for i, model in enumerate(selected_models, 1):
+        model_id = model.get("id", "")
         model_name = model.get("name", model.get("id", "Unknown"))
         context_length = model.get("context_length", "Unknown")
         pricing = model.get("pricing", {})
@@ -299,14 +383,17 @@ def interactive_organization_model_selection(show_all_orgs: bool = False):
             output_per_m = "Unknown"
             image_per_k = "Unknown"
         
-        model_table.add_row(
-            str(i),
-            model_name,
-            input_per_m,
-            output_per_m,
-            image_per_k,
-            context_str
-        )
+        row_cells = [str(i), model_name]
+        if show_pricing:
+            row_cells.extend([input_per_m, output_per_m])
+        if show_image_cost:
+            row_cells.append(image_per_k)
+        if show_context:
+            row_cells.append(context_str)
+        if show_benchmark_date:
+            row_cells.append(last_benchmarked_lookup.get(model_id, "Never"))
+
+        model_table.add_row(*row_cells)
     
     console.print(model_table)
     

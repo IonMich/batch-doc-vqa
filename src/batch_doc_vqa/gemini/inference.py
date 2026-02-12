@@ -3,14 +3,19 @@
 Gemini inference engine and orchestration.
 """
 import time
-import yaml
 from collections import defaultdict
-from pathlib import Path
 from typing import Optional
 
 from rich.console import Console
 
-from ..core import RunManager, RunConfig, format_runtime, create_inference_progress, add_inference_task
+from ..core import (
+    RunManager,
+    RunConfig,
+    format_runtime,
+    create_inference_progress,
+    add_inference_task,
+    build_git_dirty_warning_lines,
+)
 from .api import parse_images, imagepaths, prompt
 from ..openrouter.cli import get_imagepaths
 
@@ -101,6 +106,9 @@ def run_gemini_inference(model_id: str = "gemini-2.5-flash",
         runtime_environment="TBD",  # Will be updated with actual runtime
         additional_config=additional_config
     )
+
+    for warning_line in build_git_dirty_warning_lines(config):
+        console.print(warning_line)
     
     # Create run directory
     manager = RunManager()
@@ -189,10 +197,8 @@ def run_gemini_inference(model_id: str = "gemini-2.5-flash",
     config_dict["environment"]["runtime"] = runtime_formatted
     config_dict["additional"]["actual_runtime_seconds"] = runtime_seconds
     
-    # Save updated config
-    config_path = Path(run_dir) / "config.yaml"
-    with open(config_path, 'w') as f:
-        yaml.dump(config_dict, f, default_flow_style=False, sort_keys=False)
+    # Save updated config and refresh manifest metadata
+    manager.save_run_config(config.run_name, config_dict)
     
     # Final results save
     results_dict = dict(results)

@@ -3,12 +3,8 @@
 Generate Pareto frontier plot for 8-digit_top1 vs total cost.
 """
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 import argparse
-from pathlib import Path
 from typing import Dict, List, Tuple
-import json
 from adjustText import adjust_text
 
 from .table_generator import BenchmarkTableGenerator
@@ -60,24 +56,72 @@ def create_pareto_plot(run_stats: Dict, output_path: str = "pareto_plot.png",
     orgs = []
     id_top1_scores = []
     total_costs = []
+    cohort_sizes = []
+    id_top1_ci_lows = []
+    id_top1_ci_highs = []
+    total_cost_ci_lows = []
+    total_cost_ci_highs = []
     
     for model_key, data in run_stats.items():
-        config = data["run_info"]["config"]
-        stats = data["stats"]
-        
-        # Skip models with zero cost (likely free or estimation failed)
-        if stats.get('total_cost', 0) <= 0:
+        if not isinstance(data, dict):
+            print(f"  Skipping {model_key}: invalid run data")
             continue
-            
-        org = config['model']['org']
-        model_name = config['model']['model']
-        if config['model']['variant']:
-            model_name += f"-{config['model']['variant']}"
-        
+
+        run_info = data.get("run_info")
+        stats = data.get("stats")
+        if not isinstance(run_info, dict) or not isinstance(stats, dict):
+            print(f"  Skipping {model_key}: missing run info or stats")
+            continue
+
+        config = run_info.get("config")
+        if not isinstance(config, dict) or not isinstance(config.get("model"), dict):
+            print(f"  Skipping {model_key}: missing model configuration")
+            continue
+
+        try:
+            total_cost = float(stats.get("total_cost", 0) or 0)
+            id_top1 = float(stats.get("id_top1", 0) or 0)
+        except (TypeError, ValueError):
+            print(f"  Skipping {model_key}: non-numeric cost or score")
+            continue
+
+        # Skip models with zero cost (likely free or estimation failed)
+        if total_cost <= 0:
+            continue
+
+        model_config = config["model"]
+        org = model_config.get("org", "other")
+        model_name = model_config.get("model", model_key)
+        if model_config.get("variant"):
+            model_name += f"-{model_config['variant']}"
+
         model_names.append(model_name)
         orgs.append(org)
-        id_top1_scores.append(stats['id_top1'])
-        total_costs.append(stats['total_cost'])
+        id_top1_scores.append(id_top1)
+        total_costs.append(total_cost)
+        n_runs = int(stats.get("n_runs", 1) or 1)
+        cohort_sizes.append(n_runs)
+
+        ci = stats.get("ci", {})
+        id_ci = ci.get("id_top1") if isinstance(ci, dict) else None
+        cost_ci = ci.get("total_cost") if isinstance(ci, dict) else None
+
+        if (
+            n_runs >= 3
+            and isinstance(id_ci, list)
+            and len(id_ci) == 2
+            and isinstance(cost_ci, list)
+            and len(cost_ci) == 2
+        ):
+            id_top1_ci_lows.append(float(id_ci[0]))
+            id_top1_ci_highs.append(float(id_ci[1]))
+            total_cost_ci_lows.append(float(cost_ci[0]))
+            total_cost_ci_highs.append(float(cost_ci[1]))
+        else:
+            id_top1_ci_lows.append(None)
+            id_top1_ci_highs.append(None)
+            total_cost_ci_lows.append(None)
+            total_cost_ci_highs.append(None)
     
     if len(model_names) == 0:
         print("No models with cost data found")
@@ -97,6 +141,26 @@ def create_pareto_plot(run_stats: Dict, output_path: str = "pareto_plot.png",
     # Plot all points
     for i, (org, cost, score) in enumerate(zip(orgs, total_costs, id_top1_scores)):
         color = org_colors.get(org, org_colors['other'])
+        if (
+            id_top1_ci_lows[i] is not None
+            and id_top1_ci_highs[i] is not None
+            and total_cost_ci_lows[i] is not None
+            and total_cost_ci_highs[i] is not None
+        ):
+            xerr = [[cost - float(total_cost_ci_lows[i])], [float(total_cost_ci_highs[i]) - cost]]
+            yerr = [[score - float(id_top1_ci_lows[i])], [float(id_top1_ci_highs[i]) - score]]
+            ax.errorbar(
+                cost,
+                score,
+                xerr=xerr,
+                yerr=yerr,
+                fmt="none",
+                ecolor=color,
+                alpha=0.35,
+                elinewidth=1,
+                capsize=2,
+                zorder=1,
+            )
         
         if i in frontier_indices:
             # Frontier points: full opacity, larger size
@@ -116,7 +180,10 @@ def create_pareto_plot(run_stats: Dict, output_path: str = "pareto_plot.png",
     
     # Add labels for frontier models (black text)
     for i in frontier_indices:
-        text = ax.annotate(model_names[i], 
+        label = model_names[i]
+        if cohort_sizes[i] > 1:
+            label = f"{label} (n={cohort_sizes[i]})"
+        text = ax.annotate(label, 
                           (total_costs[i], id_top1_scores[i]),
                           fontsize=9, ha='center', va='center',
                           bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8, edgecolor='black'),
@@ -127,7 +194,10 @@ def create_pareto_plot(run_stats: Dict, output_path: str = "pareto_plot.png",
     if show_all_labels:
         for i, (cost, score) in enumerate(zip(total_costs, id_top1_scores)):
             if i not in frontier_indices:
-                text = ax.annotate(model_names[i], 
+                label = model_names[i]
+                if cohort_sizes[i] > 1:
+                    label = f"{label} (n={cohort_sizes[i]})"
+                text = ax.annotate(label, 
                                   (cost, score),
                                   fontsize=8, ha='center', va='center', color='gray',
                                   bbox=dict(boxstyle='round,pad=0.2', facecolor='white', alpha=0.6, edgecolor='gray'),
@@ -211,52 +281,25 @@ def main():
     parser.add_argument("--no-interactive", action="store_true", help="Skip interactive model review")
     parser.add_argument("--hide-non-frontier-labels", action="store_true", 
                        help="Hide labels for non-frontier models (default: show all labels in gray)")
+    parser.add_argument("--cohort-window-hours", type=float, default=24.0,
+                       help="Window (hours) for grouping latest cohorts by matching prompt hash + git commit")
+    parser.add_argument("--debug-cohorts", action="store_true",
+                       help="Print latest-cohort grouping details before stats generation")
     args = parser.parse_args()
     
     # Generate benchmark data
     generator = BenchmarkTableGenerator(args.runs_dir, interactive=not args.no_interactive)
     
-    # Get all matching runs
-    all_runs = []
-    if args.patterns:
-        for pattern in args.patterns:
-            runs = generator.run_manager.list_runs(pattern)
-            all_runs.extend(runs)
-    else:
-        all_runs = generator.run_manager.list_runs()
-    
-    if not all_runs:
+    run_stats = generator.build_run_stats(
+        run_patterns=args.patterns,
+        doc_info_file=args.doc_info,
+        test_ids_file=args.test_ids,
+        cohort_window_hours=args.cohort_window_hours,
+        debug_cohorts=args.debug_cohorts,
+    )
+    if not run_stats:
         print("No runs found matching the criteria")
         return
-    
-    # Remove duplicates and get latest run per model
-    runs_by_model = {}
-    unknown_models = []
-    for run_info in all_runs:
-        config = run_info["config"]
-        model_key = generator._get_model_key(config)
-        
-        # Check if model metadata exists
-        if model_key not in generator.model_metadata["models"]:
-            if model_key not in unknown_models:
-                unknown_models.append(model_key)
-        
-        # Keep the latest run for each model
-        if model_key not in runs_by_model or run_info["config"]["run_info"]["timestamp"] > runs_by_model[model_key]["config"]["run_info"]["timestamp"]:
-            runs_by_model[model_key] = run_info
-    
-    # Review unknown models
-    generator._review_unknown_models(unknown_models)
-    
-    # Compute stats for each run
-    run_stats = {}
-    for model_key, run_info in runs_by_model.items():
-        print(f"Processing run: {run_info['run_name']}")
-        stats = generator.compute_run_stats(run_info, args.doc_info, args.test_ids)
-        run_stats[model_key] = {
-            "run_info": run_info,
-            "stats": stats
-        }
     
     # Create plot
     create_pareto_plot(run_stats, args.output, args.title, show_all_labels=not args.hide_non_frontier_labels)

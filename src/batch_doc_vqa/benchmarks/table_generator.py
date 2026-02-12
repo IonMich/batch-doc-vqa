@@ -7,14 +7,19 @@ import os
 import pandas as pd
 import argparse
 import json
-from datetime import datetime
-from typing import Dict, List, Optional
+import random
+import statistics
+from typing import Dict, List, Optional, Any, Tuple
 
 from rich.console import Console
 from rich.table import Table
-from rich import print as rprint
 
 from ..core.run_manager import RunManager
+from ..core import format_runtime
+from .cohorts import (
+    select_latest_cohorts,
+    format_cohort_debug_report,
+)
 from ..utils.string_matching import (
     get_llm_ids_and_fullnames,
     get_llm_distances,
@@ -39,6 +44,19 @@ class BenchmarkTableGenerator:
         "Cost per image",
         "Total cost"
     ]
+
+    # Any of these markers indicates inference did not fully succeed for that image.
+    # Runs containing one or more such failures are excluded from latest-cohort aggregation.
+    INFERENCE_FAILURE_MARKERS = {
+        "_schema_failed",
+        "_parse_failed",
+        "_no_response",
+        "_empty_response",
+        "_server_error",
+        "_api_error",
+        "_exception",
+        "_retry_failed",
+    }
     
     # Hardcoded OpenCV+CNN baseline data
     OPENCV_CNN_BASELINE = {
@@ -321,60 +339,288 @@ class BenchmarkTableGenerator:
             "docs_detected": docs_detected,
             "docs_detected_count": docs_detected_count,
         }
-    
-    def generate_table_for_runs(self, run_patterns: Optional[List[str]] = None, 
-                               doc_info_file: str = "imgs/q11/doc_info.csv",
-                               test_ids_file: str = "tests/data/test_ids.csv",
-                               output_format: str = "rich") -> str:
-        """Generate benchmark table for specified run patterns."""
-        
-        # Get all matching runs
-        all_runs = []
+
+    def _collect_matching_runs(self, run_patterns: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+        """Collect runs that match optional patterns."""
+        all_runs: List[Dict[str, Any]] = []
         if run_patterns:
             for pattern in run_patterns:
                 runs = self.run_manager.list_runs(pattern)
                 all_runs.extend(runs)
         else:
             all_runs = self.run_manager.list_runs()
-        
-        if not all_runs:
+        return all_runs
+
+    def _is_run_eligible_for_cohort(self, run_info: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
+        """Return whether a run should participate in latest-cohort aggregation."""
+        run_name = run_info.get("run_name", "unknown")
+        config = run_info.get("config", {})
+        runtime_value = config.get("environment", {}).get("runtime")
+
+        if not run_info.get("has_results"):
+            return False, "missing results.json"
+
+        if isinstance(runtime_value, str) and runtime_value.strip().upper() == "TBD":
+            return False, "run incomplete (runtime=TBD)"
+
+        try:
+            results = self.run_manager.load_results(run_name)
+        except Exception as exc:
+            return False, f"failed to load results: {type(exc).__name__}"
+
+        if not isinstance(results, dict) or not results:
+            return False, "empty/invalid results payload"
+
+        for result_entries in results.values():
+            if not result_entries or not isinstance(result_entries[0], dict):
+                return False, "invalid result entry"
+
+            entry = result_entries[0]
+            for marker in self.INFERENCE_FAILURE_MARKERS:
+                marker_value = entry.get(marker)
+                if marker_value not in (None, False, 0, ""):
+                    return False, f"inference failure marker {marker}"
+
+        return True, None
+
+    def _bootstrap_median_ci(
+        self,
+        values: List[float],
+        *,
+        n_resamples: int = 1000,
+        confidence: float = 0.95,
+        seed: int = 0,
+    ) -> Optional[Tuple[float, float]]:
+        """Return bootstrap CI for median when n>=3."""
+        if len(values) < 3:
+            return None
+
+        rng = random.Random(seed)
+        medians: List[float] = []
+        n = len(values)
+        for _ in range(n_resamples):
+            sample = [values[rng.randrange(n)] for _ in range(n)]
+            medians.append(statistics.median(sample))
+
+        medians.sort()
+        alpha = (1.0 - confidence) / 2.0
+        lo_idx = max(0, int(alpha * n_resamples))
+        hi_idx = min(n_resamples - 1, int((1.0 - alpha) * n_resamples) - 1)
+        return medians[lo_idx], medians[hi_idx]
+
+    def _aggregate_cohort_stats(self, cohort_entries: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+        """Aggregate per-run stats into cohort median and optional CIs."""
+        if not cohort_entries:
+            return None
+
+        metrics = [
+            "digit_top1",
+            "id_top1",
+            "lastname_top1",
+            "id_avg_lev",
+            "lastname_avg_lev",
+            "docs_detected",
+            "docs_detected_count",
+            "cost_per_image",
+            "total_cost",
+        ]
+
+        aggregated: Dict[str, Any] = {
+            "n_runs": len(cohort_entries),
+            "ci": {},
+            "run_names": [entry["run_info"]["run_name"] for entry in cohort_entries],
+        }
+
+        for metric in metrics:
+            values: List[float] = []
+            for entry in cohort_entries:
+                value = entry["stats"].get(metric)
+                if value is None:
+                    continue
+                try:
+                    values.append(float(value))
+                except (TypeError, ValueError):
+                    continue
+            if not values:
+                continue
+            aggregated[metric] = float(statistics.median(values))
+            ci = self._bootstrap_median_ci(values)
+            if ci is not None:
+                aggregated["ci"][metric] = [float(ci[0]), float(ci[1])]
+
+        runtime_values: List[float] = []
+        for entry in cohort_entries:
+            config = entry["run_info"]["config"]
+            runtime_seconds = config.get("additional", {}).get("actual_runtime_seconds")
+            if isinstance(runtime_seconds, (int, float)):
+                runtime_values.append(float(runtime_seconds))
+        if runtime_values:
+            aggregated["runtime_seconds"] = float(statistics.median(runtime_values))
+
+        return aggregated
+
+    def _format_metric_cell(
+        self,
+        stats: Dict[str, Any],
+        metric: str,
+        *,
+        decimals: int = 2,
+        prefix: str = "",
+        suffix: str = "",
+    ) -> str:
+        """Format metric value with optional CI and cohort size."""
+        value = stats.get(metric)
+        if value is None:
+            return "N/A"
+        n_runs = int(stats.get("n_runs", 1) or 1)
+
+        def _fmt(number: float) -> str:
+            return f"{prefix}{number:.{decimals}f}{suffix}"
+
+        base = _fmt(float(value))
+        ci = stats.get("ci", {}).get(metric)
+        if isinstance(ci, list) and len(ci) == 2 and n_runs >= 3:
+            return f"{base} [{_fmt(float(ci[0]))}, {_fmt(float(ci[1]))}] (n={n_runs})"
+        if n_runs > 1:
+            return f"{base} (n={n_runs})"
+        return base
+
+    def _format_docs_detected_cell(self, stats: Dict[str, Any]) -> str:
+        value = stats.get("docs_detected")
+        count = stats.get("docs_detected_count")
+        if value is None or count is None:
+            return "N/A"
+        n_runs = int(stats.get("n_runs", 1) or 1)
+        count_int = int(round(float(count)))
+        base = f"{float(value):.2f}% ({count_int}/32)"
+        ci = stats.get("ci", {}).get("docs_detected")
+        if isinstance(ci, list) and len(ci) == 2 and n_runs >= 3:
+            return f"{base} [{float(ci[0]):.2f}%, {float(ci[1]):.2f}%] (n={n_runs})"
+        if n_runs > 1:
+            return f"{base} (n={n_runs})"
+        return base
+
+    def _format_runtime_cell(self, data: Dict[str, Any]) -> str:
+        stats = data["stats"]
+        runtime_seconds = stats.get("runtime_seconds")
+        n_runs = int(stats.get("n_runs", 1) or 1)
+        if isinstance(runtime_seconds, (int, float)):
+            runtime_text = format_runtime(float(runtime_seconds))
+            if n_runs > 1:
+                return f"{runtime_text} (n={n_runs})"
+            return runtime_text
+
+        runtime_text = data["run_info"]["config"]["environment"].get("runtime", "Unknown")
+        if n_runs > 1 and runtime_text != "Unknown":
+            return f"{runtime_text} (n={n_runs})"
+        return runtime_text
+
+    def build_run_stats(
+        self,
+        run_patterns: Optional[List[str]] = None,
+        doc_info_file: str = "imgs/q11/doc_info.csv",
+        test_ids_file: str = "tests/data/test_ids.csv",
+        *,
+        cohort_window_hours: float = 24.0,
+        debug_cohorts: bool = False,
+    ) -> Dict[str, Dict[str, Any]]:
+        """Build aggregated run stats grouped by latest cohort per model."""
+        discovered_runs = self._collect_matching_runs(run_patterns)
+        if not discovered_runs:
+            return {}
+
+        eligible_runs: List[Dict[str, Any]] = []
+        excluded_runs: List[Tuple[str, str]] = []
+        for run_info in discovered_runs:
+            is_eligible, reason = self._is_run_eligible_for_cohort(run_info)
+            if is_eligible:
+                eligible_runs.append(run_info)
+            else:
+                excluded_runs.append((run_info.get("run_name", "unknown"), reason or "ineligible"))
+
+        if debug_cohorts and excluded_runs:
+            print("Excluded runs from cohort selection:")
+            for run_name, reason in excluded_runs:
+                print(f"- {run_name}: {reason}")
+
+        if not eligible_runs:
+            print("No eligible runs found after filtering incomplete/failed runs.")
+            return {}
+
+        cohorts = select_latest_cohorts(
+            eligible_runs,
+            model_key_getter=self._get_model_key,
+            window_hours=cohort_window_hours,
+        )
+
+        if debug_cohorts:
+            print(format_cohort_debug_report(cohorts))
+
+        unknown_models = [
+            model_key
+            for model_key in cohorts
+            if model_key not in self.model_metadata["models"]
+        ]
+        self._review_unknown_models(unknown_models)
+
+        run_stats: Dict[str, Dict[str, Any]] = {}
+        for model_key, cohort in cohorts.items():
+            anchor_name = cohort.anchor_run["run_name"]
+            if len(cohort.runs) > 1:
+                print(
+                    f"Processing cohort: {anchor_name} "
+                    f"(model={model_key}, runs={len(cohort.runs)})"
+                )
+            else:
+                print(f"Processing run: {anchor_name}")
+
+            cohort_entries: List[Dict[str, Any]] = []
+            for run_info in cohort.runs:
+                stats = self.compute_run_stats(run_info, doc_info_file, test_ids_file)
+                if not stats:
+                    print(f"  Skipping {run_info['run_name']} (no usable results)")
+                    continue
+                cohort_entries.append(
+                    {
+                        "run_info": run_info,
+                        "stats": stats,
+                    }
+                )
+
+            aggregated = self._aggregate_cohort_stats(cohort_entries)
+            if not aggregated:
+                print(f"  Skipping {anchor_name} (no usable cohort stats)")
+                continue
+
+            run_stats[model_key] = {
+                "run_info": cohort.anchor_run,
+                "stats": aggregated,
+                "cohort_runs": cohort_entries,
+            }
+
+            print(f"  digit_top1: {aggregated.get('digit_top1', 0.0):.2f}%")
+            print(f"  id_top1: {aggregated.get('id_top1', 0.0):.2f}%")
+            print(f"  lastname_top1: {aggregated.get('lastname_top1', 0.0):.2f}%")
+
+        return run_stats
+    
+    def generate_table_for_runs(self, run_patterns: Optional[List[str]] = None, 
+                               doc_info_file: str = "imgs/q11/doc_info.csv",
+                               test_ids_file: str = "tests/data/test_ids.csv",
+                               output_format: str = "rich",
+                               cohort_window_hours: float = 24.0,
+                               debug_cohorts: bool = False) -> str:
+        """Generate benchmark table for specified run patterns."""
+        run_stats = self.build_run_stats(
+            run_patterns=run_patterns,
+            doc_info_file=doc_info_file,
+            test_ids_file=test_ids_file,
+            cohort_window_hours=cohort_window_hours,
+            debug_cohorts=debug_cohorts,
+        )
+        if not run_stats:
             print("No runs found matching the criteria")
             return ""
-        
-        # Remove duplicates and get latest run per model
-        runs_by_model = {}
-        unknown_models = []
-        for run_info in all_runs:
-            config = run_info["config"]
-            model_key = self._get_model_key(config)
-            
-            # Check if model metadata exists
-            if model_key not in self.model_metadata["models"]:
-                if model_key not in unknown_models:
-                    unknown_models.append(model_key)
-            
-            # Keep the latest run for each model
-            if model_key not in runs_by_model or run_info["config"]["run_info"]["timestamp"] > runs_by_model[model_key]["config"]["run_info"]["timestamp"]:
-                runs_by_model[model_key] = run_info
-        
-        # Review unknown models before proceeding
-        self._review_unknown_models(unknown_models)
-        
-        # Compute stats for each run
-        run_stats = {}
-        for model_key, run_info in runs_by_model.items():
-            print(f"Processing run: {run_info['run_name']}")
-            stats = self.compute_run_stats(run_info, doc_info_file, test_ids_file)
-            if not stats:
-                print(f"  Skipping {run_info['run_name']} (no usable results)")
-                continue
-            run_stats[model_key] = {
-                "run_info": run_info,
-                "stats": stats
-            }
-            print(f"  digit_top1: {stats['digit_top1']:.2f}%")
-            print(f"  id_top1: {stats['id_top1']:.2f}%")
-            print(f"  lastname_top1: {stats['lastname_top1']:.2f}%")
         
         # Generate table based on format
         if output_format == "markdown":
@@ -445,49 +691,64 @@ class BenchmarkTableGenerator:
                         row_data.append("Yes" if config.get("open_weights", False) else "No")
                         
             elif row_name == "digit_top1":
-                values = [self.OPENCV_CNN_BASELINE[row_name]] + [f"{data['stats']['digit_top1']:.2f}%" for _, data in ordered_models]
+                values = [self.OPENCV_CNN_BASELINE[row_name]] + [
+                    self._format_metric_cell(data["stats"], "digit_top1", decimals=2, suffix="%")
+                    for _, data in ordered_models
+                ]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=True, format_type="markdown")
                 
             elif row_name == "8-digit id_top1":
-                values = [self.OPENCV_CNN_BASELINE[row_name]] + [f"{data['stats']['id_top1']:.2f}%" for _, data in ordered_models]
+                values = [self.OPENCV_CNN_BASELINE[row_name]] + [
+                    self._format_metric_cell(data["stats"], "id_top1", decimals=2, suffix="%")
+                    for _, data in ordered_models
+                ]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=True, format_type="markdown")
                 
             elif row_name == "lastname_top1":
-                values = [self.OPENCV_CNN_BASELINE[row_name]] + [f"{data['stats']['lastname_top1']:.2f}%" for _, data in ordered_models]
+                values = [self.OPENCV_CNN_BASELINE[row_name]] + [
+                    self._format_metric_cell(data["stats"], "lastname_top1", decimals=2, suffix="%")
+                    for _, data in ordered_models
+                ]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=True, format_type="markdown")
                 
             elif row_name == "ID Avg d_Lev":
-                values = [self.OPENCV_CNN_BASELINE[row_name]] + [f"{data['stats']['id_avg_lev']:.4f}" for _, data in ordered_models]
+                values = [self.OPENCV_CNN_BASELINE[row_name]] + [
+                    self._format_metric_cell(data["stats"], "id_avg_lev", decimals=4)
+                    for _, data in ordered_models
+                ]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=False, format_type="markdown")
                 
             elif row_name == "Lastname Avg d_Lev":
-                values = [self.OPENCV_CNN_BASELINE[row_name]] + [f"{data['stats']['lastname_avg_lev']:.4f}" for _, data in ordered_models]
+                values = [self.OPENCV_CNN_BASELINE[row_name]] + [
+                    self._format_metric_cell(data["stats"], "lastname_avg_lev", decimals=4)
+                    for _, data in ordered_models
+                ]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=False, format_type="markdown")
                 
             elif row_name == "Docs detected":
                 values = [self.OPENCV_CNN_BASELINE[row_name]] + [
-                    f"{data['stats']['docs_detected']:.2f}% ({data['stats']['docs_detected_count']}/32)"
+                    self._format_docs_detected_cell(data["stats"])
                     for _, data in ordered_models
                 ]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=True, format_type="markdown")
                 
             elif row_name == "Runtime":
                 values = [self.OPENCV_CNN_BASELINE[row_name]] + [
-                    data["run_info"]["config"]["environment"].get("runtime", "Unknown")
+                    self._format_runtime_cell(data)
                     for _, data in ordered_models
                 ]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=False, format_type="markdown")
                 
             elif row_name == "Cost per image":
                 values = [self.OPENCV_CNN_BASELINE[row_name]] + [
-                    f"${data['stats'].get('cost_per_image', 0.0):.6f}" if data['stats'].get('cost_per_image') is not None else "N/A" 
+                    self._format_metric_cell(data["stats"], "cost_per_image", decimals=6, prefix="$")
                     for _, data in ordered_models
                 ]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=False, format_type="markdown")
                 
             elif row_name == "Total cost":
                 values = [self.OPENCV_CNN_BASELINE[row_name]] + [
-                    f"${data['stats'].get('total_cost', 0.0):.4f}" if data['stats'].get('total_cost') is not None else "N/A"
+                    self._format_metric_cell(data["stats"], "total_cost", decimals=4, prefix="$")
                     for _, data in ordered_models
                 ]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=False, format_type="markdown")
@@ -732,45 +993,60 @@ class BenchmarkTableGenerator:
         table.add_row("Open-weights", *open_weights)
         
         # Performance metrics with best value highlighting (higher is better)
-        digit_top1_values = ["85.16%"] + [f"{data['stats']['digit_top1']:.2f}%" for _, data in ordered_models]
+        digit_top1_values = ["85.16%"] + [
+            self._format_metric_cell(data["stats"], "digit_top1", decimals=2, suffix="%")
+            for _, data in ordered_models
+        ]
         table.add_row("digit_top1", *self._format_best_value(digit_top1_values, higher_is_better=True))
         
-        id_top1_values = ["??"] + [f"{data['stats']['id_top1']:.2f}%" for _, data in ordered_models]
+        id_top1_values = ["??"] + [
+            self._format_metric_cell(data["stats"], "id_top1", decimals=2, suffix="%")
+            for _, data in ordered_models
+        ]
         table.add_row("8-digit id_top1", *self._format_best_value(id_top1_values, higher_is_better=True))
         
-        lastname_top1_values = ["N/A"] + [f"{data['stats']['lastname_top1']:.2f}%" for _, data in ordered_models]
+        lastname_top1_values = ["N/A"] + [
+            self._format_metric_cell(data["stats"], "lastname_top1", decimals=2, suffix="%")
+            for _, data in ordered_models
+        ]
         table.add_row("lastname_top1", *self._format_best_value(lastname_top1_values, higher_is_better=True))
         
         # Distance metrics (lower is better)
-        id_avg_lev_values = ["N/A"] + [f"{data['stats']['id_avg_lev']:.4f}" for _, data in ordered_models]
+        id_avg_lev_values = ["N/A"] + [
+            self._format_metric_cell(data["stats"], "id_avg_lev", decimals=4)
+            for _, data in ordered_models
+        ]
         table.add_row("ID Avg d_Lev", *self._format_best_value(id_avg_lev_values, higher_is_better=False))
         
-        lastname_avg_lev_values = ["N/A"] + [f"{data['stats']['lastname_avg_lev']:.4f}" for _, data in ordered_models]
+        lastname_avg_lev_values = ["N/A"] + [
+            self._format_metric_cell(data["stats"], "lastname_avg_lev", decimals=4)
+            for _, data in ordered_models
+        ]
         table.add_row("Lastname Avg d_Lev", *self._format_best_value(lastname_avg_lev_values, higher_is_better=False))
         
         # Detection metrics (higher is better)
         docs_detected_values = ["90.62% (29/32)"] + [
-            f"{data['stats']['docs_detected']:.2f}% ({data['stats']['docs_detected_count']}/32)"
+            self._format_docs_detected_cell(data["stats"])
             for _, data in ordered_models
         ]
         table.add_row("Docs detected", *self._format_best_value(docs_detected_values, higher_is_better=True))
         
         # Runtime (lower is better)
         runtime_values = ["~1 second"] + [
-            data["run_info"]["config"]["environment"].get("runtime", "Unknown")
+            self._format_runtime_cell(data)
             for _, data in ordered_models
         ]
         table.add_row("Runtime", *self._format_best_value(runtime_values, higher_is_better=False))
         
         # Cost metrics (lower is better) - handle missing cost data for backward compatibility
         cost_per_image_values = ["$0.00"] + [
-            f"${data['stats'].get('cost_per_image', 0.0):.6f}" if data['stats'].get('cost_per_image') is not None else "N/A" 
+            self._format_metric_cell(data["stats"], "cost_per_image", decimals=6, prefix="$")
             for _, data in ordered_models
         ]
         table.add_row("Cost per image", *self._format_best_value(cost_per_image_values, higher_is_better=False))
         
         total_cost_values = ["$0.00"] + [
-            f"${data['stats'].get('total_cost', 0.0):.4f}" if data['stats'].get('total_cost') is not None else "N/A"
+            self._format_metric_cell(data["stats"], "total_cost", decimals=4, prefix="$")
             for _, data in ordered_models
         ]
         table.add_row("Total cost", *self._format_best_value(total_cost_values, higher_is_better=False))
@@ -845,50 +1121,23 @@ def main():
                        help="Skip interactive model review (add unknown models to needs_review list)")
     parser.add_argument("--readme", action="store_true",
                        help="Generate README-friendly table with top performers only")
+    parser.add_argument("--cohort-window-hours", type=float, default=24.0,
+                       help="Window (hours) for grouping latest cohorts by matching prompt hash + git commit")
+    parser.add_argument("--debug-cohorts", action="store_true",
+                       help="Print latest-cohort grouping details before stats generation")
     args = parser.parse_args()
     
     generator = BenchmarkTableGenerator(args.runs_dir, interactive=not args.no_interactive)
     
     if args.readme:
-        # Generate README section with top performers only
-        all_runs = []
-        if args.patterns:
-            for pattern in args.patterns:
-                runs = generator.run_manager.list_runs(pattern)
-                all_runs.extend(runs)
-        else:
-            all_runs = generator.run_manager.list_runs()
-        
-        # Get latest run per model
-        runs_by_model = {}
-        unknown_models = []
-        for run_info in all_runs:
-            config = run_info["config"]
-            model_key = generator._get_model_key(config)
-            
-            if model_key not in generator.model_metadata["models"]:
-                if model_key not in unknown_models:
-                    unknown_models.append(model_key)
-            
-            if model_key not in runs_by_model or run_info["config"]["run_info"]["timestamp"] > runs_by_model[model_key]["config"]["run_info"]["timestamp"]:
-                runs_by_model[model_key] = run_info
-        
-        # Review unknown models
-        generator._review_unknown_models(unknown_models)
-        
-        # Compute stats for each run
-        run_stats = {}
-        for model_key, run_info in runs_by_model.items():
-            print(f"Processing run: {run_info['run_name']}")
-            stats = generator.compute_run_stats(run_info, args.doc_info, args.test_ids)
-            if not stats:
-                print(f"  Skipping {run_info['run_name']} (no usable results)")
-                continue
-            run_stats[model_key] = {
-                "run_info": run_info,
-                "stats": stats
-            }
-        
+        # Generate README section with top performers only (from latest cohorts)
+        run_stats = generator.build_run_stats(
+            run_patterns=args.patterns,
+            doc_info_file=args.doc_info,
+            test_ids_file=args.test_ids,
+            cohort_window_hours=args.cohort_window_hours,
+            debug_cohorts=args.debug_cohorts,
+        )
         table_markdown = generator.generate_readme_section(run_stats, args.doc_info, args.test_ids)
     else:
         # Generate full table
@@ -896,7 +1145,9 @@ def main():
             run_patterns=args.patterns,
             doc_info_file=args.doc_info,
             test_ids_file=args.test_ids,
-            output_format=args.format
+            output_format=args.format,
+            cohort_window_hours=args.cohort_window_hours,
+            debug_cohorts=args.debug_cohorts,
         )
     
     if args.output:

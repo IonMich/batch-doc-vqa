@@ -229,6 +229,11 @@
       "open_weights": true,
       "model_size": "1000A32",
       "license": "modified-mit"
+    },
+    "google/gemma-3-12b-it": {
+      "open_weights": true,
+      "model_size": "12B",
+      "license": "Gemma"
     }
   },
   "needs_review": []

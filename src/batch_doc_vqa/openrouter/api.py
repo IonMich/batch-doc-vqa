@@ -5,6 +5,7 @@ OpenRouter API interactions and data processing utilities.
 import os
 import json
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests  # type: ignore[import]
 from typing import Dict, Any, Optional, List
 from rich.console import Console
@@ -25,9 +26,21 @@ MODEL_CONFIG_OVERRIDES = {
 }
 
 
-def create_completion(model_name: str, config: Dict[str, Any], imagepath: str):
+def create_completion(
+    model_name: str,
+    config: Dict[str, Any],
+    imagepath: str,
+    *,
+    prompt_text: Optional[str] = None,
+):
     """Create a completion request to OpenRouter."""
-    
+    request_config = dict(config)
+    # Internal-only key (if present) should not be forwarded to the API payload.
+    request_config.pop("prompt_template", None)
+
+    if prompt_text is None:
+        prompt_text = STUDENT_EXTRACTION_PROMPT
+
     response = requests.post(
         url="https://openrouter.ai/api/v1/chat/completions",
         headers={
@@ -42,7 +55,7 @@ def create_completion(model_name: str, config: Dict[str, Any], imagepath: str):
                     "content": [
                         {
                             "type": "text",
-                            "text": STUDENT_EXTRACTION_PROMPT
+                            "text": prompt_text
                         },
                         {
                             "type": "image_url",
@@ -53,8 +66,9 @@ def create_completion(model_name: str, config: Dict[str, Any], imagepath: str):
                     ],
                 }
             ],
-            **config,
-        }
+            **request_config,
+        },
+        timeout=180,
     )
     
     return response
@@ -150,7 +164,192 @@ def filter_vision_models(models: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return vision_models
 
 
-def batch_update_generation_costs(results: Dict) -> Dict:
+_RETRYABLE_GENERATION_STATUS_CODES = {404, 408, 409, 425, 429}
+
+
+def _env_flag(name: str, default: bool = False) -> bool:
+    """Parse boolean-like environment variable values."""
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    normalized = raw.strip().lower()
+    if normalized in {"1", "true", "yes", "y", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "n", "off"}:
+        return False
+    return default
+
+
+def _copy_scalar_field(
+    target: Dict[str, Any],
+    source: Dict[str, Any],
+    source_key: str,
+    *,
+    target_key: Optional[str] = None,
+) -> None:
+    """Copy scalar value from source into target when present and non-empty."""
+    value = source.get(source_key)
+    if value is None:
+        return
+    if isinstance(value, str):
+        trimmed = value.strip()
+        if not trimmed:
+            return
+        target[target_key or source_key] = trimmed
+        return
+    if isinstance(value, (int, float, bool)):
+        target[target_key or source_key] = value
+
+
+def _extract_generation_meta(
+    data: Dict[str, Any],
+    *,
+    generation_id: Optional[str] = None,
+    include_generation_id: bool = False,
+) -> Optional[Dict[str, Any]]:
+    """Extract a conservative generation metadata subset safe for result artifacts."""
+    if not isinstance(data, dict):
+        return None
+
+    meta: Dict[str, Any] = {}
+
+    scalar_fields = [
+        "provider",
+        "model",
+        "status",
+        "route",
+        "finish_reason",
+        "native_finish_reason",
+        "service_tier",
+        "cache_status",
+    ]
+    numeric_fields = [
+        "latency",
+        "latency_ms",
+        "duration",
+        "duration_ms",
+        "processing_time",
+        "processing_time_ms",
+        "queue_time",
+        "queue_time_ms",
+        "time_to_first_token",
+        "time_to_first_token_ms",
+    ]
+    timestamp_fields = [
+        "created_at",
+        "generated_at",
+        "finished_at",
+        "created_at_ms",
+        "generated_at_ms",
+        "finished_at_ms",
+    ]
+
+    for key in scalar_fields:
+        _copy_scalar_field(meta, data, key)
+
+    for key in numeric_fields:
+        _copy_scalar_field(meta, data, key)
+
+    for key in timestamp_fields:
+        _copy_scalar_field(meta, data, key)
+
+    # Some payloads place provider details under an object.
+    provider_obj = data.get("provider")
+    if isinstance(provider_obj, dict):
+        _copy_scalar_field(meta, provider_obj, "name", target_key="provider_name")
+        _copy_scalar_field(meta, provider_obj, "slug", target_key="provider_slug")
+        if "provider" not in meta:
+            provider_slug = meta.get("provider_slug")
+            provider_name = meta.get("provider_name")
+            if isinstance(provider_slug, str):
+                meta["provider"] = provider_slug
+            elif isinstance(provider_name, str):
+                meta["provider"] = provider_name
+
+    if include_generation_id and isinstance(generation_id, str) and generation_id.strip():
+        meta["generation_id"] = generation_id.strip()
+
+    if not meta:
+        return None
+    return meta
+
+
+def _fetch_generation_stats_with_retries(
+    generation_id: str,
+    api_key: str,
+    *,
+    max_retries: int = 3,
+    base_delay_seconds: float = 0.75,
+    request_timeout_seconds: float = 5.0,
+) -> Dict[str, Any]:
+    """Fetch generation stats with bounded retries/backoff."""
+    attempts = 0
+    last_status_code: Optional[int] = None
+    last_error: Optional[str] = None
+    last_retryable = False
+
+    max_retries = max(0, int(max_retries))
+    total_attempts = max_retries + 1
+
+    for attempt in range(1, total_attempts + 1):
+        attempts = attempt
+        try:
+            response = requests.get(
+                f"https://openrouter.ai/api/v1/generation?id={generation_id}",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                timeout=request_timeout_seconds,
+            )
+            last_status_code = response.status_code
+
+            if response.status_code == 200:
+                try:
+                    stats_data = response.json()
+                except Exception as exc:
+                    last_error = f"invalid json: {type(exc).__name__}: {exc}"
+                    last_retryable = True
+                else:
+                    data = stats_data.get("data", {})
+                    if data:
+                        return {
+                            "success": True,
+                            "attempts": attempts,
+                            "status_code": response.status_code,
+                            "retryable": False,
+                            "error": None,
+                            "data": data,
+                        }
+                    last_error = "empty data payload"
+                    last_retryable = True
+            else:
+                last_error = f"HTTP {response.status_code}"
+                last_retryable = (
+                    response.status_code in _RETRYABLE_GENERATION_STATUS_CODES
+                    or response.status_code >= 500
+                )
+        except Exception as exc:
+            last_error = f"{type(exc).__name__}: {exc}"
+            last_retryable = True
+
+        if not last_retryable or attempt >= total_attempts:
+            break
+
+        backoff_seconds = min(10.0, base_delay_seconds * (2 ** (attempt - 1)))
+        time.sleep(backoff_seconds)
+
+    return {
+        "success": False,
+        "attempts": attempts,
+        "status_code": last_status_code,
+        "retryable": last_retryable,
+        "error": last_error,
+        "data": None,
+    }
+
+
+def batch_update_generation_costs(results: Dict, *, max_workers: int = 1) -> Dict:
     """Update results with precise costs from generation API in batch."""
     
     # Collect all generation IDs that need processing
@@ -177,7 +376,18 @@ def batch_update_generation_costs(results: Dict) -> Dict:
         console.print("[yellow]⚠️ No API key found, skipping precise cost updates[/yellow]")
         return results
     
+    requested_workers = max(1, int(max_workers))
+    worker_count = min(requested_workers, len(generation_ids_to_process))
+    max_retries = 3
+    base_delay_seconds = 0.75
+    request_timeout_seconds = 5.0
+    keep_generation_id = _env_flag("OPENROUTER_KEEP_GENERATION_ID", default=False)
+
     updated_count = 0
+    zero_cost_count = 0
+    failed_count = 0
+    retried_count = 0
+    failed_fetches: list[tuple[str, str, Dict[str, Any]]] = []
     
     with Progress(
         SpinnerColumn(),
@@ -190,62 +400,127 @@ def batch_update_generation_costs(results: Dict) -> Dict:
         transient=True
     ) as progress:
         
-        task = progress.add_task("Updating costs...", total=len(generation_ids_to_process))
-        
-        for filepath, generation_id in generation_ids_to_process:
-            try:
-                # Query generation API for precise stats
-                stats_response = requests.get(
-                    f"https://openrouter.ai/api/v1/generation?id={generation_id}",
-                    headers={
-                        "Authorization": f"Bearer {api_key}",
-                        "Content-Type": "application/json",
-                    },
-                    timeout=5
-                )
-                
-                # Always remove generation_id first
+        task = progress.add_task(
+            f"Updating costs ({worker_count} workers)...",
+            total=len(generation_ids_to_process),
+        )
+
+        with ThreadPoolExecutor(max_workers=worker_count) as executor:
+            future_map = {
+                executor.submit(
+                    _fetch_generation_stats_with_retries,
+                    generation_id,
+                    api_key,
+                    max_retries=max_retries,
+                    base_delay_seconds=base_delay_seconds,
+                    request_timeout_seconds=request_timeout_seconds,
+                ): (filepath, generation_id)
+                for filepath, generation_id in generation_ids_to_process
+            }
+
+            for future in as_completed(future_map):
+                filepath, generation_id = future_map[future]
                 result = results[filepath][0]
-                token_usage = result["_token_usage"]
-                token_usage.pop("generation_id", None)
-                
-                if stats_response.status_code == 200:
-                    stats_data = stats_response.json()
-                    data = stats_data.get("data", {})
-                    
-                    if data:  # Make sure we got actual data
-                        # Update with native token counts and actual cost
-                        if "native_tokens_prompt" in data:
-                            token_usage["prompt_tokens"] = data["native_tokens_prompt"]
-                        if "native_tokens_completion" in data:
-                            token_usage["completion_tokens"] = data["native_tokens_completion"]
-                        
-                        actual_cost = data.get("total_cost", 0.0)
-                        if actual_cost > 0:
-                            token_usage["actual_cost"] = actual_cost
+                token_usage = result.setdefault("_token_usage", {})
+
+                try:
+                    fetch_outcome = future.result()
+                except Exception as exc:
+                    fetch_outcome = {
+                        "success": False,
+                        "attempts": 1,
+                        "status_code": None,
+                        "retryable": True,
+                        "error": f"worker exception: {type(exc).__name__}: {exc}",
+                        "data": None,
+                    }
+
+                attempts = int(fetch_outcome.get("attempts", 1) or 1)
+                if attempts > 1:
+                    retried_count += 1
+
+                if fetch_outcome.get("success"):
+                    data = fetch_outcome.get("data") or {}
+                    if "native_tokens_prompt" in data:
+                        token_usage["prompt_tokens"] = data["native_tokens_prompt"]
+                    if "native_tokens_completion" in data:
+                        token_usage["completion_tokens"] = data["native_tokens_completion"]
+
+                    actual_cost = data.get("total_cost")
+                    if isinstance(actual_cost, (int, float)):
+                        token_usage["actual_cost"] = float(actual_cost)
+                        if float(actual_cost) > 0:
                             updated_count += 1
-                            progress.update(task, advance=1, description=f"Updated {updated_count} costs")
                         else:
-                            progress.update(task, advance=1, description=f"Updated {updated_count} costs (no cost data)")
+                            zero_cost_count += 1
                     else:
-                        progress.update(task, advance=1, description=f"Updated {updated_count} costs (empty response)")
-                
+                        zero_cost_count += 1
+
+                    generation_meta = _extract_generation_meta(
+                        data,
+                        generation_id=generation_id,
+                        include_generation_id=keep_generation_id,
+                    )
+                    if generation_meta:
+                        result["_generation_meta"] = generation_meta
+
+                    if not keep_generation_id:
+                        token_usage.pop("generation_id", None)
+                    result.pop("_cost_fetch", None)
                 else:
-                    # Log the failure for debugging
-                    if stats_response.status_code == 404:
-                        progress.update(task, advance=1, description=f"Updated {updated_count} costs (404 not found)")
+                    failed_count += 1
+                    failure_meta = {
+                        "status": "failed",
+                        "attempts": attempts,
+                        "status_code": fetch_outcome.get("status_code"),
+                        "retryable": bool(fetch_outcome.get("retryable")),
+                        "error": fetch_outcome.get("error"),
+                    }
+                    if keep_generation_id:
+                        failure_meta["generation_id"] = generation_id
                     else:
-                        progress.update(task, advance=1, description=f"Updated {updated_count} costs (API error {stats_response.status_code})")
-            
-            except Exception as e:
-                # Remove generation_id and log error
-                results[filepath][0]["_token_usage"].pop("generation_id", None)
-                progress.update(task, advance=1, description=f"Updated {updated_count} costs (exception)")
-                console.print(f"[dim]Error for {generation_id}: {str(e)}[/dim]")
-    
+                        token_usage.pop("generation_id", None)
+                    result["_cost_fetch"] = failure_meta
+                    failed_fetches.append((filepath, generation_id, failure_meta))
+
+                progress.update(
+                    task,
+                    advance=1,
+                    description=(
+                        f"Updated {updated_count} costs • "
+                        f"retried {retried_count} • "
+                        f"failed {failed_count}"
+                    ),
+                )
+
+    total_targets = len(generation_ids_to_process)
     if updated_count > 0:
-        console.print(f"[green]✅ Updated {updated_count}/{len(generation_ids_to_process)} results with precise costs[/green]")
+        console.print(
+            f"[green]✅ Updated {updated_count}/{total_targets} results with precise costs[/green]"
+        )
     else:
         console.print("[yellow]⚠️ Could not get precise costs for any results[/yellow]")
+
+    if zero_cost_count > 0:
+        console.print(
+            f"[dim]ℹ️ {zero_cost_count}/{total_targets} generation fetches returned zero/unknown cost[/dim]"
+        )
+
+    if retried_count > 0:
+        console.print(f"[dim]ℹ️ Retried {retried_count} generation lookups[/dim]")
+
+    if failed_fetches:
+        console.print(
+            f"[yellow]⚠️ Cost fetch failed for {failed_count}/{total_targets} results after retries[/yellow]"
+        )
+        max_rows = 8
+        for filepath, _generation_id, failure_meta in failed_fetches[:max_rows]:
+            image_name = os.path.basename(filepath)
+            status = failure_meta.get("status_code")
+            error = failure_meta.get("error") or "unknown error"
+            console.print(f"[dim]- {image_name}: status={status}, error={error}[/dim]")
+        remaining = len(failed_fetches) - max_rows
+        if remaining > 0:
+            console.print(f"[dim]... and {remaining} more failed cost fetches[/dim]")
     
     return results

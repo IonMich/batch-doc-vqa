@@ -3,13 +3,132 @@
 Run management system for batch document VQA experiments.
 Creates dated run directories with proper configuration tracking.
 """
-import os
 import yaml
 import json
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 import re
+import subprocess
+import hashlib
+
+
+REPRO_RELEVANT_PATH_PREFIXES = (
+    "src/",
+    "imgs/",
+    "tests/data/",
+)
+
+REPRO_RELEVANT_PATH_EXACT = {
+    "pyproject.toml",
+    "uv.lock",
+    "requirements.txt",
+}
+
+
+def _to_json_safe(value: Any) -> Any:
+    """Convert values to JSON-safe structures with stable ordering."""
+    if isinstance(value, dict):
+        return {str(k): _to_json_safe(v) for k, v in sorted(value.items(), key=lambda item: str(item[0]))}
+    if isinstance(value, (list, tuple)):
+        return [_to_json_safe(v) for v in value]
+    if isinstance(value, set):
+        return sorted(_to_json_safe(v) for v in value)
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+    return str(value)
+
+
+def _stable_hash(payload: Any) -> str:
+    """Create a stable SHA256 hash for arbitrary JSON-serializable payloads."""
+    normalized = _to_json_safe(payload)
+    raw = json.dumps(normalized, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def _safe_run_git_command(args: List[str]) -> Optional[str]:
+    """Run a git command safely and return stripped stdout when available."""
+    try:
+        result = subprocess.run(
+            ["git", *args],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+    except Exception:
+        return None
+
+    output = result.stdout.strip()
+    return output if output else None
+
+
+def _dequote_git_path(path: str) -> str:
+    """Best-effort dequote for porcelain paths with quoted whitespace/escapes."""
+    if len(path) >= 2 and path[0] == '"' and path[-1] == '"':
+        raw = path[1:-1]
+        try:
+            return bytes(raw, "utf-8").decode("unicode_escape")
+        except Exception:
+            return raw
+    return path
+
+
+def _extract_git_dirty_paths(porcelain_output: Optional[str]) -> Optional[List[str]]:
+    """Extract normalized file paths from `git status --porcelain` output."""
+    if porcelain_output is None:
+        return None
+
+    paths: List[str] = []
+    for raw_line in porcelain_output.splitlines():
+        line = raw_line.rstrip()
+        if len(line) < 4:
+            continue
+
+        payload = line[3:].strip()
+        if not payload:
+            continue
+
+        # Rename/copy format: "old/path -> new/path" (keep destination path).
+        if " -> " in payload:
+            payload = payload.split(" -> ", 1)[1].strip()
+
+        normalized = _dequote_git_path(payload).replace("\\", "/").strip()
+        if normalized:
+            paths.append(normalized)
+
+    return paths
+
+
+def _is_reproducibility_relevant_dirty_path(path: str) -> bool:
+    """Return whether a dirty path likely impacts inference/benchmark reproducibility."""
+    if path in REPRO_RELEVANT_PATH_EXACT:
+        return True
+    return any(path.startswith(prefix) for prefix in REPRO_RELEVANT_PATH_PREFIXES)
+
+
+def build_git_dirty_warning_lines(config: "RunConfig", *, max_paths: int = 6) -> List[str]:
+    """Build pre-run warning/info lines for dirty worktree status."""
+    if config.git_dirty_relevant:
+        total_relevant = config.git_dirty_relevant_count or len(config.git_dirty_relevant_paths)
+        lines = [
+            "[yellow]⚠️ Reproducibility warning: relevant uncommitted changes detected.[/yellow]",
+            f"[yellow]Relevant dirty paths: {total_relevant}[/yellow]",
+        ]
+        for path in config.git_dirty_relevant_paths[:max_paths]:
+            lines.append(f"[yellow]- {path}[/yellow]")
+        remaining = total_relevant - min(max_paths, len(config.git_dirty_relevant_paths))
+        if remaining > 0:
+            lines.append(f"[yellow]... and {remaining} more[/yellow]")
+        lines.append("[yellow]Commit/stash relevant changes for strict run-to-run comparability.[/yellow]")
+        return lines
+
+    if config.git_dirty_raw:
+        return [
+            "[dim]ℹ️ Uncommitted changes detected, but none matched reproducibility-relevant paths.[/dim]"
+        ]
+
+    return []
 
 
 class RunConfig:
@@ -27,6 +146,8 @@ class RunConfig:
                  temperature: float = 0.0,
                  max_tokens: Optional[int] = None,
                  runtime_environment: str = "Unknown",
+                 parser_version: str = "v1",
+                 schema_version: str = "v1",
                  additional_config: Optional[Dict[str, Any]] = None):
         
         self.org = org
@@ -41,6 +162,8 @@ class RunConfig:
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.runtime_environment = runtime_environment
+        self.parser_version = parser_version
+        self.schema_version = schema_version
         self.additional_config = additional_config or {}
         
         # Generate run timestamp
@@ -49,6 +172,26 @@ class RunConfig:
         
         # Generate run directory name
         self.run_name = self._generate_run_name()
+
+        # Reproducibility metadata used for cohorting and diagnostics
+        self.git_commit = _safe_run_git_command(["rev-parse", "HEAD"]) or "unknown"
+        git_status = _safe_run_git_command(["status", "--porcelain"])
+        dirty_paths = _extract_git_dirty_paths(git_status)
+        self.git_dirty = bool(dirty_paths) if dirty_paths is not None else None
+        self.git_dirty_raw = self.git_dirty
+        self.git_dirty_raw_count = len(dirty_paths) if dirty_paths is not None else None
+        if dirty_paths is None:
+            self.git_dirty_relevant = None
+            self.git_dirty_relevant_count = None
+            self.git_dirty_relevant_paths: List[str] = []
+        else:
+            relevant_paths = [p for p in dirty_paths if _is_reproducibility_relevant_dirty_path(p)]
+            self.git_dirty_relevant = bool(relevant_paths)
+            self.git_dirty_relevant_count = len(relevant_paths)
+            self.git_dirty_relevant_paths = relevant_paths
+        self.prompt_hash = self._compute_prompt_hash()
+        self.inference_settings_hash = self._compute_inference_settings_hash()
+        self.provider_routing_config = self._extract_provider_routing_config()
         
     def _generate_run_name(self) -> str:
         """Generate a standardized run directory name."""
@@ -58,6 +201,42 @@ class RunConfig:
         
         name = "-".join(parts).replace("/", "-").replace("_", "-")
         return f"{name}_{self.timestamp_str}"
+
+    def _compute_prompt_hash(self) -> Optional[str]:
+        """Hash the effective prompt template if available."""
+        prompt_candidates = (
+            self.additional_config.get("prompt_template"),
+            self.additional_config.get("prompt"),
+        )
+        for candidate in prompt_candidates:
+            if isinstance(candidate, str) and candidate.strip():
+                return hashlib.sha256(candidate.encode("utf-8")).hexdigest()
+        return None
+
+    def _compute_inference_settings_hash(self) -> str:
+        """Hash inference settings excluding the raw prompt text."""
+        additional_without_prompt = {
+            key: value
+            for key, value in self.additional_config.items()
+            if key not in {"prompt_template", "prompt"}
+        }
+        payload = {
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+            "structured_output": self.use_structured_output,
+            "regex_patterns": self.use_regex_patterns,
+            "additional": additional_without_prompt,
+        }
+        return _stable_hash(payload)
+
+    def _extract_provider_routing_config(self) -> Dict[str, Any]:
+        """Extract provider-routing-relevant config fields for reproducibility metadata."""
+        routing_fields = {}
+        for key, value in self.additional_config.items():
+            lowered = str(key).lower()
+            if "provider" in lowered or "route" in lowered or "fallback" in lowered:
+                routing_fields[key] = value
+        return _to_json_safe(routing_fields)
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert config to dictionary for YAML serialization."""
@@ -66,6 +245,21 @@ class RunConfig:
                 "run_name": self.run_name,
                 "timestamp": self.timestamp_str,
                 "timestamp_iso": self.timestamp.isoformat(),
+                "reproducibility": {
+                    "manifest_version": "1",
+                    "git_commit": self.git_commit,
+                    "git_dirty_raw": self.git_dirty_raw,
+                    "git_dirty_raw_count": self.git_dirty_raw_count,
+                    "git_dirty_relevant": self.git_dirty_relevant,
+                    "git_dirty_relevant_count": self.git_dirty_relevant_count,
+                    "git_dirty_relevant_paths_sample": self.git_dirty_relevant_paths[:10],
+                    "git_dirty": self.git_dirty,
+                    "prompt_hash": self.prompt_hash,
+                    "parser_version": self.parser_version,
+                    "schema_version": self.schema_version,
+                    "inference_settings_hash": self.inference_settings_hash,
+                    "provider_routing_config": self.provider_routing_config,
+                },
             },
             "model": {
                 "org": self.org,
@@ -103,13 +297,47 @@ class RunManager:
         """Create a new run directory with the given configuration."""
         run_dir = self.base_output_dir / config.run_name
         run_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Save configuration
-        config_path = run_dir / "config.yaml"
-        with open(config_path, 'w') as f:
-            yaml.dump(config.to_dict(), f, default_flow_style=False, sort_keys=False)
-        
+
+        # Save configuration and reproducibility manifest
+        self.save_run_config(config.run_name, config.to_dict())
+
         return run_dir
+
+    def _write_manifest(self, run_dir: Path, config: Dict[str, Any]) -> Path:
+        """Write a lightweight reproducibility manifest for a run."""
+        run_info = config.get("run_info", {})
+        repro = run_info.get("reproducibility", {})
+        manifest = {
+            "manifest_version": repro.get("manifest_version", "1"),
+            "run_name": run_info.get("run_name", run_dir.name),
+            "timestamp": run_info.get("timestamp"),
+            "timestamp_iso": run_info.get("timestamp_iso"),
+            "model": config.get("model", {}),
+            "api": config.get("api", {}),
+            "reproducibility": repro,
+            "artifacts": {
+                "config": "config.yaml",
+                "results": "results.json",
+                "table_results": "table_results.json",
+            },
+        }
+        manifest_path = run_dir / "manifest.json"
+        with open(manifest_path, "w") as f:
+            json.dump(_to_json_safe(manifest), f, indent=2)
+        return manifest_path
+
+    def save_run_config(self, run_name: str, config: Dict[str, Any]) -> Path:
+        """Save run configuration and refresh manifest metadata."""
+        run_dir = self.base_output_dir / run_name
+        if not run_dir.exists():
+            raise ValueError(f"Run directory {run_name} does not exist")
+
+        config_path = run_dir / "config.yaml"
+        with open(config_path, "w") as f:
+            yaml.dump(_to_json_safe(config), f, default_flow_style=False, sort_keys=False)
+
+        self._write_manifest(run_dir, config)
+        return config_path
     
     def list_runs(self, pattern: Optional[str] = None) -> List[Dict[str, Any]]:
         """List all runs, optionally filtered by pattern."""
@@ -135,12 +363,16 @@ class RunManager:
                 table_results_path = run_dir / "table_results.json"
                 has_table_results = table_results_path.exists()
                 
+                manifest_path = run_dir / "manifest.json"
+                has_manifest = manifest_path.exists()
+                
                 run_info = {
                     "run_name": run_dir.name,
                     "run_dir": str(run_dir),
                     "config": config,
                     "has_results": has_results,
                     "has_table_results": has_table_results,
+                    "has_manifest": has_manifest,
                 }
                 runs.append(run_info)
         

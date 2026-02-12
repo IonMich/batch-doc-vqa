@@ -14,6 +14,22 @@ dotenv.load_dotenv()
 console = Console()
 
 
+def parse_provider_order(raw_value: str | None) -> list[str]:
+    """Parse comma-separated provider slugs into a clean ordered list."""
+    if not raw_value:
+        return []
+
+    providers: list[str] = []
+    seen: set[str] = set()
+    for chunk in raw_value.split(","):
+        slug = chunk.strip().lower()
+        if not slug or slug in seen:
+            continue
+        seen.add(slug)
+        providers.append(slug)
+    return providers
+
+
 # Import shared utilities from core
 def list_model_overrides():
     """List models with special configuration overrides."""
@@ -93,6 +109,21 @@ Examples:
     parser.add_argument("--rate-limit", type=float, default=None, help="Max requests per second across all threads (optional)")
     parser.add_argument("--retry-max", type=int, default=3, help="Max retries per image for 5xx errors (default: 3)")
     parser.add_argument("--retry-base-delay", type=float, default=2.0, help="Base delay (seconds) for exponential backoff on 5xx (default: 2.0)")
+    parser.add_argument(
+        "--provider-order",
+        type=str,
+        help="Comma-separated OpenRouter provider slugs (preferred order, e.g. deepinfra,crusoe)",
+    )
+    parser.add_argument(
+        "--no-fallbacks",
+        action="store_true",
+        help="Disable provider fallbacks (pairs best with --provider-order)",
+    )
+    parser.add_argument(
+        "--provider-sort",
+        choices=["price", "throughput", "latency"],
+        help="Provider sorting preference for OpenRouter routing",
+    )
     
     args = parser.parse_args()
     
@@ -111,14 +142,17 @@ Examples:
             return
         # Set the selected model for inference
         args.model = selected_model
-    
+
+    provider_order = parse_provider_order(args.provider_order)
+    allow_fallbacks = False if args.no_fallbacks else None
+
     from .inference import run_openrouter_inference
     run_name = run_openrouter_inference(
         model_name=args.model,
         temperature=args.temperature,
         max_tokens=args.max_tokens,
         top_p=args.top_p,
-    repetition_penalty=args.repetition_penalty,
+        repetition_penalty=args.repetition_penalty,
         model_size=args.model_size,
         open_weights=args.open_weights,
         license_info=args.license_info,
@@ -127,6 +161,9 @@ Examples:
         rate_limit=args.rate_limit,
         retry_max=args.retry_max,
         retry_base_delay=args.retry_base_delay,
+        provider_order=provider_order if provider_order else None,
+        provider_allow_fallbacks=allow_fallbacks,
+        provider_sort=args.provider_sort,
     )
     
     print(f"\nRun completed: {run_name}")
