@@ -124,6 +124,14 @@ Examples:
         choices=["price", "throughput", "latency"],
         help="Provider sorting preference for OpenRouter routing",
     )
+    parser.add_argument(
+        "--skip-reproducibility-checks",
+        action="store_true",
+        help=(
+            "Bypass reproducibility dirty-tree guard. "
+            "Use only when you intentionally accept non-comparable runs."
+        ),
+    )
     
     args = parser.parse_args()
     
@@ -159,7 +167,11 @@ Examples:
         open_weights=args.open_weights,
         license_info=args.license_info,
         interactive=args.interactive,
-        confirm_reproducibility_warnings=(model_selected_interactively or args.interactive),
+        confirm_reproducibility_warnings=(
+            (model_selected_interactively or args.interactive)
+            and not args.skip_reproducibility_checks
+        ),
+        skip_reproducibility_checks=args.skip_reproducibility_checks,
         concurrency=args.concurrency,
         rate_limit=args.rate_limit,
         retry_max=args.retry_max,
@@ -170,7 +182,7 @@ Examples:
     )
     if not run_name:
         console.print("[yellow]Inference aborted.[/yellow]")
-        return
+        raise SystemExit(2)
     
     print(f"\nRun completed: {run_name}")
     print("Generate benchmark table with:")

@@ -78,6 +78,7 @@ def run_openrouter_inference(model_name: str,
                             license_info: Optional[str] = None,
                             interactive: bool = False,
                             confirm_reproducibility_warnings: bool = False,
+                            skip_reproducibility_checks: bool = False,
                             concurrency: int = 1,
                             rate_limit: Optional[float] = None,
                             retry_max: int = 3,
@@ -411,7 +412,19 @@ def run_openrouter_inference(model_name: str,
     for warning_line in build_git_dirty_warning_lines(config):
         console.print(warning_line)
 
-    if confirm_reproducibility_warnings and config.git_dirty_relevant:
+    if config.git_dirty_relevant and not skip_reproducibility_checks:
+        if not confirm_reproducibility_warnings:
+            console.print(
+                "[red]❌ Reproducibility check failed: relevant uncommitted changes detected.[/red]"
+            )
+            console.print(
+                "[red]Non-interactive runs require a clean reproducibility state.[/red]"
+            )
+            console.print(
+                "[yellow]Use --skip-reproducibility-checks to override this guard explicitly.[/yellow]"
+            )
+            return ""
+
         console.print("\n[bold yellow]Pre-run reproducibility check[/bold yellow]")
         console.print(
             "[yellow]This run has reproducibility-relevant uncommitted changes "
