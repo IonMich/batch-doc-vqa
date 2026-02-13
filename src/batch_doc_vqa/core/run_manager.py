@@ -191,7 +191,6 @@ class RunConfig:
             self.git_dirty_relevant_paths = relevant_paths
         self.prompt_hash = self._compute_prompt_hash()
         self.inference_settings_hash = self._compute_inference_settings_hash()
-        self.provider_routing_config = self._extract_provider_routing_config()
         
     def _generate_run_name(self) -> str:
         """Generate a standardized run directory name."""
@@ -240,6 +239,9 @@ class RunConfig:
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert config to dictionary for YAML serialization."""
+        # Derive routing metadata at serialization time so late-bound runtime
+        # fields (e.g. discovered providers) stay consistent in config/manifest.
+        provider_routing_config = self._extract_provider_routing_config()
         config_dict = {
             "run_info": {
                 "run_name": self.run_name,
@@ -258,7 +260,7 @@ class RunConfig:
                     "parser_version": self.parser_version,
                     "schema_version": self.schema_version,
                     "inference_settings_hash": self.inference_settings_hash,
-                    "provider_routing_config": self.provider_routing_config,
+                    "provider_routing_config": provider_routing_config,
                 },
             },
             "model": {
