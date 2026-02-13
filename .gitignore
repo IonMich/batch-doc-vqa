@@ -4,6 +4,7 @@ imgs/*
 !imgs/quiz11-presidents.pdf
 tests/output/*
 !tests/output/public/
+src/batch_doc_vqa/datasets/
 
 **/__pycache__/
 .env
