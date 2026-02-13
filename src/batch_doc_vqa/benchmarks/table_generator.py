@@ -28,6 +28,36 @@ from ..utils.string_matching import (
     get_matches,
 )
 
+_DEFAULT_BASELINE_SECTION = """## Baseline Comparison
+
+- **OpenCV+CNN**: Traditional computer vision pipeline with convolutional neural networks
+  - **logits available**: Yes (provides confidence scores and top-k predictions)
+  - **digit_top2**: 90.62%, **digit_top3**: 94.14% (multi-candidate accuracy)
+  - **Model licensing**: N/A (uses OpenCV + custom CNN)
+"""
+
+
+def _render_benchmarks_template(
+    template_content: str,
+    *,
+    doc_info_file: str,
+    test_ids_file: str,
+    expected_docs: int,
+    include_baseline: bool,
+) -> str:
+    """Render BENCHMARKS.md header template with dataset-aware metadata."""
+    rendered = template_content
+    rendered = rendered.replace("{{DOC_INFO_FILE}}", doc_info_file)
+    rendered = rendered.replace("{{TEST_IDS_FILE}}", test_ids_file)
+    rendered = rendered.replace("{{EXPECTED_DOCS}}", str(expected_docs))
+    rendered = rendered.replace(
+        "{{BASELINE_SECTION}}",
+        _DEFAULT_BASELINE_SECTION if include_baseline else "",
+    )
+    while "\n\n\n" in rendered:
+        rendered = rendered.replace("\n\n\n", "\n\n")
+    return rendered.rstrip()
+
 
 class BenchmarkTableGenerator:
     """Enhanced benchmark table generator using run management system."""
@@ -1428,11 +1458,19 @@ def main():
     if args.output:
         # Check if this is BENCHMARKS.md and needs template header
         if args.output.endswith('BENCHMARKS.md'):
+            include_baseline = generator._is_default_dataset_request(args.doc_info, args.test_ids)
+            expected_docs = generator._get_expected_docs_count(args.test_ids)
             # Use relative path from this file to the template
             template_path = os.path.join(os.path.dirname(__file__), '..', 'templates', 'benchmarks.md')
             if os.path.exists(template_path):
                 with open(template_path, 'r') as template_f:
-                    template_content = template_f.read()
+                    template_content = _render_benchmarks_template(
+                        template_f.read(),
+                        doc_info_file=args.doc_info,
+                        test_ids_file=args.test_ids,
+                        expected_docs=expected_docs,
+                        include_baseline=include_baseline,
+                    )
                 with open(args.output, 'w') as f:
                     f.write(template_content + "\n\n" + table_markdown)
             else:
