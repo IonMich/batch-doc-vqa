@@ -31,6 +31,7 @@ generate-pareto-plot = "batch_doc_vqa.benchmarks.pareto_plot:main"
 cleanup-bad-runs = "batch_doc_vqa.benchmarks.cleanup_bad_runs:main"
 summarize-model-runs = "batch_doc_vqa.benchmarks.summarize_model_runs:main"
 update-readme-section = "batch_doc_vqa.benchmarks.readme_updater:cli_main"
+generate-synthetic-pdf-task = "batch_doc_vqa.tools.generate_synthetic_pdf_task:main"
 
 [project.optional-dependencies]
 gemini = [

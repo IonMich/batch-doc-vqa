@@ -1,0 +1,14 @@
+task_type: default_student
+pages_per_doc: 4
+target_pages:
+  - 1
+  - 3
+profile: noisy_mixed
+include_table: true
+extra_lines_min: 3
+extra_lines_max: 6
+font_choices:
+  - helv
+  - cour
+  - times-roman
+jitter_px: 1.5
