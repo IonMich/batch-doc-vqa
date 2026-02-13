@@ -2,8 +2,8 @@
 
 ## Status Snapshot
 
-- Completed: Phases 1-6
-- Remaining: Phase 7 (docs/examples), Phase 8 (synthetic PDF generator), Phase 9 (future UI), Phase 10 (future calibration experiment)
+- Completed: Phases 1-7
+- Remaining: Phase 8 (synthetic PDF generator), Phase 9 (future UI), Phase 10 (future calibration experiment)
 
 ## Goal
 
@@ -21,7 +21,7 @@
 - [x] Phase 4: Parser generalization
 - [x] Phase 5: Output ergonomics
 - [x] Phase 6: Legacy benchmark compatibility
-- [ ] Phase 7: Documentation and examples
+- [x] Phase 7: Documentation and examples
 - [ ] Phase 8: Synthetic PDF task generator (PyMuPDF)
 - [ ] Phase 9 (Future): Task-design UI workflow
 - [ ] Phase 10 (Future): Statistical calibration plot experiment (OpenRouter, one-off script)
