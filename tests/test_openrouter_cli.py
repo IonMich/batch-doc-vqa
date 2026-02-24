@@ -67,6 +67,11 @@ class TestOpenRouterCliMain(unittest.TestCase):
         self.assertIs(kwargs["provider_allow_fallbacks"], False)
         self.assertIs(kwargs["provider_zdr"], False)
         self.assertEqual(kwargs["pages"], [1, 3])
+        self.assertIsNone(kwargs["temperature"])
+        self.assertIsNone(kwargs["top_p"])
+        self.assertIsNone(kwargs["top_k"])
+        self.assertIsNone(kwargs["min_p"])
+        self.assertIsNone(kwargs["presence_penalty"])
 
     @patch("batch_doc_vqa.openrouter.cli.setup_api_key", return_value=None)
     @patch("batch_doc_vqa.openrouter.cli.resolve_preset_definition", side_effect=ValueError("Unknown extraction preset"))
@@ -115,6 +120,48 @@ class TestOpenRouterCliMain(unittest.TestCase):
         _, kwargs = mock_run_inference.call_args
         self.assertEqual(kwargs["model_name"], "google/gemini-2.5-flash")
         self.assertIs(kwargs["confirm_reproducibility_warnings"], True)
+
+    @patch("batch_doc_vqa.openrouter.cli.setup_api_key", return_value=None)
+    @patch("batch_doc_vqa.openrouter.cli.resolve_preset_definition")
+    @patch("batch_doc_vqa.openrouter.inference.run_openrouter_inference", return_value="run_789")
+    def test_main_wires_optional_generation_overrides(
+        self,
+        mock_run_inference,
+        mock_resolve_preset,
+        _mock_setup_api_key,
+    ):
+        mock_resolve_preset.return_value = SimpleNamespace(
+            preset_id="default_student",
+            default_pages=(1, 3),
+        )
+        argv = [
+            "openrouter-inference",
+            "--model",
+            "qwen/qwen3.5-plus-02-15",
+            "--temperature",
+            "0.6",
+            "--top-p",
+            "0.95",
+            "--top-k",
+            "20",
+            "--min-p",
+            "0.0",
+            "--presence-penalty",
+            "0.0",
+            "--repetition-penalty",
+            "1.0",
+        ]
+
+        with patch("sys.argv", argv):
+            cli.main()
+
+        _, kwargs = mock_run_inference.call_args
+        self.assertEqual(kwargs["temperature"], 0.6)
+        self.assertEqual(kwargs["top_p"], 0.95)
+        self.assertEqual(kwargs["top_k"], 20)
+        self.assertEqual(kwargs["min_p"], 0.0)
+        self.assertEqual(kwargs["presence_penalty"], 0.0)
+        self.assertEqual(kwargs["repetition_penalty"], 1.0)
 
 
 if __name__ == "__main__":

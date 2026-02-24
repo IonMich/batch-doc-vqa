@@ -25,9 +25,10 @@ from ..core import (
     build_git_dirty_warning_lines,
 )
 from .api import (
-    MODEL_CONFIG_OVERRIDES, 
-    create_completion, 
-    parse_response_content, 
+    MODEL_CONFIG_OVERRIDES,
+    resolve_model_config_overrides,
+    create_completion,
+    parse_response_content,
     fetch_openrouter_models,
     model_supports_image_input,
     batch_update_generation_costs,
@@ -70,11 +71,14 @@ def assess_repetition(text: str, *, min_tokens: int = 80) -> tuple[bool, float]:
     return is_repetitive, repetition_score
 
 
-def run_openrouter_inference(model_name: str, 
+def run_openrouter_inference(model_name: str,
                             preset_id: str = DEFAULT_EXTRACTION_PRESET_ID,
-                            temperature: float = 0.0,
-                            max_tokens: int = 4096,
-                            top_p: float = 1.0,
+                            temperature: Optional[float] = None,
+                            max_tokens: Optional[int] = None,
+                            top_p: Optional[float] = None,
+                            top_k: Optional[int] = None,
+                            min_p: Optional[float] = None,
+                            presence_penalty: Optional[float] = None,
                             repetition_penalty: Optional[float] = None,
                             provider_order: Optional[list[str]] = None,
                             provider_allow_fallbacks: Optional[bool] = None,
@@ -100,7 +104,7 @@ def run_openrouter_inference(model_name: str,
                             output_json: Optional[str] = None,
                             strict_schema: Optional[bool] = None):
     """Run inference using any OpenRouter vision model."""
-    
+
     # Start timing
     start_time = time.time()
 
@@ -221,21 +225,21 @@ def run_openrouter_inference(model_name: str,
         reasoning_content: Optional[str],
         *,
         log_image: Optional[str] = None,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> tuple[Optional[Dict[str, Any]], bool]:
         parsed = None
         if isinstance(response_format, str):
             parsed = parse_response_content(primary_content or "", response_format)
 
         if parsed is not None:
-            return parsed
+            return parsed, False
 
         if isinstance(reasoning_content, str) and reasoning_content.strip():
             fallback = parse_response_content(reasoning_content.strip(), response_format)
             if fallback is not None and log_image:
                 console.print(f"[yellow]⚠️ Using reasoning text as fallback for {log_image}[/yellow]")
-            return fallback
+            return fallback, True
 
-        return None
+        return None, False
 
     def build_reasoning_retry_steps(
         *,
@@ -296,34 +300,169 @@ def run_openrouter_inference(model_name: str,
             "[red]This pipeline requires image-input models; aborting before requests are sent.[/red]"
         )
         return ""
-    
+
     # Parse model name
     if "/" in model_name:
         org, model = model_name.split("/", 1)
     else:
         org, model = "unknown", model_name
-    
-    # Get model-specific overrides if they exist
-    overrides = cast(Dict[str, Any], MODEL_CONFIG_OVERRIDES.get(model_name, {}))
+
+    # Get model-specific overrides if they exist.
+    overrides = cast(Dict[str, Any], resolve_model_config_overrides(model_name))
+
+    default_temperature = 0.0
+    default_max_tokens = 4096
+    default_top_p = 1.0
+
+    def _is_number(value: Any) -> bool:
+        return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+    def _resolve_float_param(
+        *,
+        cli_value: Optional[float],
+        key: str,
+        default_value: Optional[float] = None,
+        min_value: Optional[float] = None,
+        max_value: Optional[float] = None,
+    ) -> tuple[Optional[float], str]:
+        source = "cli"
+        resolved: Optional[float]
+        if cli_value is not None:
+            resolved = float(cli_value)
+        else:
+            source = "model_override"
+            override_value = overrides.get(key)
+            if _is_number(override_value):
+                resolved = float(override_value)
+            else:
+                source = "global_default"
+                resolved = default_value
+
+        if resolved is None:
+            return None, source
+
+        if min_value is not None and resolved < min_value:
+            raise ValueError(f"{key} must be >= {min_value}; got {resolved}")
+        if max_value is not None and resolved > max_value:
+            raise ValueError(f"{key} must be <= {max_value}; got {resolved}")
+        return resolved, source
+
+    def _resolve_int_param(
+        *,
+        cli_value: Optional[int],
+        key: str,
+        default_value: Optional[int] = None,
+        min_value: Optional[int] = None,
+    ) -> tuple[Optional[int], str]:
+        source = "cli"
+        resolved: Optional[int]
+        if cli_value is not None:
+            resolved = int(cli_value)
+        else:
+            source = "model_override"
+            override_value = overrides.get(key)
+            if isinstance(override_value, bool):
+                resolved = None
+            elif isinstance(override_value, int):
+                resolved = override_value
+            elif isinstance(override_value, float) and override_value.is_integer():
+                resolved = int(override_value)
+            else:
+                source = "global_default"
+                resolved = default_value
+
+        if resolved is None:
+            return None, source
+        if min_value is not None and resolved < min_value:
+            raise ValueError(f"{key} must be >= {min_value}; got {resolved}")
+        return resolved, source
+
+    try:
+        effective_temperature, temperature_source = _resolve_float_param(
+            cli_value=temperature,
+            key="temperature",
+            default_value=default_temperature,
+            min_value=0.0,
+        )
+        effective_max_tokens, max_tokens_source = _resolve_int_param(
+            cli_value=max_tokens,
+            key="max_tokens",
+            default_value=default_max_tokens,
+            min_value=1,
+        )
+        effective_top_p, top_p_source = _resolve_float_param(
+            cli_value=top_p,
+            key="top_p",
+            default_value=default_top_p,
+            min_value=0.0,
+            max_value=1.0,
+        )
+        effective_top_k, top_k_source = _resolve_int_param(
+            cli_value=top_k,
+            key="top_k",
+            default_value=None,
+            min_value=0,
+        )
+        effective_min_p, min_p_source = _resolve_float_param(
+            cli_value=min_p,
+            key="min_p",
+            default_value=None,
+            min_value=0.0,
+            max_value=1.0,
+        )
+        effective_presence_penalty, presence_penalty_source = _resolve_float_param(
+            cli_value=presence_penalty,
+            key="presence_penalty",
+            default_value=None,
+        )
+        effective_repetition_penalty, repetition_penalty_source = _resolve_float_param(
+            cli_value=repetition_penalty,
+            key="repetition_penalty",
+            default_value=None,
+            min_value=0.0,
+        )
+    except ValueError as exc:
+        console.print(f"[red]❌ Invalid generation parameter: {exc}[/red]")
+        return ""
+
+    if effective_temperature is None or effective_max_tokens is None or effective_top_p is None:
+        console.print("[red]❌ Failed to resolve core generation parameters.[/red]")
+        return ""
+
+    resolved_param_sources: Dict[str, str] = {
+        "temperature": temperature_source,
+        "max_tokens": max_tokens_source,
+        "top_p": top_p_source,
+        "top_k": top_k_source,
+        "min_p": min_p_source,
+        "presence_penalty": presence_penalty_source,
+        "repetition_penalty": repetition_penalty_source,
+    }
+
+    # Replace optional function args with resolved effective values.
+    temperature = effective_temperature
+    max_tokens = effective_max_tokens
+    top_p = effective_top_p
+
     default_schema_retry_max = 2
     schema_retry_max = overrides.get("schema_retry_max", default_schema_retry_max)
     if not isinstance(schema_retry_max, int) or schema_retry_max < 0:
         schema_retry_max = default_schema_retry_max
 
-    effective_repetition_penalty: Optional[float] = repetition_penalty
-    if effective_repetition_penalty is None:
-        override_penalty = overrides.get("repetition_penalty")
-        if isinstance(override_penalty, (int, float)):
-            effective_repetition_penalty = float(override_penalty)
-    
+    default_token_escalation_repetition_threshold = 0.85
+    threshold_override = overrides.get(
+        "token_escalation_repetition_threshold",
+        default_token_escalation_repetition_threshold,
+    )
+    if isinstance(threshold_override, (int, float)):
+        token_escalation_repetition_threshold = float(threshold_override)
+    else:
+        token_escalation_repetition_threshold = default_token_escalation_repetition_threshold
+    if not (0.0 <= token_escalation_repetition_threshold <= 1.0):
+        token_escalation_repetition_threshold = default_token_escalation_repetition_threshold
+
     # Set defaults with potential overrides
     response_format = overrides.get("response_format", "json")
-    
-    # Use provided max_tokens (now has default of 4096)
-    if "max_tokens" in overrides:
-        override_max_tokens = overrides.get("max_tokens")
-        if isinstance(override_max_tokens, int):
-            max_tokens = override_max_tokens
 
     allowed_provider_sorts = {"price", "throughput", "latency"}
     allowed_data_collection = {"allow", "deny"}
@@ -426,32 +565,43 @@ def run_openrouter_inference(model_name: str,
         "data_collection": normalized_data_collection,
         "zdr": normalized_provider_zdr,
     }
-    
+
     # Extract supported parameters from model data
     supported_parameters = []
     model_context_length = "Unknown"
     model_pricing = {}
-    
+
     if model_data:
         supported_parameters = model_data.get("supported_parameters", [])
         model_context_length = model_data.get("context_length", "Unknown")
         model_pricing = model_data.get("pricing", {})
-    
+
     # Interactive configuration if missing key info and interactive mode
     if interactive and (model_size is None or open_weights is None or license_info is None):
         interactive_config = interactive_config_prompt(model_name)
         model_size = model_size or interactive_config["model_size"]
         open_weights = open_weights if open_weights is not None else interactive_config["open_weights"]
         license_info = license_info or interactive_config["license_info"]
-    
+
     # Set final defaults
     if model_size is None:
         override_model_size = overrides.get("model_size")
         model_size = override_model_size if isinstance(override_model_size, str) else "Unknown"
     open_weights = open_weights if open_weights is not None else False
     license_info = license_info or "Varies by provider"
-    
+
     selected_pages = list(pages) if pages else list(extraction_spec.default_pages)
+    generation_params_effective: Dict[str, Any] = {
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+        "top_p": top_p,
+        "top_k": effective_top_k,
+        "min_p": effective_min_p,
+        "presence_penalty": effective_presence_penalty,
+        "repetition_penalty": effective_repetition_penalty,
+        "include_reasoning": overrides.get("include_reasoning"),
+        "reasoning": overrides.get("reasoning"),
+    }
 
     # Create run configuration (runtime will be updated after inference)
     config = RunConfig(
@@ -476,8 +626,14 @@ def run_openrouter_inference(model_name: str,
             "retry_max": int(max(0, retry_max)),
             "retry_base_delay": float(max(0.0, retry_base_delay)),
             "schema_retry_max": int(schema_retry_max),
+            "token_escalation_repetition_threshold": token_escalation_repetition_threshold,
             "cost_fetch_max_workers": int(max(1, concurrency)),
+            "generation_param_sources": dict(resolved_param_sources),
+            "generation_params_effective": dict(generation_params_effective),
             "top_p": top_p,
+            "top_k": effective_top_k,
+            "min_p": effective_min_p,
+            "presence_penalty": effective_presence_penalty,
             "repetition_penalty": effective_repetition_penalty,
             "provider_routing_requested": provider_routing_requested,
             "provider_routing_effective": provider_routing_effective,
@@ -526,11 +682,12 @@ def run_openrouter_inference(model_name: str,
         if not proceed_anyway:
             console.print("[yellow]Run cancelled before start.[/yellow]")
             return ""
-    
+
     # Create run directory
     manager = RunManager()
     run_dir = manager.create_run_directory(config)
     reasoning_log_path = Path(run_dir) / "failed_reasoning.log"
+    retry_log_path = Path(run_dir) / "retry_events.log"
 
     def log_reasoning_trace(imagepath: str,
                              message: Dict[str, Any],
@@ -558,15 +715,144 @@ def run_openrouter_inference(model_name: str,
             console.print(f"[dim]Saved reasoning trace for {imagepath} to {reasoning_log_path.name}[/dim]")
         except Exception as exc:
             console.print(f"[yellow]⚠️ Failed to write reasoning log: {exc}[/yellow]")
-    
+
+    # Parallel processing setup
+    import threading
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    retry_event_lock = threading.Lock()
+
+    def log_retry_event(
+        imagepath: str,
+        *,
+        stage: str,
+        attempt: int,
+        max_attempts: Optional[int] = None,
+        delay_seconds: Optional[float] = None,
+        detail: Optional[str] = None,
+        extra_fields: Optional[Dict[str, Any]] = None,
+        emit_console: bool = True,
+    ) -> None:
+        """Emit a compact live retry update and persist it for postmortems."""
+        image_name = Path(imagepath).name
+        if isinstance(max_attempts, int) and max_attempts > 0:
+            attempt_label = f"{attempt}/{max_attempts}"
+        else:
+            attempt_label = str(attempt)
+
+        parts = [f"Retry {stage}: {image_name} (attempt {attempt_label})"]
+        if isinstance(delay_seconds, (int, float)) and delay_seconds > 0:
+            parts.append(f"sleep={delay_seconds:.1f}s")
+        if isinstance(detail, str) and detail.strip():
+            parts.append(detail.strip())
+        line = " | ".join(parts)
+
+        log_entry = {
+            "timestamp": time.time(),
+            "image": imagepath,
+            "stage": stage,
+            "attempt": attempt,
+            "max_attempts": max_attempts,
+            "delay_seconds": delay_seconds,
+            "detail": detail,
+        }
+        if isinstance(extra_fields, dict):
+            log_entry.update(extra_fields)
+
+        with retry_event_lock:
+            if emit_console:
+                console.print(f"[dim]{line}[/dim]")
+            try:
+                with open(retry_log_path, "a", encoding="utf-8") as retry_log_file:
+                    retry_log_file.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
+            except Exception as exc:
+                console.print(f"[yellow]⚠️ Failed to write retry log: {exc}[/yellow]")
+
+    def extract_response_summary(response: Any) -> Dict[str, Any]:
+        summary: Dict[str, Any] = {
+            "status_code": getattr(response, "status_code", None),
+        }
+        try:
+            payload = response.json()
+        except Exception:
+            return summary
+
+        if not isinstance(payload, dict):
+            return summary
+
+        provider = payload.get("provider")
+        if isinstance(provider, str) and provider.strip():
+            summary["provider"] = provider
+
+        response_id = payload.get("id")
+        if isinstance(response_id, str) and response_id.strip():
+            summary["response_id"] = response_id
+
+        usage = payload.get("usage")
+        if isinstance(usage, dict):
+            summary["prompt_tokens"] = usage.get("prompt_tokens")
+            summary["completion_tokens"] = usage.get("completion_tokens")
+            summary["total_tokens"] = usage.get("total_tokens")
+
+        choices = payload.get("choices")
+        if isinstance(choices, list) and choices and isinstance(choices[0], dict):
+            choice = choices[0]
+            summary["finish_reason"] = choice.get("finish_reason")
+            summary["native_finish_reason"] = choice.get("native_finish_reason")
+
+        return summary
+
+    def log_retry_response(
+        imagepath: str,
+        *,
+        stage: str,
+        attempt: int,
+        response: Any,
+        max_attempts: Optional[int] = None,
+        request_max_tokens: Optional[int] = None,
+        emit_console: bool = False,
+    ) -> None:
+        summary = extract_response_summary(response)
+        status_code = summary.get("status_code")
+        finish_reason = summary.get("finish_reason")
+        native_finish_reason = summary.get("native_finish_reason")
+        completion_tokens = summary.get("completion_tokens")
+        total_tokens = summary.get("total_tokens")
+
+        detail_parts: list[str] = []
+        if status_code is not None:
+            detail_parts.append(f"status={status_code}")
+        if finish_reason is not None:
+            detail_parts.append(f"finish={finish_reason}")
+        if native_finish_reason is not None:
+            detail_parts.append(f"native_finish={native_finish_reason}")
+        if completion_tokens is not None:
+            detail_parts.append(f"completion_tokens={completion_tokens}")
+        if total_tokens is not None:
+            detail_parts.append(f"total_tokens={total_tokens}")
+        if isinstance(request_max_tokens, int):
+            detail_parts.append(f"request_max_tokens={request_max_tokens}")
+
+        summary["request_max_tokens"] = request_max_tokens
+        log_retry_event(
+            imagepath,
+            stage=stage,
+            attempt=attempt,
+            max_attempts=max_attempts,
+            detail=", ".join(detail_parts) if detail_parts else None,
+            extra_fields=summary,
+            emit_console=emit_console,
+        )
+
     print(f"Starting OpenRouter inference run: {config.run_name}")
     print(f"Model: {model_name}")
     print(f"Run directory: {run_dir}")
+    print(f"Retry log: {retry_log_path}")
     if provider_routing_effective:
         print(f"Provider routing: {provider_routing_effective}")
     else:
         print("Provider routing: OpenRouter default")
-    
+
     # Setup inference parameters
     if effective_dataset_manifest:
         imagepaths = get_imagepaths_from_doc_info(
@@ -577,12 +863,18 @@ def run_openrouter_inference(model_name: str,
     else:
         pattern = r"doc-\d+-page-[" + "".join([str(p) for p in selected_pages]) + "]-[A-Z0-9]+.png"
         imagepaths = get_imagepaths(effective_images_dir, pattern)
-    
+
     inference_config: Dict[str, Any] = {
         "temperature": temperature,
         "top_p": top_p,
         "max_tokens": max_tokens,
     }
+    if effective_top_k is not None:
+        inference_config["top_k"] = effective_top_k
+    if effective_min_p is not None:
+        inference_config["min_p"] = effective_min_p
+    if effective_presence_penalty is not None:
+        inference_config["presence_penalty"] = effective_presence_penalty
     if provider_routing_effective:
         inference_config["provider"] = provider_routing_effective
 
@@ -604,10 +896,11 @@ def run_openrouter_inference(model_name: str,
 
     if effective_repetition_penalty is not None:
         inference_config["repetition_penalty"] = effective_repetition_penalty
-    
-    # Parallel processing setup
-    import threading
-    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    generation_params_effective["include_reasoning"] = inference_config.get("include_reasoning")
+    generation_params_effective["reasoning"] = inference_config.get("reasoning")
+    config.additional_config["generation_params_effective"] = dict(generation_params_effective)
+    print(f"Generation params: {generation_params_effective}")
 
     class RateLimiter:
         def __init__(self, rate: Optional[float]):
@@ -708,6 +1001,15 @@ def run_openrouter_inference(model_name: str,
                     raise
 
                 delay = min(60.0, base_delay * (2 ** attempt))
+                retry_attempt = attempt + 1
+                log_retry_event(
+                    img_path,
+                    stage="transport_exception",
+                    attempt=retry_attempt,
+                    max_attempts=max_transport_retries,
+                    delay_seconds=delay,
+                    detail=str(exc)[:120],
+                )
                 time.sleep(delay)
                 attempt += 1
 
@@ -729,8 +1031,24 @@ def run_openrouter_inference(model_name: str,
         local_providers: set[str] = set()
         local_rep_score: float = 0.0
         status_msg: str = ""
+        reasoning_fallback_used = False
+        reasoning_fallback_logged = False
         image_started_epoch = time.time()
         image_started_at_utc = datetime.now(timezone.utc).isoformat()
+
+        def mark_reasoning_fallback(stage: str) -> None:
+            nonlocal reasoning_fallback_used, reasoning_fallback_logged
+            reasoning_fallback_used = True
+            if reasoning_fallback_logged:
+                return
+            log_retry_event(
+                imagepath,
+                stage="reasoning_fallback_used",
+                attempt=1,
+                detail=f"stage={stage}",
+                emit_console=False,
+            )
+            reasoning_fallback_logged = True
 
         def finalize_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
             """Attach per-image wall-clock timing to payload and result entries."""
@@ -752,17 +1070,50 @@ def run_openrouter_inference(model_name: str,
                         "finished_at_utc": image_finished_at_utc,
                         "elapsed_seconds": elapsed_seconds,
                     }
+                    if reasoning_fallback_used:
+                        entry["_used_reasoning_fallback"] = True
             return payload
 
         # Copy base inference config for this image
         local_inference_config: Dict[str, Any] = dict(inference_config)
         try:
             response = guarded_create_completion(model_name, local_inference_config, imagepath)
+            log_retry_response(
+                imagepath,
+                stage="initial_response",
+                attempt=0,
+                response=response,
+                request_max_tokens=(
+                    local_inference_config.get("max_tokens")
+                    if isinstance(local_inference_config.get("max_tokens"), int)
+                    else None
+                ),
+            )
 
             # Handle rate limiting with a single retry
             if response.status_code == 429:
+                log_retry_event(
+                    imagepath,
+                    stage="initial_429",
+                    attempt=1,
+                    max_attempts=1,
+                    delay_seconds=10.0,
+                    detail="rate-limited on first response",
+                )
                 time.sleep(10)
                 response = guarded_create_completion(model_name, local_inference_config, imagepath)
+                log_retry_response(
+                    imagepath,
+                    stage="initial_429_result",
+                    attempt=1,
+                    max_attempts=1,
+                    response=response,
+                    request_max_tokens=(
+                        local_inference_config.get("max_tokens")
+                        if isinstance(local_inference_config.get("max_tokens"), int)
+                        else None
+                    ),
+                )
 
             # Hard-stop critical errors
             if response.status_code == 402:
@@ -780,8 +1131,28 @@ def run_openrouter_inference(model_name: str,
             server_attempts = 0
             while response.status_code >= 500 and server_attempts < max(0, retry_max):
                 delay = min(60.0, retry_base_delay * (2 ** server_attempts))
+                log_retry_event(
+                    imagepath,
+                    stage="server_5xx",
+                    attempt=server_attempts + 1,
+                    max_attempts=max(0, retry_max),
+                    delay_seconds=delay,
+                    detail=f"status={response.status_code}",
+                )
                 time.sleep(delay)
                 response = guarded_create_completion(model_name, local_inference_config, imagepath)
+                log_retry_response(
+                    imagepath,
+                    stage="server_5xx_result",
+                    attempt=server_attempts + 1,
+                    max_attempts=max(0, retry_max),
+                    response=response,
+                    request_max_tokens=(
+                        local_inference_config.get("max_tokens")
+                        if isinstance(local_inference_config.get("max_tokens"), int)
+                        else None
+                    ),
+                )
                 server_attempts += 1
 
             # If still a server error after retries, record non-critical failure and continue
@@ -846,13 +1217,54 @@ def run_openrouter_inference(model_name: str,
 
                 while missing_choices and no_choice_attempts < max_no_choice_retries:
                     no_choice_attempts += 1
-                    time.sleep(min(5 * no_choice_attempts, 15))
+                    no_choice_delay = min(5 * no_choice_attempts, 15)
+                    log_retry_event(
+                        imagepath,
+                        stage="missing_choices",
+                        attempt=no_choice_attempts,
+                        max_attempts=max_no_choice_retries,
+                        delay_seconds=float(no_choice_delay),
+                        detail="retrying empty choices payload",
+                    )
+                    time.sleep(no_choice_delay)
                     retry_response = guarded_create_completion(model_name, local_inference_config, imagepath)
+                    log_retry_response(
+                        imagepath,
+                        stage="missing_choices_result",
+                        attempt=no_choice_attempts,
+                        max_attempts=max_no_choice_retries,
+                        response=retry_response,
+                        request_max_tokens=(
+                            local_inference_config.get("max_tokens")
+                            if isinstance(local_inference_config.get("max_tokens"), int)
+                            else None
+                        ),
+                    )
                     if retry_response.status_code >= 500:
                         continue
                     if retry_response.status_code == 429:
+                        log_retry_event(
+                            imagepath,
+                            stage="missing_choices_429",
+                            attempt=no_choice_attempts,
+                            max_attempts=max_no_choice_retries,
+                            delay_seconds=10.0,
+                            detail="rate-limited while recovering missing choices",
+                        )
                         time.sleep(10)
                         retry_response = guarded_create_completion(model_name, local_inference_config, imagepath)
+                        log_retry_response(
+                            imagepath,
+                            stage="missing_choices_429_result",
+                            attempt=no_choice_attempts,
+                            max_attempts=max_no_choice_retries,
+                            response=retry_response,
+                            request_max_tokens=(
+                                local_inference_config.get("max_tokens")
+                                if isinstance(local_inference_config.get("max_tokens"), int)
+                                else None
+                            ),
+                        )
                     if retry_response.status_code != 200:
                         continue
                     retry_response_json = retry_response.json()
@@ -923,9 +1335,25 @@ def run_openrouter_inference(model_name: str,
                 new_max_tokens = min(max_tokens_ceiling, current_max_tokens * 2)
                 if new_max_tokens <= current_max_tokens:
                     break
+                log_retry_event(
+                    imagepath,
+                    stage="finish_reason_length",
+                    attempt=length_retry_attempts + 1,
+                    max_attempts=max_length_retry_attempts,
+                    delay_seconds=2.0,
+                    detail=f"max_tokens {current_max_tokens} -> {new_max_tokens}",
+                )
                 time.sleep(2)
                 retry_config = {**local_inference_config, "max_tokens": new_max_tokens}
                 retry_response = guarded_create_completion(model_name, retry_config, imagepath)
+                log_retry_response(
+                    imagepath,
+                    stage="finish_reason_length_result",
+                    attempt=length_retry_attempts + 1,
+                    max_attempts=max_length_retry_attempts,
+                    response=retry_response,
+                    request_max_tokens=new_max_tokens,
+                )
                 if retry_response.status_code != 200:
                     break
                 retry_response_json = retry_response.json()
@@ -944,8 +1372,28 @@ def run_openrouter_inference(model_name: str,
                 length_retry_attempts += 1
 
             if not content and choice.get("finish_reason") is None:
+                log_retry_event(
+                    imagepath,
+                    stage="empty_content",
+                    attempt=1,
+                    max_attempts=1,
+                    delay_seconds=10.0,
+                    detail="content missing with finish_reason=None",
+                )
                 time.sleep(10)
                 retry_response = guarded_create_completion(model_name, local_inference_config, imagepath)
+                log_retry_response(
+                    imagepath,
+                    stage="empty_content_result",
+                    attempt=1,
+                    max_attempts=1,
+                    response=retry_response,
+                    request_max_tokens=(
+                        local_inference_config.get("max_tokens")
+                        if isinstance(local_inference_config.get("max_tokens"), int)
+                        else None
+                    ),
+                )
                 if retry_response.status_code == 200:
                     retry_response_json = retry_response.json()
                     if "provider" in retry_response_json:
@@ -992,16 +1440,71 @@ def run_openrouter_inference(model_name: str,
                         "success": False,
                     })
 
-            json_obj = parse_with_reasoning_fallback(content, reasoning_text, log_image=imagepath)
+            json_obj, used_reasoning_fallback = parse_with_reasoning_fallback(
+                content,
+                reasoning_text,
+                log_image=imagepath,
+            )
+            if used_reasoning_fallback:
+                mark_reasoning_fallback("initial_parse")
             target_parse_tokens = min(max_tokens_ceiling, 16384)
+            parse_retry_attempts = 0
+            latest_finish_reason = choice.get("finish_reason")
+            high_repetition_for_escalation = (
+                repetition_detected
+                and repetition_score >= token_escalation_repetition_threshold
+            )
+            can_raise_token_budget = (
+                latest_finish_reason == "length" and not high_repetition_for_escalation
+            )
+            if (
+                not can_raise_token_budget
+                and json_obj is None
+                and current_max_tokens < target_parse_tokens
+            ):
+                skip_reason = f"finish_reason={latest_finish_reason!r}"
+                if high_repetition_for_escalation:
+                    skip_reason += (
+                        f", repetition_score={repetition_score:.3f} "
+                        f">= {token_escalation_repetition_threshold:.2f}"
+                    )
+                log_retry_event(
+                    imagepath,
+                    stage="parse_retry_tokens_skipped",
+                    attempt=0,
+                    detail=(
+                        f"{skip_reason}; "
+                        f"keeping max_tokens={current_max_tokens}"
+                    ),
+                    emit_console=False,
+                )
 
-            while json_obj is None and current_max_tokens < target_parse_tokens:
+            while (
+                can_raise_token_budget
+                and json_obj is None
+                and current_max_tokens < target_parse_tokens
+            ):
                 new_max_tokens = min(target_parse_tokens, max(current_max_tokens * 2, current_max_tokens + 512))
                 if new_max_tokens <= current_max_tokens:
                     break
+                parse_retry_attempts += 1
+                log_retry_event(
+                    imagepath,
+                    stage="parse_retry_tokens",
+                    attempt=parse_retry_attempts,
+                    delay_seconds=2.0,
+                    detail=f"max_tokens {current_max_tokens} -> {new_max_tokens}",
+                )
                 time.sleep(2)
                 retry_config = {**local_inference_config, "max_tokens": new_max_tokens}
                 retry_response = guarded_create_completion(model_name, retry_config, imagepath)
+                log_retry_response(
+                    imagepath,
+                    stage="parse_retry_tokens_result",
+                    attempt=parse_retry_attempts,
+                    response=retry_response,
+                    request_max_tokens=new_max_tokens,
+                )
                 if retry_response.status_code != 200:
                     break
                 retry_response_json = retry_response.json()
@@ -1009,17 +1512,76 @@ def run_openrouter_inference(model_name: str,
                     local_providers.add(retry_response_json["provider"])
                 if "choices" not in retry_response_json or not retry_response_json["choices"]:
                     break
-                retry_message = retry_response_json["choices"][0]["message"]
+                retry_choice = retry_response_json["choices"][0]
+                retry_message = retry_choice["message"]
                 content = retry_message.get("content", "")
                 reasoning_text = retry_message.get("reasoning")
                 response_json = retry_response_json
+                choice = retry_choice
+                latest_finish_reason = choice.get("finish_reason")
                 update_repetition_metrics(content, reasoning_text)
                 current_max_tokens = new_max_tokens
                 local_inference_config["max_tokens"] = new_max_tokens
-                json_obj = parse_with_reasoning_fallback(content, reasoning_text, log_image=imagepath)
+                json_obj, used_reasoning_fallback = parse_with_reasoning_fallback(
+                    content,
+                    reasoning_text,
+                    log_image=imagepath,
+                )
+                if used_reasoning_fallback:
+                    mark_reasoning_fallback("parse_retry_tokens")
+                high_repetition_for_escalation = (
+                    repetition_detected
+                    and repetition_score >= token_escalation_repetition_threshold
+                )
+                if json_obj is None and (
+                    latest_finish_reason != "length" or high_repetition_for_escalation
+                ):
+                    can_raise_token_budget = False
+                    stop_reason = f"finish_reason={latest_finish_reason!r}"
+                    if high_repetition_for_escalation:
+                        stop_reason += (
+                            f", repetition_score={repetition_score:.3f} "
+                            f">= {token_escalation_repetition_threshold:.2f}"
+                        )
+                    log_retry_event(
+                        imagepath,
+                        stage="parse_retry_tokens_stop",
+                        attempt=parse_retry_attempts,
+                        detail=(
+                            f"{stop_reason}; "
+                            "stopping token escalation"
+                        ),
+                    )
+                    break
 
             if json_obj is None:
-                adaptive_target_tokens = max(current_max_tokens, target_parse_tokens)
+                adaptive_cap_reason: Optional[str] = None
+                high_repetition_for_escalation = (
+                    repetition_detected
+                    and repetition_score >= token_escalation_repetition_threshold
+                )
+                if latest_finish_reason == "length" and not high_repetition_for_escalation:
+                    adaptive_target_tokens = max(current_max_tokens, target_parse_tokens)
+                else:
+                    adaptive_target_tokens = current_max_tokens
+                    if current_max_tokens < target_parse_tokens:
+                        cap_reason = f"finish_reason={latest_finish_reason!r}"
+                        if high_repetition_for_escalation:
+                            cap_reason += (
+                                f", repetition_score={repetition_score:.3f} "
+                                f">= {token_escalation_repetition_threshold:.2f}"
+                            )
+                        adaptive_cap_reason = (
+                            f"{cap_reason}; "
+                            f"keeping max_tokens={adaptive_target_tokens}"
+                        )
+                        log_retry_event(
+                            imagepath,
+                            stage="adaptive_tokens_capped",
+                            attempt=1,
+                            detail=adaptive_cap_reason,
+                            emit_console=False,
+                        )
                 if local_inference_config.get("max_tokens", current_max_tokens) < adaptive_target_tokens:
                     local_inference_config["max_tokens"] = adaptive_target_tokens
                     current_max_tokens = adaptive_target_tokens
@@ -1031,16 +1593,57 @@ def run_openrouter_inference(model_name: str,
                     base_repetition_penalty=local_inference_config.get("repetition_penalty"),
                 )
 
-                for step in adaptive_steps:
+                for step_index, step in enumerate(adaptive_steps, start=1):
                     retry_config = dict(local_inference_config)
                     for key in step.get("remove_keys", []):
                         retry_config.pop(key, None)
                     retry_config.update(step.get("config_updates", {}))
+                    step_label = str(step.get("label", "adaptive_step"))
+                    step_detail = f"max_tokens={retry_config.get('max_tokens')}"
+                    if step_index == 1 and adaptive_cap_reason:
+                        step_detail = f"{adaptive_cap_reason} | {step_detail}"
+                    log_retry_event(
+                        imagepath,
+                        stage=f"adaptive_{step_label}",
+                        attempt=step_index,
+                        max_attempts=len(adaptive_steps),
+                        delay_seconds=2.0,
+                        detail=step_detail,
+                    )
                     time.sleep(2)
                     retry_response = guarded_create_completion(model_name, retry_config, imagepath)
+                    step_request_max_tokens = (
+                        retry_config.get("max_tokens")
+                        if isinstance(retry_config.get("max_tokens"), int)
+                        else None
+                    )
+                    log_retry_response(
+                        imagepath,
+                        stage=f"adaptive_{step_label}_result",
+                        attempt=step_index,
+                        max_attempts=len(adaptive_steps),
+                        response=retry_response,
+                        request_max_tokens=step_request_max_tokens,
+                    )
                     if retry_response.status_code == 429:
+                        log_retry_event(
+                            imagepath,
+                            stage=f"adaptive_{step_label}_429",
+                            attempt=step_index,
+                            max_attempts=len(adaptive_steps),
+                            delay_seconds=10.0,
+                            detail="rate-limited during adaptive retry",
+                        )
                         time.sleep(10)
                         retry_response = guarded_create_completion(model_name, retry_config, imagepath)
+                        log_retry_response(
+                            imagepath,
+                            stage=f"adaptive_{step_label}_429_result",
+                            attempt=step_index,
+                            max_attempts=len(adaptive_steps),
+                            response=retry_response,
+                            request_max_tokens=step_request_max_tokens,
+                        )
                     if retry_response.status_code >= 500:
                         continue
                     if retry_response.status_code != 200:
@@ -1060,7 +1663,13 @@ def run_openrouter_inference(model_name: str,
                     if isinstance(step_max_tokens, int) and step_max_tokens > current_max_tokens:
                         current_max_tokens = step_max_tokens
                         local_inference_config["max_tokens"] = step_max_tokens
-                    json_obj = parse_with_reasoning_fallback(content, reasoning_text, log_image=imagepath)
+                    json_obj, used_reasoning_fallback = parse_with_reasoning_fallback(
+                        content,
+                        reasoning_text,
+                        log_image=imagepath,
+                    )
+                    if used_reasoning_fallback:
+                        mark_reasoning_fallback(f"adaptive_{step_label}")
                     if json_obj is not None:
                         break
 
@@ -1101,6 +1710,15 @@ def run_openrouter_inference(model_name: str,
                     schema_errors,
                     attempt_number=schema_retry_attempts,
                 )
+                first_error = schema_errors[0] if schema_errors else "schema mismatch"
+                log_retry_event(
+                    imagepath,
+                    stage="schema_retry",
+                    attempt=schema_retry_attempts,
+                    max_attempts=schema_retry_max,
+                    delay_seconds=2.0,
+                    detail=first_error[:120],
+                )
                 time.sleep(2)
                 retry_response = guarded_create_completion(
                     model_name,
@@ -1108,13 +1726,45 @@ def run_openrouter_inference(model_name: str,
                     imagepath,
                     prompt_text=retry_prompt,
                 )
+                log_retry_response(
+                    imagepath,
+                    stage="schema_retry_result",
+                    attempt=schema_retry_attempts,
+                    max_attempts=schema_retry_max,
+                    response=retry_response,
+                    request_max_tokens=(
+                        local_inference_config.get("max_tokens")
+                        if isinstance(local_inference_config.get("max_tokens"), int)
+                        else None
+                    ),
+                )
                 if retry_response.status_code == 429:
+                    log_retry_event(
+                        imagepath,
+                        stage="schema_retry_429",
+                        attempt=schema_retry_attempts,
+                        max_attempts=schema_retry_max,
+                        delay_seconds=10.0,
+                        detail="rate-limited during schema retry",
+                    )
                     time.sleep(10)
                     retry_response = guarded_create_completion(
                         model_name,
                         local_inference_config,
                         imagepath,
                         prompt_text=retry_prompt,
+                    )
+                    log_retry_response(
+                        imagepath,
+                        stage="schema_retry_429_result",
+                        attempt=schema_retry_attempts,
+                        max_attempts=schema_retry_max,
+                        response=retry_response,
+                        request_max_tokens=(
+                            local_inference_config.get("max_tokens")
+                            if isinstance(local_inference_config.get("max_tokens"), int)
+                            else None
+                        ),
                     )
                 if retry_response.status_code >= 500:
                     continue
@@ -1133,7 +1783,13 @@ def run_openrouter_inference(model_name: str,
                 response_json = retry_response_json
                 update_repetition_metrics(content, reasoning_text)
 
-                retry_json_obj = parse_with_reasoning_fallback(content, reasoning_text, log_image=imagepath)
+                retry_json_obj, used_reasoning_fallback = parse_with_reasoning_fallback(
+                    content,
+                    reasoning_text,
+                    log_image=imagepath,
+                )
+                if used_reasoning_fallback:
+                    mark_reasoning_fallback("schema_retry")
                 if retry_json_obj is None:
                     normalized_obj = None
                     schema_errors = ["Retry response could not be parsed as JSON."]
@@ -1342,7 +1998,7 @@ def run_openrouter_inference(model_name: str,
                     pending_future.cancel()
                 console.print(f"\n[red]❌ Critical Error: {critical_stop[1]} ({critical_stop[0]})[/red]")
                 console.print("[yellow]⚠️  Processing stopped. Please resolve the issue and rerun.[/yellow]")
-    
+
     if repetition_event_scores:
         worst_image, worst_score = max(repetition_event_scores.items(), key=lambda item: item[1])
         console.print(
@@ -1356,24 +2012,29 @@ def run_openrouter_inference(model_name: str,
     end_time = time.time()
     runtime_seconds = end_time - start_time
     runtime_formatted = format_runtime(runtime_seconds)
-    
+
     # Update config with actual runtime
     # Create config dict and add extracted model information
     config_dict = config.to_dict()
     config_dict["environment"]["runtime"] = runtime_formatted
     config_dict["additional"]["actual_runtime_seconds"] = runtime_seconds
+    config_dict["api"]["temperature"] = temperature
+    config_dict["api"]["top_p"] = top_p
+    config_dict["api"]["top_k"] = effective_top_k
+    config_dict["api"]["min_p"] = effective_min_p
+    config_dict["api"]["presence_penalty"] = effective_presence_penalty
     config_dict["api"]["repetition_penalty"] = effective_repetition_penalty
-    
+
     # Convert provider set to list for serialization
     if "actual_model_providers" in config_dict["additional"]:
         config_dict["additional"]["actual_model_providers"] = sorted(list(config_dict["additional"]["actual_model_providers"]))
-    
+
     # Add extracted model information to config (avoid duplication)
     if supported_parameters:
         # Enhance supported parameters with OpenRouter default values
         param_defaults = {
             "temperature": 1.0,  # OpenRouter default
-            "top_p": 1.0,        # OpenRouter default  
+            "top_p": 1.0,        # OpenRouter default
             "max_tokens": None,   # No default, model-dependent
             "frequency_penalty": 0.0,
             "presence_penalty": 0.0,
@@ -1388,7 +2049,7 @@ def run_openrouter_inference(model_name: str,
             "include_reasoning": None,  # Model-specific
             "reasoning": None     # Model-specific
         }
-        
+
         # Create enhanced parameter info with defaults
         enhanced_params = {}
         for param in supported_parameters:
@@ -1396,23 +2057,24 @@ def run_openrouter_inference(model_name: str,
                 "supported": True,
                 "openrouter_default": param_defaults.get(param, "Unknown")
             }
-        
+
         config_dict["additional"]["model_supported_parameters"] = enhanced_params
-        
+
     if model_context_length != "Unknown":
         config_dict["additional"]["model_context_length"] = model_context_length
     if model_pricing:
         config_dict["additional"]["model_pricing"] = model_pricing
-    
+
     # Save updated config and refresh manifest metadata
     manager.save_run_config(config.run_name, config_dict)
-    
+
     # Final results save (incremental saves were done during processing)
     results_dict = dict(results)
     manager.save_results(config.run_name, results_dict)
 
     schema_failed_images: list[tuple[str, list[str], int]] = []
     schema_coerced_images: list[tuple[str, list[str], int]] = []
+    reasoning_fallback_images: list[str] = []
     for imagepath, result_list in results_dict.items():
         if not result_list or not isinstance(result_list[0], dict):
             continue
@@ -1428,10 +2090,12 @@ def run_openrouter_inference(model_name: str,
             corrections_raw = entry.get("_schema_corrections")
             corrections = [str(c) for c in corrections_raw] if isinstance(corrections_raw, list) else []
             schema_coerced_images.append((imagepath, corrections, retry_attempts))
-    
+        if entry.get("_used_reasoning_fallback"):
+            reasoning_fallback_images.append(imagepath)
+
     # Display results with rich formatting
     console.print("\n[bold green]✅ Inference Complete![/bold green]")
-    
+
     from rich.table import Table
     results_table = Table(show_header=False, box=None)
     failed_count = total_images - successful_images
@@ -1446,7 +2110,7 @@ def run_openrouter_inference(model_name: str,
         results_table.add_row("[cyan]Routing config:[/cyan]", json.dumps(provider_routing_effective, sort_keys=True))
     else:
         results_table.add_row("[cyan]Routing config:[/cyan]", "OpenRouter default")
-    
+
     # Show actual model providers used
     actual_providers = sorted(list(config.additional_config.get("actual_model_providers", set())))
     if actual_providers:
@@ -1455,10 +2119,13 @@ def run_openrouter_inference(model_name: str,
         results_table.add_row("[yellow]Schema failures:[/yellow]", f"{len(schema_failed_images)}/{total_images} images")
     if schema_coerced_images:
         results_table.add_row("[yellow]Schema coerced:[/yellow]", f"{len(schema_coerced_images)}/{total_images} images")
-    
+    if reasoning_fallback_images:
+        results_table.add_row("[yellow]Reasoning fallback:[/yellow]", f"{len(reasoning_fallback_images)}/{total_images} images")
+
     results_table.add_row("[cyan]Results saved:[/cyan]", f"{run_dir}/results.json")
+    results_table.add_row("[cyan]Retry log:[/cyan]", f"{retry_log_path}")
     results_table.add_row("[cyan]Run name:[/cyan]", f"[bold]{config.run_name}[/bold]")
-    
+
     console.print(results_table)
 
     if schema_failed_images:
@@ -1497,7 +2164,7 @@ def run_openrouter_inference(model_name: str,
         remaining = len(failed_images) - max_rows
         if remaining > 0:
             console.print(f"[dim]... and {remaining} more failed image(s).[/dim]")
-    
+
     # After inference is complete, batch process generation IDs for precise costs
     console.print("\n[cyan]🔍 Fetching precise cost data...[/cyan]")
     original_results = dict(results)
@@ -1505,7 +2172,7 @@ def run_openrouter_inference(model_name: str,
         original_results,
         max_workers=max(1, concurrency),
     )
-    
+
     # Always save the updated results (includes cost fetch metadata for any unrecovered failures)
     manager.save_results(config.run_name, updated_results)
 
@@ -1519,7 +2186,7 @@ def run_openrouter_inference(model_name: str,
             external_output_path = str(output_path)
         except Exception as exc:
             console.print(f"[yellow]⚠️ Failed to write --output-json file: {exc}[/yellow]")
-    
+
     # Count how many actually got precise costs
     cost_count = 0
     for result_list in updated_results.values():
@@ -1528,7 +2195,7 @@ def run_openrouter_inference(model_name: str,
             token_usage = result.get("_token_usage", {})
             if "actual_cost" in token_usage:
                 cost_count += 1
-    
+
     if cost_count > 0:
         console.print(f"[green]✅ Added precise costs to {cost_count} results[/green]")
     else:
@@ -1536,7 +2203,7 @@ def run_openrouter_inference(model_name: str,
 
     if external_output_path:
         console.print(f"[green]✅ Wrote output JSON copy to {external_output_path}[/green]")
-    
+
     return config.run_name
 
 

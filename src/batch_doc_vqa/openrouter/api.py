@@ -20,8 +20,38 @@ MODEL_CONFIG_OVERRIDES = {
     "z-ai/glm-4.5v": {
         "response_format": "box",  # Uses <|begin_of_box|> format
     },
+    "qwen/qwen3.5-plus-02-15": {
+        # Qwen provider "thinking mode" defaults.
+        "temperature": 0.6,
+        "top_p": 0.95,
+        "top_k": 20,
+        "min_p": 0.0,
+        "presence_penalty": 0.0,
+        "repetition_penalty": 1.0,
+        "include_reasoning": True,
+        "reasoning": {"effort": "medium"},
+    },
     # Add more overrides as needed for models with special requirements
 }
+
+
+def resolve_model_config_overrides(model_name: str) -> Dict[str, Any]:
+    """Resolve model overrides with light normalization for variant suffixes."""
+    normalized = (model_name or "").strip().lower()
+    if not normalized:
+        return {}
+
+    candidates = [normalized]
+    base_model_name = normalized.split(":", 1)[0]
+    if base_model_name not in candidates:
+        candidates.append(base_model_name)
+
+    for candidate in candidates:
+        overrides = MODEL_CONFIG_OVERRIDES.get(candidate)
+        if isinstance(overrides, dict):
+            return dict(overrides)
+
+    return {}
 
 
 def create_completion(

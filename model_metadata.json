@@ -244,6 +244,16 @@
       "open_weights": false,
       "model_size": "??",
       "license": null
+    },
+    "baidu/ernie-4.5-vl-424b-a47b": {
+      "open_weights": true,
+      "model_size": "424A47",
+      "license": "Apache-2.0"
+    },
+    "qwen/qwen3.5-plus-02-15": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
     }
   },
   "needs_review": []

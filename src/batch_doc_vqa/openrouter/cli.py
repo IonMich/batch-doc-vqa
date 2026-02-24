@@ -129,9 +129,42 @@ Examples:
     )
     
     parser.add_argument("--model", type=str, help="OpenRouter model name (e.g., 'z-ai/glm-4.5v')")
-    parser.add_argument("--temperature", type=float, default=0.0, help="Temperature (default: 0.0 for deterministic output)")
-    parser.add_argument("--max-tokens", type=int, default=4096, help="Max tokens (default: 4096)")
-    parser.add_argument("--top-p", type=float, default=1.0, help="Top-p sampling (default: 1.0 - OpenRouter default)")
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        default=None,
+        help="Temperature override (if omitted: model profile/default)",
+    )
+    parser.add_argument(
+        "--max-tokens",
+        type=int,
+        default=None,
+        help="Max tokens override (if omitted: model profile/default)",
+    )
+    parser.add_argument(
+        "--top-p",
+        type=float,
+        default=None,
+        help="Top-p override (if omitted: model profile/default)",
+    )
+    parser.add_argument(
+        "--top-k",
+        type=int,
+        default=None,
+        help="Top-k override (if omitted: model profile/default)",
+    )
+    parser.add_argument(
+        "--min-p",
+        type=float,
+        default=None,
+        help="Min-p override (if omitted: model profile/default)",
+    )
+    parser.add_argument(
+        "--presence-penalty",
+        type=float,
+        default=None,
+        help="Presence penalty override (if omitted: model profile/default)",
+    )
     parser.add_argument("--model-size", type=str, help="Model size (e.g., '7B', '72B')")
     parser.add_argument("--open-weights", action="store_true", help="Mark as open-weights model")
     parser.add_argument("--license-info", type=str, help="License information")
@@ -297,6 +330,9 @@ Examples:
         temperature=args.temperature,
         max_tokens=args.max_tokens,
         top_p=args.top_p,
+        top_k=args.top_k,
+        min_p=args.min_p,
+        presence_penalty=args.presence_penalty,
         repetition_penalty=args.repetition_penalty,
         model_size=args.model_size,
         open_weights=args.open_weights,
