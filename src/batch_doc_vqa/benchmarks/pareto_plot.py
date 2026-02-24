@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate Pareto frontier plot for 8-digit_top1 vs total cost.
+Generate Pareto frontier plot(s) for benchmark metric(s) vs total cost.
 """
 import matplotlib.pyplot as plt
 import argparse
@@ -10,23 +10,23 @@ from adjustText import adjust_text
 from .table_generator import BenchmarkTableGenerator
 
 
-def calculate_pareto_frontier(points: List[Tuple[float, float]]) -> List[int]:
+def calculate_pareto_frontier(points: List[Tuple[float, float]], maximize_y: bool = True) -> List[int]:
     """
-    Calculate Pareto frontier indices for maximizing y (accuracy) and minimizing x (cost).
+    Calculate Pareto frontier indices for minimizing x (cost) and optimizing y.
     Returns indices of points on the frontier.
     """
     # Sort by x (cost) ascending
     sorted_indices = sorted(range(len(points)), key=lambda i: points[i][0])
-    
+
     frontier_indices = []
-    max_y_so_far = -float('inf')
-    
+    best_y_so_far = -float("inf") if maximize_y else float("inf")
+
     for idx in sorted_indices:
         x, y = points[idx]
-        if y > max_y_so_far:
+        if (maximize_y and y > best_y_so_far) or (not maximize_y and y < best_y_so_far):
             frontier_indices.append(idx)
-            max_y_so_far = y
-    
+            best_y_so_far = y
+
     return frontier_indices
 
 
@@ -47,21 +47,33 @@ def get_organization_colors():
 
 
 
-def create_pareto_plot(run_stats: Dict, output_path: str = "pareto_plot.png", 
-                      title: str = "Model Performance vs Cost Trade-off (quiz-identify-vqa)", show_all_labels: bool = True):
-    """Create Pareto frontier plot for 8-digit_top1 vs total cost."""
-    
+def create_pareto_plot(
+    run_stats: Dict,
+    output_path: str = "pareto_plot.png",
+    title: str = "Model Performance vs Cost Trade-off (quiz-identify-vqa)",
+    show_all_labels: bool = True,
+    *,
+    y_metric: str = "id_top1",
+    y_axis_label: str = "8-digit ID Top-1 Accuracy (%)",
+    y_metric_print_label: str = "accuracy",
+    y_metric_print_decimals: int = 1,
+    y_metric_suffix: str = "%",
+    maximize_y: bool = True,
+    invert_y_axis: bool = False,
+):
+    """Create Pareto frontier plot for a chosen y-axis metric vs total cost."""
+
     # Extract data
     model_names = []
     orgs = []
-    id_top1_scores = []
+    y_values = []
     total_costs = []
     cohort_sizes = []
-    id_top1_ci_lows = []
-    id_top1_ci_highs = []
+    y_ci_lows = []
+    y_ci_highs = []
     total_cost_ci_lows = []
     total_cost_ci_highs = []
-    
+
     for model_key, data in run_stats.items():
         if not isinstance(data, dict):
             print(f"  Skipping {model_key}: invalid run data")
@@ -80,7 +92,7 @@ def create_pareto_plot(run_stats: Dict, output_path: str = "pareto_plot.png",
 
         try:
             total_cost = float(stats.get("total_cost", 0) or 0)
-            id_top1 = float(stats.get("id_top1", 0) or 0)
+            y_value = float(stats.get(y_metric, 0) or 0)
         except (TypeError, ValueError):
             print(f"  Skipping {model_key}: non-numeric cost or score")
             continue
@@ -97,58 +109,58 @@ def create_pareto_plot(run_stats: Dict, output_path: str = "pareto_plot.png",
 
         model_names.append(model_name)
         orgs.append(org)
-        id_top1_scores.append(id_top1)
+        y_values.append(y_value)
         total_costs.append(total_cost)
         n_runs = int(stats.get("n_runs", 1) or 1)
         cohort_sizes.append(n_runs)
 
         ci = stats.get("ci", {})
-        id_ci = ci.get("id_top1") if isinstance(ci, dict) else None
+        y_ci = ci.get(y_metric) if isinstance(ci, dict) else None
         cost_ci = ci.get("total_cost") if isinstance(ci, dict) else None
 
         if (
             n_runs >= 3
-            and isinstance(id_ci, list)
-            and len(id_ci) == 2
+            and isinstance(y_ci, list)
+            and len(y_ci) == 2
             and isinstance(cost_ci, list)
             and len(cost_ci) == 2
         ):
-            id_top1_ci_lows.append(float(id_ci[0]))
-            id_top1_ci_highs.append(float(id_ci[1]))
+            y_ci_lows.append(float(y_ci[0]))
+            y_ci_highs.append(float(y_ci[1]))
             total_cost_ci_lows.append(float(cost_ci[0]))
             total_cost_ci_highs.append(float(cost_ci[1]))
         else:
-            id_top1_ci_lows.append(None)
-            id_top1_ci_highs.append(None)
+            y_ci_lows.append(None)
+            y_ci_highs.append(None)
             total_cost_ci_lows.append(None)
             total_cost_ci_highs.append(None)
-    
+
     if len(model_names) == 0:
         print("No models with cost data found")
         return
-    
+
     # Calculate Pareto frontier
-    points = list(zip(total_costs, id_top1_scores))
-    frontier_indices = calculate_pareto_frontier(points)
+    points = list(zip(total_costs, y_values))
+    frontier_indices = calculate_pareto_frontier(points, maximize_y=maximize_y)
     frontier_indices.sort(key=lambda i: total_costs[i])  # Sort by cost for line plotting
-    
+
     # Set up the plot
     fig, ax = plt.subplots(figsize=(12, 8))
-    
+
     # Color scheme
     org_colors = get_organization_colors()
-    
+
     # Plot all points
-    for i, (org, cost, score) in enumerate(zip(orgs, total_costs, id_top1_scores)):
-        color = org_colors.get(org, org_colors['other'])
+    for i, (org, cost, score) in enumerate(zip(orgs, total_costs, y_values)):
+        color = org_colors.get(org, org_colors["other"])
         if (
-            id_top1_ci_lows[i] is not None
-            and id_top1_ci_highs[i] is not None
+            y_ci_lows[i] is not None
+            and y_ci_highs[i] is not None
             and total_cost_ci_lows[i] is not None
             and total_cost_ci_highs[i] is not None
         ):
             xerr = [[cost - float(total_cost_ci_lows[i])], [float(total_cost_ci_highs[i]) - cost]]
-            yerr = [[score - float(id_top1_ci_lows[i])], [float(id_top1_ci_highs[i]) - score]]
+            yerr = [[score - float(y_ci_lows[i])], [float(y_ci_highs[i]) - score]]
             ax.errorbar(
                 cost,
                 score,
@@ -168,31 +180,31 @@ def create_pareto_plot(run_stats: Dict, output_path: str = "pareto_plot.png",
         else:
             # Non-frontier points: faded, smaller size  
             ax.scatter(cost, score, c=color, s=60, alpha=0.4, edgecolors='gray', linewidth=0.5, zorder=2)
-    
+
     # Draw Pareto frontier line
     if len(frontier_indices) > 1:
         frontier_costs = [total_costs[i] for i in frontier_indices]
-        frontier_scores = [id_top1_scores[i] for i in frontier_indices]
+        frontier_scores = [y_values[i] for i in frontier_indices]
         ax.plot(frontier_costs, frontier_scores, 'k--', alpha=0.7, linewidth=2, zorder=1, label='Pareto Frontier')
-    
+
     # Collect text annotations for adjustText
     texts = []
-    
+
     # Add labels for frontier models (black text)
     for i in frontier_indices:
         label = model_names[i]
         if cohort_sizes[i] > 1:
             label = f"{label} (n={cohort_sizes[i]})"
         text = ax.annotate(label, 
-                          (total_costs[i], id_top1_scores[i]),
+                          (total_costs[i], y_values[i]),
                           fontsize=9, ha='center', va='center',
                           bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8, edgecolor='black'),
                           zorder=4)
         texts.append(text)
-    
+
     # Add labels for non-frontier models (gray text) if show_all_labels is True
     if show_all_labels:
-        for i, (cost, score) in enumerate(zip(total_costs, id_top1_scores)):
+        for i, (cost, score) in enumerate(zip(total_costs, y_values)):
             if i not in frontier_indices:
                 label = model_names[i]
                 if cohort_sizes[i] > 1:
@@ -203,12 +215,14 @@ def create_pareto_plot(run_stats: Dict, output_path: str = "pareto_plot.png",
                                   bbox=dict(boxstyle='round,pad=0.2', facecolor='white', alpha=0.6, edgecolor='gray'),
                                   zorder=3)
                 texts.append(text)
-    
+
     # Formatting
     ax.set_xscale('log')
     ax.set_xlabel('Total Cost ($)', fontsize=12)
-    ax.set_ylabel('8-digit ID Top-1 Accuracy (%)', fontsize=12)
+    ax.set_ylabel(y_axis_label, fontsize=12)
     ax.set_title(title, fontsize=14, fontweight='bold')
+    if invert_y_axis:
+        ax.invert_yaxis()
     ax.text(
         0.01,
         0.99,
@@ -220,21 +234,21 @@ def create_pareto_plot(run_stats: Dict, output_path: str = "pareto_plot.png",
         color="#444444",
     )
     ax.grid(True, alpha=0.3)
-    
+
     # Create legend for organizations
     legend_elements = []
     used_orgs = set(orgs)
     for org in sorted(used_orgs):
-        color = org_colors.get(org, org_colors['other'])
+        color = org_colors.get(org, org_colors["other"])
         legend_elements.append(plt.scatter([], [], c=color, s=80, label=org, alpha=0.8))
-    
+
     # Add Pareto frontier to legend if it exists
     if len(frontier_indices) > 1:
         legend_elements.append(plt.Line2D([0], [0], color='black', linestyle='--', 
                                         linewidth=2, label='Pareto Frontier'))
-    
+
     ax.legend(handles=legend_elements, loc='center left', bbox_to_anchor=(1, 0.5), fontsize=10)
-    
+
     # Apply adjustText LAST, after all plotting is complete
     # This is crucial according to the documentation
     if texts:
@@ -256,7 +270,7 @@ def create_pareto_plot(run_stats: Dict, output_path: str = "pareto_plot.png",
                    force_pull=(0.01, 0.01),  # Keep pull forces balanced
                    # Add arrows to connect moved labels to points
                    arrowprops=dict(arrowstyle='-', color='gray', alpha=0.6, lw=0.5))
-    
+
     # Adjust layout and save
     plt.tight_layout()
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
@@ -265,8 +279,9 @@ def create_pareto_plot(run_stats: Dict, output_path: str = "pareto_plot.png",
     # Print frontier models
     print(f"\nModels on Pareto frontier ({len(frontier_indices)}):")
     for i in frontier_indices:
-        print(f"  {model_names[i]} ({orgs[i]}): {id_top1_scores[i]:.1f}% accuracy, ${total_costs[i]:.4f} total cost")
-    
+        metric_text = f"{y_values[i]:.{y_metric_print_decimals}f}{y_metric_suffix} {y_metric_print_label}"
+        print(f"  {model_names[i]} ({orgs[i]}): {metric_text}, ${total_costs[i]:.4f} total cost")
+
     return frontier_indices
 
 
@@ -278,6 +293,21 @@ def main():
     parser.add_argument("--test-ids", default="tests/data/test_ids.csv", help="Test IDs CSV") 
     parser.add_argument("--output", default="pareto_plot.png", help="Output plot file")
     parser.add_argument("--title", default="Model Performance vs Cost Trade-off (quiz-identify-vqa)", help="Plot title")
+    parser.add_argument(
+        "--extra-id-lev-pareto",
+        action="store_true",
+        help="Generate an additional Pareto plot using ID Avg d_Lev vs cost (non-default)",
+    )
+    parser.add_argument(
+        "--id-lev-output",
+        default="pareto_plot_id_lev.png",
+        help="Output file for optional ID Avg d_Lev Pareto plot",
+    )
+    parser.add_argument(
+        "--id-lev-title",
+        default="Model ID Levenshtein Distance vs Cost (quiz-identify-vqa)",
+        help="Title for optional ID Avg d_Lev Pareto plot",
+    )
     parser.add_argument("--no-interactive", action="store_true", help="Skip interactive model review")
     parser.add_argument("--hide-non-frontier-labels", action="store_true", 
                        help="Hide labels for non-frontier models (default: show all labels in gray)")
@@ -303,6 +333,20 @@ def main():
     
     # Create plot
     create_pareto_plot(run_stats, args.output, args.title, show_all_labels=not args.hide_non_frontier_labels)
+    if args.extra_id_lev_pareto:
+        create_pareto_plot(
+            run_stats,
+            args.id_lev_output,
+            args.id_lev_title,
+            show_all_labels=not args.hide_non_frontier_labels,
+            y_metric="id_avg_lev",
+            y_axis_label="ID Avg d_Lev (lower is better)",
+            y_metric_print_label="avg ID d_Lev",
+            y_metric_print_decimals=4,
+            y_metric_suffix="",
+            maximize_y=False,
+            invert_y_axis=True,
+        )
 
 
 if __name__ == "__main__":
