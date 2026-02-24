@@ -254,6 +254,11 @@
       "open_weights": false,
       "model_size": "??",
       "license": null
+    },
+    "qwen/qwen3.5-397b-a17b": {
+      "open_weights": true,
+      "model_size": "397A17",
+      "license": "Apache-2.0"
     }
   },
   "needs_review": []
