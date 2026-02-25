@@ -337,6 +337,15 @@ def _fetch_generation_stats_with_retries(
     request_timeout_seconds: float = 5.0,
 ) -> Dict[str, Any]:
     """Fetch generation stats with bounded retries/backoff."""
+    def _is_numeric_scalar(value: Any) -> bool:
+        return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+    def _required_fields_present(data: Dict[str, Any]) -> tuple[bool, list[str]]:
+        missing: list[str] = []
+        if not _is_numeric_scalar(data.get("total_cost")):
+            missing.append("total_cost")
+        return (len(missing) == 0, missing)
+
     attempts = 0
     last_status_code: Optional[int] = None
     last_error: Optional[str] = None
@@ -366,17 +375,22 @@ def _fetch_generation_stats_with_retries(
                     last_retryable = True
                 else:
                     data = stats_data.get("data", {})
-                    if data:
-                        return {
-                            "success": True,
-                            "attempts": attempts,
-                            "status_code": response.status_code,
-                            "retryable": False,
-                            "error": None,
-                            "data": data,
-                        }
-                    last_error = "empty data payload"
-                    last_retryable = True
+                    if isinstance(data, dict) and data:
+                        has_required_fields, missing_fields = _required_fields_present(data)
+                        if has_required_fields:
+                            return {
+                                "success": True,
+                                "attempts": attempts,
+                                "status_code": response.status_code,
+                                "retryable": False,
+                                "error": None,
+                                "data": data,
+                            }
+                        last_error = f"missing required fields: {', '.join(missing_fields)}"
+                        last_retryable = True
+                    else:
+                        last_error = "empty data payload"
+                        last_retryable = True
             else:
                 last_error = f"HTTP {response.status_code}"
                 last_retryable = (
@@ -432,7 +446,9 @@ def batch_update_generation_costs(results: Dict, *, max_workers: int = 1) -> Dic
     
     requested_workers = max(1, int(max_workers))
     worker_count = min(requested_workers, len(generation_ids_to_process))
-    max_retries = 3
+    # Slightly extended retry window for eventual-consistency 404s and
+    # delayed generation payload population.
+    max_retries = 4
     base_delay_seconds = 0.75
     request_timeout_seconds = 5.0
     keep_generation_id = _env_flag("OPENROUTER_KEEP_GENERATION_ID", default=False)

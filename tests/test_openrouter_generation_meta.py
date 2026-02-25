@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 from batch_doc_vqa.openrouter.api import (
     _extract_generation_meta,
+    _fetch_generation_stats_with_retries,
     batch_update_generation_costs,
 )
 
@@ -149,6 +150,73 @@ class TestBatchUpdateGenerationCosts(unittest.TestCase):
         entry = updated["imgs/q11/doc-0-page-1-VHX7P2D0.png"][0]
         self.assertEqual(entry["_token_usage"].get("generation_id"), "gen-xyz")
         self.assertEqual(entry["_cost_fetch"].get("generation_id"), "gen-xyz")
+
+
+class _MockGenerationResponse:
+    def __init__(self, status_code: int, payload):
+        self.status_code = status_code
+        self._payload = payload
+
+    def json(self):
+        return self._payload
+
+
+class TestFetchGenerationStatsWithRetries(unittest.TestCase):
+    @patch("batch_doc_vqa.openrouter.api.time.sleep", return_value=None)
+    @patch("batch_doc_vqa.openrouter.api.requests.get")
+    def test_retries_until_required_fields_are_available(self, mock_get, _mock_sleep):
+        mock_get.side_effect = [
+            _MockGenerationResponse(
+                200,
+                {"data": {"model": "qwen/qwen3.5-27b", "native_tokens_prompt": 100}},
+            ),
+            _MockGenerationResponse(
+                200,
+                {
+                    "data": {
+                        "model": "qwen/qwen3.5-27b",
+                        "native_tokens_prompt": 100,
+                        "native_tokens_completion": 20,
+                        "total_cost": 0.00042,
+                    }
+                },
+            ),
+        ]
+
+        outcome = _fetch_generation_stats_with_retries(
+            "gen-test",
+            "test-key",
+            max_retries=2,
+            base_delay_seconds=0.01,
+            request_timeout_seconds=1.0,
+        )
+
+        self.assertTrue(outcome["success"])
+        self.assertEqual(outcome["attempts"], 2)
+        self.assertEqual(mock_get.call_count, 2)
+        self.assertEqual(outcome["data"].get("total_cost"), 0.00042)
+
+    @patch("batch_doc_vqa.openrouter.api.time.sleep", return_value=None)
+    @patch("batch_doc_vqa.openrouter.api.requests.get")
+    def test_fails_when_required_fields_never_appear(self, mock_get, _mock_sleep):
+        mock_get.side_effect = [
+            _MockGenerationResponse(200, {"data": {"model": "qwen/qwen3.5-27b"}}),
+            _MockGenerationResponse(200, {"data": {"model": "qwen/qwen3.5-27b"}}),
+            _MockGenerationResponse(200, {"data": {"model": "qwen/qwen3.5-27b"}}),
+        ]
+
+        outcome = _fetch_generation_stats_with_retries(
+            "gen-test",
+            "test-key",
+            max_retries=2,
+            base_delay_seconds=0.01,
+            request_timeout_seconds=1.0,
+        )
+
+        self.assertFalse(outcome["success"])
+        self.assertEqual(outcome["attempts"], 3)
+        self.assertTrue(outcome["retryable"])
+        self.assertIn("missing required fields", str(outcome.get("error")))
 
 
 if __name__ == "__main__":
