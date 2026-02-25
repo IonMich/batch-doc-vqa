@@ -264,6 +264,21 @@
       "open_weights": false,
       "model_size": "??",
       "license": null
+    },
+    "qwen/qwen3.5-122b-a10b": {
+      "open_weights": true,
+      "model_size": "122A10",
+      "license": "Apache-2.0"
+    },
+    "qwen/qwen3.5-27b": {
+      "open_weights": true,
+      "model_size": "27B",
+      "license": "Apache-2.0"
+    },
+    "qwen/qwen3.5-35b-a3b": {
+      "open_weights": true,
+      "model_size": "35A3",
+      "license": "Apache-2.0"
     }
   },
   "needs_review": []
