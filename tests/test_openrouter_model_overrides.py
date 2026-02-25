@@ -17,6 +17,49 @@ class TestOpenRouterModelOverrideResolution(unittest.TestCase):
         self.assertEqual(resolved.get("presence_penalty"), 0.0)
         self.assertEqual(resolved.get("repetition_penalty"), 1.0)
 
+    def test_qwen_3_vl_instruct_series_includes_recommended_defaults(self):
+        expected = {
+            "temperature": 0.7,
+            "top_p": 0.8,
+            "top_k": 20,
+            "repetition_penalty": 1.0,
+        }
+        for model_name in (
+            "qwen/qwen3-vl-8b-instruct",
+            "qwen/qwen3-vl-30b-a3b-instruct",
+            "qwen/qwen3-vl-32b-instruct",
+            "qwen/qwen3-vl-235b-a22b-instruct",
+        ):
+            with self.subTest(model_name=model_name):
+                resolved = resolve_model_config_overrides(model_name)
+                self.assertEqual(resolved, expected)
+
+    def test_qwen_3_vl_thinking_series_includes_recommended_defaults(self):
+        expected_by_model = {
+            "qwen/qwen3-vl-8b-thinking": {
+                "temperature": 1.0,
+                "top_p": 0.95,
+                "top_k": 20,
+                "repetition_penalty": 1.0,
+            },
+            "qwen/qwen3-vl-30b-a3b-thinking": {
+                "temperature": 0.8,
+                "top_p": 0.95,
+                "top_k": 20,
+                "repetition_penalty": 1.0,
+            },
+            "qwen/qwen3-vl-235b-a22b-thinking": {
+                "temperature": 0.8,
+                "top_p": 0.95,
+                "top_k": 20,
+                "repetition_penalty": 1.0,
+            },
+        }
+        for model_name, expected in expected_by_model.items():
+            with self.subTest(model_name=model_name):
+                resolved = resolve_model_config_overrides(model_name)
+                self.assertEqual(resolved, expected)
+
     def test_resolves_exact_model_override(self):
         with patch.dict(
             "batch_doc_vqa.openrouter.api.MODEL_CONFIG_OVERRIDES",

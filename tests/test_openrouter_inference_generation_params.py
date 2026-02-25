@@ -32,7 +32,7 @@ class _DummyProgress:
 
 
 class TestOpenRouterGenerationParams(unittest.TestCase):
-    def _run_and_capture_config(self, **run_kwargs: Any) -> Dict[str, Any]:
+    def _run_and_capture_config(self, *, model_name: str = "qwen/qwen3.5-plus-02-15", **run_kwargs: Any) -> Dict[str, Any]:
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_path = Path(tmp_dir)
             captured: Dict[str, Any] = {}
@@ -103,7 +103,7 @@ class TestOpenRouterGenerationParams(unittest.TestCase):
                 patch("batch_doc_vqa.openrouter.inference.RunManager", _CapturingRunManager),
             ):
                 run_name = inference.run_openrouter_inference(
-                    model_name="qwen/qwen3.5-plus-02-15",
+                    model_name=model_name,
                     images_dir=str(tmp_path),
                     pages=[1],
                     concurrency=1,
@@ -138,6 +138,38 @@ class TestOpenRouterGenerationParams(unittest.TestCase):
         self.assertEqual(sources["repetition_penalty"], "model_override")
         self.assertIsNone(effective.get("reasoning"))
         self.assertNotIn("include_reasoning", effective)
+
+    def test_qwen_3_vl_instruct_profile_is_used_when_cli_overrides_are_omitted(self):
+        config = self._run_and_capture_config(model_name="qwen/qwen3-vl-8b-instruct")
+        api = config["api"]
+        sources = config["additional"]["generation_param_sources"]
+
+        self.assertEqual(api["temperature"], 0.7)
+        self.assertEqual(api["top_p"], 0.8)
+        self.assertEqual(api["top_k"], 20)
+        self.assertEqual(api["repetition_penalty"], 1.0)
+        self.assertIsNone(api["presence_penalty"])
+        self.assertEqual(sources["temperature"], "model_override")
+        self.assertEqual(sources["top_p"], "model_override")
+        self.assertEqual(sources["top_k"], "model_override")
+        self.assertEqual(sources["repetition_penalty"], "model_override")
+        self.assertEqual(sources["presence_penalty"], "global_default")
+
+    def test_qwen_3_vl_thinking_profile_is_used_when_cli_overrides_are_omitted(self):
+        config = self._run_and_capture_config(model_name="qwen/qwen3-vl-30b-a3b-thinking")
+        api = config["api"]
+        sources = config["additional"]["generation_param_sources"]
+
+        self.assertEqual(api["temperature"], 0.8)
+        self.assertEqual(api["top_p"], 0.95)
+        self.assertEqual(api["top_k"], 20)
+        self.assertEqual(api["repetition_penalty"], 1.0)
+        self.assertIsNone(api["presence_penalty"])
+        self.assertEqual(sources["temperature"], "model_override")
+        self.assertEqual(sources["top_p"], "model_override")
+        self.assertEqual(sources["top_k"], "model_override")
+        self.assertEqual(sources["repetition_penalty"], "model_override")
+        self.assertEqual(sources["presence_penalty"], "global_default")
 
     def test_cli_overrides_take_precedence_over_model_profile(self):
         config = self._run_and_capture_config(

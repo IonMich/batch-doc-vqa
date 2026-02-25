@@ -25,6 +25,29 @@ QWEN_35_RECOMMENDED_DEFAULTS = {
     "repetition_penalty": 1.0,
 }
 
+# Qwen3-VL model-card generation defaults.
+# Source: Hugging Face Qwen3-VL model cards / generation_config.json.
+QWEN_3_VL_INSTRUCT_DEFAULTS = {
+    "temperature": 0.7,
+    "top_p": 0.8,
+    "top_k": 20,
+    "repetition_penalty": 1.0,
+}
+
+QWEN_3_VL_THINKING_8B_DEFAULTS = {
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 20,
+    "repetition_penalty": 1.0,
+}
+
+QWEN_3_VL_THINKING_LARGE_DEFAULTS = {
+    "temperature": 0.8,
+    "top_p": 0.95,
+    "top_k": 20,
+    "repetition_penalty": 1.0,
+}
+
 # Model-specific configurations for special cases
 MODEL_CONFIG_OVERRIDES = {
     "z-ai/glm-4.5v": {
@@ -39,6 +62,13 @@ MODEL_CONFIG_OVERRIDES = {
         # Qwen provider "thinking mode" defaults.
         **QWEN_35_RECOMMENDED_DEFAULTS,
     },
+    "qwen/qwen3-vl-8b-instruct": dict(QWEN_3_VL_INSTRUCT_DEFAULTS),
+    "qwen/qwen3-vl-30b-a3b-instruct": dict(QWEN_3_VL_INSTRUCT_DEFAULTS),
+    "qwen/qwen3-vl-32b-instruct": dict(QWEN_3_VL_INSTRUCT_DEFAULTS),
+    "qwen/qwen3-vl-235b-a22b-instruct": dict(QWEN_3_VL_INSTRUCT_DEFAULTS),
+    "qwen/qwen3-vl-8b-thinking": dict(QWEN_3_VL_THINKING_8B_DEFAULTS),
+    "qwen/qwen3-vl-30b-a3b-thinking": dict(QWEN_3_VL_THINKING_LARGE_DEFAULTS),
+    "qwen/qwen3-vl-235b-a22b-thinking": dict(QWEN_3_VL_THINKING_LARGE_DEFAULTS),
     # Add more overrides as needed for models with special requirements
 }
 
