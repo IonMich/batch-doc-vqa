@@ -171,6 +171,42 @@ class TestOpenRouterGenerationParams(unittest.TestCase):
         self.assertEqual(sources["repetition_penalty"], "model_override")
         self.assertEqual(sources["presence_penalty"], "global_default")
 
+    def test_google_frontier_profile_uses_global_temp_and_model_sampling_overrides(self):
+        config = self._run_and_capture_config(model_name="google/gemini-2.5-flash-lite")
+        api = config["api"]
+        sources = config["additional"]["generation_param_sources"]
+
+        self.assertEqual(api["temperature"], 1.0)
+        self.assertEqual(api["top_p"], 0.95)
+        self.assertEqual(api["top_k"], 64)
+        self.assertEqual(sources["temperature"], "global_default")
+        self.assertEqual(sources["top_p"], "model_override")
+        self.assertEqual(sources["top_k"], "model_override")
+
+    def test_nova_lite_profile_is_used_when_cli_overrides_are_omitted(self):
+        config = self._run_and_capture_config(model_name="amazon/nova-lite-v1")
+        api = config["api"]
+        sources = config["additional"]["generation_param_sources"]
+
+        self.assertEqual(api["temperature"], 0.7)
+        self.assertEqual(api["top_p"], 0.9)
+        self.assertEqual(api["top_k"], 50)
+        self.assertEqual(sources["temperature"], "model_override")
+        self.assertEqual(sources["top_p"], "model_override")
+        self.assertEqual(sources["top_k"], "model_override")
+
+    def test_kimi_k2_5_profile_is_used_when_cli_overrides_are_omitted(self):
+        config = self._run_and_capture_config(model_name="moonshotai/kimi-k2.5")
+        api = config["api"]
+        sources = config["additional"]["generation_param_sources"]
+
+        self.assertEqual(api["temperature"], 0.6)
+        self.assertEqual(api["top_p"], 0.95)
+        self.assertIsNone(api["top_k"])
+        self.assertEqual(sources["temperature"], "model_override")
+        self.assertEqual(sources["top_p"], "model_override")
+        self.assertEqual(sources["top_k"], "global_default")
+
     def test_cli_overrides_take_precedence_over_model_profile(self):
         config = self._run_and_capture_config(
             temperature=0.2,

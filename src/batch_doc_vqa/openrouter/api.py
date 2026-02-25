@@ -48,6 +48,26 @@ QWEN_3_VL_THINKING_LARGE_DEFAULTS = {
     "repetition_penalty": 1.0,
 }
 
+# Google model defaults from the official Google model endpoint.
+# We intentionally omit temperature because global default is already 1.0.
+GOOGLE_RECOMMENDED_SAMPLING_DEFAULTS = {
+    "top_p": 0.95,
+    "top_k": 64,
+}
+
+# Amazon Nova Lite defaults from official docs.
+NOVA_LITE_RECOMMENDED_DEFAULTS = {
+    "temperature": 0.7,
+    "top_p": 0.9,
+    "top_k": 50,
+}
+
+# Moonshot Kimi-K2.5 defaults from model card recommendations.
+KIMI_K2_5_RECOMMENDED_DEFAULTS = {
+    "temperature": 0.6,
+    "top_p": 0.95,
+}
+
 # Model-specific configurations for special cases
 MODEL_CONFIG_OVERRIDES = {
     "z-ai/glm-4.5v": {
@@ -69,6 +89,12 @@ MODEL_CONFIG_OVERRIDES = {
     "qwen/qwen3-vl-8b-thinking": dict(QWEN_3_VL_THINKING_8B_DEFAULTS),
     "qwen/qwen3-vl-30b-a3b-thinking": dict(QWEN_3_VL_THINKING_LARGE_DEFAULTS),
     "qwen/qwen3-vl-235b-a22b-thinking": dict(QWEN_3_VL_THINKING_LARGE_DEFAULTS),
+    "google/gemma-3-4b-it": dict(GOOGLE_RECOMMENDED_SAMPLING_DEFAULTS),
+    "google/gemma-3-27b-it": dict(GOOGLE_RECOMMENDED_SAMPLING_DEFAULTS),
+    "google/gemini-2.5-flash-lite": dict(GOOGLE_RECOMMENDED_SAMPLING_DEFAULTS),
+    "google/gemini-2.5-flash-lite-preview-09-2025": dict(GOOGLE_RECOMMENDED_SAMPLING_DEFAULTS),
+    "amazon/nova-lite-v1": dict(NOVA_LITE_RECOMMENDED_DEFAULTS),
+    "moonshotai/kimi-k2.5": dict(KIMI_K2_5_RECOMMENDED_DEFAULTS),
     # Add more overrides as needed for models with special requirements
 }
 

@@ -60,6 +60,42 @@ class TestOpenRouterModelOverrideResolution(unittest.TestCase):
                 resolved = resolve_model_config_overrides(model_name)
                 self.assertEqual(resolved, expected)
 
+    def test_google_frontier_models_include_recommended_sampling_defaults(self):
+        expected = {
+            "top_p": 0.95,
+            "top_k": 64,
+        }
+        for model_name in (
+            "google/gemma-3-4b-it",
+            "google/gemma-3-27b-it",
+            "google/gemini-2.5-flash-lite",
+            "google/gemini-2.5-flash-lite-preview-09-2025",
+        ):
+            with self.subTest(model_name=model_name):
+                resolved = resolve_model_config_overrides(model_name)
+                self.assertEqual(resolved, expected)
+
+    def test_nova_lite_includes_recommended_defaults(self):
+        resolved = resolve_model_config_overrides("amazon/nova-lite-v1")
+        self.assertEqual(
+            resolved,
+            {
+                "temperature": 0.7,
+                "top_p": 0.9,
+                "top_k": 50,
+            },
+        )
+
+    def test_kimi_k2_5_includes_recommended_defaults(self):
+        resolved = resolve_model_config_overrides("moonshotai/kimi-k2.5")
+        self.assertEqual(
+            resolved,
+            {
+                "temperature": 0.6,
+                "top_p": 0.95,
+            },
+        )
+
     def test_resolves_exact_model_override(self):
         with patch.dict(
             "batch_doc_vqa.openrouter.api.MODEL_CONFIG_OVERRIDES",
