@@ -902,7 +902,12 @@ def run_openrouter_inference(model_name: str,
 
     generation_params_effective["reasoning"] = inference_config.get("reasoning")
     config.additional_config["generation_params_effective"] = dict(generation_params_effective)
-    print(f"Generation params: {generation_params_effective}")
+
+    # Clarify that omitted reasoning means model/provider defaults are in effect.
+    generation_params_for_log = dict(generation_params_effective)
+    if generation_params_for_log.get("reasoning") is None:
+        generation_params_for_log["reasoning"] = "omitted (model/provider default)"
+    print(f"Generation params: {generation_params_for_log}")
 
     class RateLimiter:
         def __init__(self, rate: Optional[float]):
