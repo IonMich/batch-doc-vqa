@@ -14,19 +14,19 @@ The table below shows the top performing models by category. See [BENCHMARKS.md]
 
 <!-- BENCHMARK_TABLE_START -->
 
-| **Metric** | **OpenCV+CNN** | **moonshotai**<br>kimi-k2.5 | **qwen**<br>qwen3-vl-8b-instruct | **google**<br>gemini-2.5-flash-lite | **google**<br>gemini-3-flash-preview |
+| **Metric** | **OpenCV+CNN** | **moonshotai**<br>kimi-k2.5 | **qwen**<br>qwen3-vl-8b-instruct | **google**<br>gemini-3.1-pro-preview | **google**<br>gemini-2.5-flash-lite |
 |:---|:---|:---|:---|:---|:---|
 | LLM model size | N/A | 1000A32 | 8B | ?? | ?? |
 | Open-weights | N/A | Yes | Yes | No | No |
 | digit_top1 | 85.16% | **100.00%** | 99.61% | 99.22% | 99.22% |
 | 8-digit id_top1 | ?? | **100.00%** | 96.88% | 93.75% | 93.75% |
-| lastname_top1 | N/A | **100.00%** | **100.00%** | 96.88% | **100.00%** |
+| lastname_top1 | N/A | **100.00%** | **100.00%** | **100.00%** | 96.88% |
 | ID Avg d_Lev | N/A | **0.0000** | 0.0312 | 0.0625 | 0.0625 |
-| Lastname Avg d_Lev | N/A | **0.0000** | **0.0000** | 0.0312 | **0.0000** |
+| Lastname Avg d_Lev | N/A | **0.0000** | **0.0000** | **0.0000** | 0.0312 |
 | Docs detected | 90.62% (29/32) | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** |
-| Runtime (p) | **~1 second** | N/A | 11 seconds | 11 seconds | N/A |
-| Cost per image | **$0.00** | $0.004679 | $0.000266 | $0.000214 | $0.001636 |
-| Total cost | **$0.00** | $0.2995 | $0.0171 | $0.0137 | $0.1047 |
+| Runtime (p) | **~1 second** | N/A | 11 seconds | 1.1 minutes | 11 seconds |
+| Cost per image | **$0.00** | $0.004679 | $0.000266 | $0.009424 | $0.000214 |
+| Total cost | **$0.00** | $0.2995 | $0.0171 | $0.6031 | $0.0137 |
 
 
 
@@ -188,6 +188,17 @@ uv run generate-pareto-plot \
   --title "Model Performance vs Cost Trade-off (synthetic benchmark)"
 ```
 
+Optional: also generate a second Pareto plot for ID Avg d_Lev (with an inverted y-axis so lower/better distances are at the top):
+
+```bash
+uv run generate-pareto-plot \
+  --doc-info /tmp/synthetic_benchmark/images/doc_info.csv \
+  --test-ids /tmp/synthetic_benchmark/test_ids.csv \
+  --output /tmp/synthetic_benchmark/pareto_plot.png \
+  --extra-id-lev-pareto \
+  --id-lev-output /tmp/synthetic_benchmark/pareto_plot_id_lev.png
+```
+
 ## Run Benchmark: Your Dataset (default_student, No Code Changes)
 
 Use this when you have a labeled dataset compatible with the default student benchmark task and want benchmark tables/plots.
@@ -251,6 +262,8 @@ uv run generate-pareto-plot \
   --output /tmp/my_benchmark/pareto_plot.png \
   --title "Model Performance vs Cost Trade-off (my benchmark)"
 ```
+
+Optional: add `--extra-id-lev-pareto --id-lev-output /tmp/my_benchmark/pareto_plot_id_lev.png` to emit the additional inverted ID Avg d_Lev Pareto plot.
 
 ## Run Extraction: Your Dataset (default_student, No Code Changes)
 

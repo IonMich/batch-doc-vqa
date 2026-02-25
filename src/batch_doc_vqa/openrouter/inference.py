@@ -244,46 +244,43 @@ def run_openrouter_inference(model_name: str,
     def build_reasoning_retry_steps(
         *,
         reasoning_capable: bool,
-        include_reasoning_capable: bool,
         target_max_tokens: int,
         base_repetition_penalty: Optional[float],
     ) -> list[dict[str, Any]]:
         steps: list[dict[str, Any]] = []
 
-        if reasoning_capable:
-            for effort in ("medium", "low"):
-                steps.append({
-                    "label": f"reasoning_{effort}",
-                    "config_updates": {
-                        "max_tokens": target_max_tokens,
-                        "reasoning": {"effort": effort},
-                        "include_reasoning": True,
-                    },
-                })
+        if not reasoning_capable:
+            return steps
 
-            penalty_value = 1.1
-            if base_repetition_penalty and base_repetition_penalty > penalty_value:
-                penalty_value = base_repetition_penalty
-
+        for effort in ("medium", "low"):
             steps.append({
-                "label": "reasoning_high_penalty",
+                "label": f"reasoning_{effort}",
                 "config_updates": {
                     "max_tokens": target_max_tokens,
-                    "reasoning": {"effort": "high"},
-                    "include_reasoning": True,
-                    "repetition_penalty": penalty_value,
+                    "reasoning": {"effort": effort},
                 },
             })
 
-        if include_reasoning_capable:
-            steps.append({
-                "label": "reasoning_disabled",
-                "config_updates": {
-                    "max_tokens": target_max_tokens,
-                    "include_reasoning": False,
-                },
-                "remove_keys": ["reasoning"],
-            })
+        penalty_value = 1.1
+        if base_repetition_penalty and base_repetition_penalty > penalty_value:
+            penalty_value = base_repetition_penalty
+
+        steps.append({
+            "label": "reasoning_low_penalty",
+            "config_updates": {
+                "max_tokens": target_max_tokens,
+                "reasoning": {"effort": "low"},
+                "repetition_penalty": penalty_value,
+            },
+        })
+
+        steps.append({
+            "label": "reasoning_disabled",
+            "config_updates": {
+                "max_tokens": target_max_tokens,
+                "reasoning": {"enabled": False},
+            },
+        })
 
         return steps
 
@@ -310,7 +307,7 @@ def run_openrouter_inference(model_name: str,
     # Get model-specific overrides if they exist.
     overrides = cast(Dict[str, Any], resolve_model_config_overrides(model_name))
 
-    default_temperature = 0.0
+    default_temperature = 1.0
     default_max_tokens = 4096
     default_top_p = 1.0
 
@@ -599,7 +596,6 @@ def run_openrouter_inference(model_name: str,
         "min_p": effective_min_p,
         "presence_penalty": effective_presence_penalty,
         "repetition_penalty": effective_repetition_penalty,
-        "include_reasoning": overrides.get("include_reasoning"),
         "reasoning": overrides.get("reasoning"),
     }
 
@@ -885,19 +881,25 @@ def run_openrouter_inference(model_name: str,
     include_reasoning_override = overrides.get("include_reasoning")
     reasoning_override = overrides.get("reasoning")
 
-    if include_reasoning_override is not None:
-        inference_config["include_reasoning"] = include_reasoning_override
-
     if reasoning_override is not None:
         inference_config["reasoning"] = reasoning_override
+    elif include_reasoning_override is not None:
+        # Legacy compatibility shim: normalize deprecated include_reasoning
+        # into the current reasoning object and avoid sending legacy keys.
+        if bool(include_reasoning_override):
+            inference_config["reasoning"] = {"enabled": True}
+        else:
+            inference_config["reasoning"] = {"exclude": True}
 
-    reasoning_capable = "reasoning" in supported_parameters or reasoning_override is not None
-    include_reasoning_capable = reasoning_capable or "include_reasoning" in supported_parameters or include_reasoning_override is not None
+    reasoning_capable = (
+        "reasoning" in supported_parameters
+        or "include_reasoning" in supported_parameters
+        or inference_config.get("reasoning") is not None
+    )
 
     if effective_repetition_penalty is not None:
         inference_config["repetition_penalty"] = effective_repetition_penalty
 
-    generation_params_effective["include_reasoning"] = inference_config.get("include_reasoning")
     generation_params_effective["reasoning"] = inference_config.get("reasoning")
     config.additional_config["generation_params_effective"] = dict(generation_params_effective)
     print(f"Generation params: {generation_params_effective}")
@@ -1588,15 +1590,12 @@ def run_openrouter_inference(model_name: str,
 
                 adaptive_steps = build_reasoning_retry_steps(
                     reasoning_capable=reasoning_capable,
-                    include_reasoning_capable=include_reasoning_capable,
                     target_max_tokens=adaptive_target_tokens,
                     base_repetition_penalty=local_inference_config.get("repetition_penalty"),
                 )
 
                 for step_index, step in enumerate(adaptive_steps, start=1):
                     retry_config = dict(local_inference_config)
-                    for key in step.get("remove_keys", []):
-                        retry_config.pop(key, None)
                     retry_config.update(step.get("config_updates", {}))
                     step_label = str(step.get("label", "adaptive_step"))
                     step_detail = f"max_tokens={retry_config.get('max_tokens')}"
@@ -2046,7 +2045,6 @@ def run_openrouter_inference(model_name: str,
             "response_format": None,  # No default
             "tool_choice": "auto",
             "logit_bias": None,   # No default
-            "include_reasoning": None,  # Model-specific
             "reasoning": None     # Model-specific
         }
 

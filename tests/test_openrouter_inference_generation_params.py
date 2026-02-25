@@ -122,6 +122,7 @@ class TestOpenRouterGenerationParams(unittest.TestCase):
         api = config["api"]
         additional = config["additional"]
         sources = additional["generation_param_sources"]
+        effective = additional["generation_params_effective"]
 
         self.assertEqual(api["temperature"], 0.6)
         self.assertEqual(api["top_p"], 0.95)
@@ -135,6 +136,8 @@ class TestOpenRouterGenerationParams(unittest.TestCase):
         self.assertEqual(sources["min_p"], "model_override")
         self.assertEqual(sources["presence_penalty"], "model_override")
         self.assertEqual(sources["repetition_penalty"], "model_override")
+        self.assertIsNone(effective.get("reasoning"))
+        self.assertNotIn("include_reasoning", effective)
 
     def test_cli_overrides_take_precedence_over_model_profile(self):
         config = self._run_and_capture_config(

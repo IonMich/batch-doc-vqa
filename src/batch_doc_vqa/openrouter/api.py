@@ -15,21 +15,29 @@ from ..core import filepath_to_base64
 
 console = Console()
 
+# Qwen 3.5 recommended generation params for thinking/coding workloads.
+QWEN_35_RECOMMENDED_DEFAULTS = {
+    "temperature": 0.6,
+    "top_p": 0.95,
+    "top_k": 20,
+    "min_p": 0.0,
+    "presence_penalty": 0.0,
+    "repetition_penalty": 1.0,
+}
+
 # Model-specific configurations for special cases
 MODEL_CONFIG_OVERRIDES = {
     "z-ai/glm-4.5v": {
         "response_format": "box",  # Uses <|begin_of_box|> format
     },
+    "qwen/qwen3.5-35b-a3b": dict(QWEN_35_RECOMMENDED_DEFAULTS),
+    "qwen/qwen3.5-27b": dict(QWEN_35_RECOMMENDED_DEFAULTS),
+    "qwen/qwen3.5-122b-a10b": dict(QWEN_35_RECOMMENDED_DEFAULTS),
+    "qwen/qwen3.5-flash-02-23": dict(QWEN_35_RECOMMENDED_DEFAULTS),
+    "qwen/qwen3.5-397b-a17b": dict(QWEN_35_RECOMMENDED_DEFAULTS),
     "qwen/qwen3.5-plus-02-15": {
         # Qwen provider "thinking mode" defaults.
-        "temperature": 0.6,
-        "top_p": 0.95,
-        "top_k": 20,
-        "min_p": 0.0,
-        "presence_penalty": 0.0,
-        "repetition_penalty": 1.0,
-        "include_reasoning": True,
-        "reasoning": {"effort": "medium"},
+        **QWEN_35_RECOMMENDED_DEFAULTS,
     },
     # Add more overrides as needed for models with special requirements
 }
