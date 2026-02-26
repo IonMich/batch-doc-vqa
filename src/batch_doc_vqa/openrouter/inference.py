@@ -102,7 +102,8 @@ def run_openrouter_inference(model_name: str,
                             prompt_file: Optional[str] = None,
                             schema_file: Optional[str] = None,
                             output_json: Optional[str] = None,
-                            strict_schema: Optional[bool] = None):
+                            strict_schema: Optional[bool] = None,
+                            runs_base_dir: str = "tests/output/runs"):
     """Run inference using any OpenRouter vision model."""
 
     # Start timing
@@ -680,7 +681,12 @@ def run_openrouter_inference(model_name: str,
             return ""
 
     # Create run directory
-    manager = RunManager()
+    # Keep default zero-arg constructor path for compatibility with existing
+    # patched/mocked RunManager subclasses in tests.
+    if runs_base_dir == "tests/output/runs":
+        manager = RunManager()
+    else:
+        manager = RunManager(runs_base_dir)
     run_dir = manager.create_run_directory(config)
     reasoning_log_path = Path(run_dir) / "failed_reasoning.log"
     retry_log_path = Path(run_dir) / "retry_events.log"

@@ -21,6 +21,7 @@ dependencies = [
 batch-doc-vqa = "batch_doc_vqa:main"
 openrouter-inference = "batch_doc_vqa.openrouter.main:main"
 openrouter-cli = "batch_doc_vqa.openrouter.cli:main"
+openrouter-param-sweep = "batch_doc_vqa.openrouter.param_sweep:main"
 openrouter-ui = "batch_doc_vqa.openrouter.ui:interactive_organization_model_selection"
 gemini-inference = "batch_doc_vqa.gemini.cli:main"
 gemini-ui = "batch_doc_vqa.gemini.main:main"
