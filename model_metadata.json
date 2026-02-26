@@ -279,6 +279,11 @@
       "open_weights": true,
       "model_size": "35A3",
       "license": "Apache-2.0"
+    },
+    "qwen/qwen3.5-flash-02-23": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
     }
   },
   "needs_review": []
