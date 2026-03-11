@@ -4,7 +4,13 @@ imgs/*
 !imgs/quiz11-presidents.pdf
 tests/output/*
 !tests/output/public/
-src/batch_doc_vqa/datasets/
+src/batch_doc_vqa/datasets/*
+!src/batch_doc_vqa/datasets/instructor_pilot.py
+!src/batch_doc_vqa/datasets/ta_annotation_ui.py
+/tmp/instructor_pilot_ta_v1/
+tests/output/ta_runs/
+annotations/
+ta_artifacts/
 
 **/__pycache__/
 .env
