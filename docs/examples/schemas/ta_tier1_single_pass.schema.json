@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "student_full_name",
+    "university_id",
+    "section_number",
+    "evidence_regions",
+    "problems",
+    "template_version_guess",
+    "template_confidence"
+  ],
+  "properties": {
+    "student_full_name": {
+      "type": "string"
+    },
+    "university_id": {
+      "type": "string"
+    },
+    "section_number": {
+      "type": "string"
+    },
+    "template_version_guess": {
+      "type": "string"
+    },
+    "template_confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "evidence_regions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "evidence_id",
+          "bbox",
+          "kind"
+        ],
+        "properties": {
+          "evidence_id": {
+            "type": "string"
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "bbox": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "problem_description",
+              "problem_number",
+              "figure",
+              "other"
+            ]
+          },
+          "label": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "problems": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "problem_uid",
+          "problem_number",
+          "description_text",
+          "description_evidence_ids",
+          "figure_evidence_ids"
+        ],
+        "properties": {
+          "problem_uid": {
+            "type": "string"
+          },
+          "problem_number": {
+            "type": "string"
+          },
+          "description_text": {
+            "type": "string"
+          },
+          "description_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "figure_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

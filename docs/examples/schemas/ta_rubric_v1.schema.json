@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TA Rubric v1",
+  "type": "object",
+  "required": [
+    "rubric_version",
+    "assignment_id",
+    "criteria"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "rubric_version": {
+      "type": "string"
+    },
+    "assignment_id": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "criteria": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "criterion_id",
+          "label",
+          "max_points"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "criterion_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string"
+          },
+          "max_points": {
+            "type": "number",
+            "minimum": 0.0
+          }
+        }
+      }
+    }
+  }
+}

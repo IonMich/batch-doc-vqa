@@ -1,0 +1,280 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TA Benchmark Label v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "doc_id",
+    "submission_id",
+    "assignment_id",
+    "template_version_id",
+    "evidence_regions",
+    "problems",
+    "review"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "ta_benchmark_v1"
+    },
+    "doc_id": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "submission_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "assignment_id": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "template_version_id": {
+      "type": "string"
+    },
+    "evidence_regions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidence_region"
+      }
+    },
+    "problems": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/problem"
+      }
+    },
+    "tier2": {
+      "$ref": "#/$defs/tier2"
+    },
+    "review": {
+      "$ref": "#/$defs/review"
+    }
+  },
+  "$defs": {
+    "evidence_id": {
+      "type": "string",
+      "pattern": "^ev[A-Za-z0-9_-]+$"
+    },
+    "bbox": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 1.0
+      }
+    },
+    "evidence_region": {
+      "type": "object",
+      "required": [
+        "evidence_id",
+        "page",
+        "bbox",
+        "kind"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "evidence_id": {
+          "$ref": "#/$defs/evidence_id"
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "bbox": {
+          "$ref": "#/$defs/bbox"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "problem_description",
+            "problem_number",
+            "figure",
+            "work_region",
+            "rubric_evidence",
+            "feedback_anchor",
+            "other"
+          ]
+        },
+        "label": {
+          "type": "string"
+        }
+      }
+    },
+    "problem": {
+      "type": "object",
+      "required": [
+        "problem_uid",
+        "problem_number",
+        "description_text",
+        "description_evidence_ids",
+        "figure_evidence_ids"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "problem_uid": {
+          "type": "string",
+          "minLength": 1
+        },
+        "problem_number": {
+          "type": "string"
+        },
+        "description_text": {
+          "type": "string"
+        },
+        "description_evidence_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence_id"
+          }
+        },
+        "figure_evidence_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence_id"
+          }
+        }
+      }
+    },
+    "rubric_score": {
+      "type": "object",
+      "required": [
+        "problem_uid",
+        "criterion_id",
+        "max_points",
+        "awarded_points",
+        "error_tags",
+        "evidence_ids"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "problem_uid": {
+          "type": "string",
+          "minLength": 1
+        },
+        "criterion_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "max_points": {
+          "type": "number",
+          "minimum": 0.0
+        },
+        "awarded_points": {
+          "type": "number",
+          "minimum": 0.0
+        },
+        "error_tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence_id"
+          }
+        }
+      }
+    },
+    "feedback_item": {
+      "type": "object",
+      "required": [
+        "problem_uid",
+        "comment",
+        "specificity",
+        "actionability",
+        "evidence_ids"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "problem_uid": {
+          "type": "string",
+          "minLength": 1
+        },
+        "comment": {
+          "type": "string"
+        },
+        "specificity": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "actionability": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "correctness": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence_id"
+          }
+        }
+      }
+    },
+    "tier2": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "rubric_scores": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/rubric_score"
+          }
+        },
+        "feedback": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/feedback_item"
+          }
+        }
+      }
+    },
+    "review": {
+      "type": "object",
+      "required": [
+        "annotator_id",
+        "status",
+        "updated_at_utc"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "annotator_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "in_review",
+            "verified"
+          ]
+        },
+        "updated_at_utc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "proposal_action": {
+          "type": "string",
+          "enum": [
+            "",
+            "accepted",
+            "edited",
+            "rejected"
+          ]
+        }
+      }
+    }
+  }
+}

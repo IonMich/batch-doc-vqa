@@ -335,6 +335,81 @@ For a different extraction schema or different scoring rules, update:
 4. Ground-truth matching logic: `src/batch_doc_vqa/utils/string_matching.py`
 5. Benchmark table metrics/rows: `src/batch_doc_vqa/benchmarks/table_generator.py`
 
+## TA Benchmark Workflow (Instructor Pilot)
+
+Use this workflow for TA-style annotation and grading evaluation beyond ID/name/section extraction.
+
+### 1. Freeze dataset metadata and splits
+
+```bash
+uv run python -m batch_doc_vqa.ta_benchmark.dataset_freeze \
+  --doc-info /tmp/instructor_pilot_export_full/doc_info.csv \
+  --test-ids /tmp/instructor_pilot_export_full/test_ids.csv \
+  --dataset-manifest /tmp/instructor_pilot_export_full/dataset_manifest.json \
+  --output-root /tmp/instructor_pilot_ta_v1
+```
+
+### 2. Generate model-assisted proposals
+
+```bash
+uv run python -m batch_doc_vqa.ta_benchmark.proposals \
+  --results-json tests/output/runs/<run_name>/results.json \
+  --doc-info /tmp/instructor_pilot_export_full/doc_info.csv \
+  --test-ids /tmp/instructor_pilot_export_full/test_ids.csv \
+  --output /tmp/instructor_pilot_ta_v1/proposals.json
+```
+
+### 3. Annotate in local UI
+
+```bash
+uv run python -m batch_doc_vqa.datasets.ta_annotation_ui \
+  --images-dir /tmp/instructor_pilot_export_full/images \
+  --doc-info /tmp/instructor_pilot_export_full/doc_info.csv \
+  --test-ids /tmp/instructor_pilot_export_full/test_ids.csv \
+  --labels-dir /tmp/instructor_pilot_ta_v1/annotations \
+  --proposals /tmp/instructor_pilot_ta_v1/proposals.json \
+  --rubrics-dir /tmp/instructor_pilot_ta_v1/rubrics
+```
+
+### 4. Validate labels
+
+```bash
+uv run python -m batch_doc_vqa.ta_benchmark.validate_labels \
+  --labels-dir /tmp/instructor_pilot_ta_v1/annotations
+```
+
+### 5. Score predictions and generate report
+
+```bash
+uv run python -m batch_doc_vqa.ta_benchmark.score_runs \
+  --labels-dir /tmp/instructor_pilot_ta_v1/annotations \
+  --predictions tests/output/runs/<run_name>/results.json \
+  --doc-info /tmp/instructor_pilot_export_full/doc_info.csv \
+  --images-dir /tmp/instructor_pilot_export_full/images \
+  --output /tmp/instructor_pilot_ta_v1/scores/<run_name>.json
+
+uv run python -m batch_doc_vqa.ta_benchmark.report \
+  --scores-json /tmp/instructor_pilot_ta_v1/scores/<run_name>.json \
+  --output-md /tmp/instructor_pilot_ta_v1/reports/<run_name>.md \
+  --output-json /tmp/instructor_pilot_ta_v1/reports/<run_name>.summary.json
+
+# Optional: compare runs + Pareto
+uv run python -m batch_doc_vqa.ta_benchmark.compare_runs \
+  --scores-glob "/tmp/instructor_pilot_ta_v1/scores/*.json" \
+  --metric rubric_scoring.qwk \
+  --cost-field run_metadata.cost_per_image \
+  --output-md /tmp/instructor_pilot_ta_v1/reports/comparison.md \
+  --pareto-output /tmp/instructor_pilot_ta_v1/reports/pareto_qwk.png
+
+# Optional: inter-annotator agreement gate
+uv run python -m batch_doc_vqa.ta_benchmark.agreement \
+  --labels-a /tmp/instructor_pilot_ta_v1/annotations_reviewer_a \
+  --labels-b /tmp/instructor_pilot_ta_v1/annotations_reviewer_b \
+  --threshold-template 0.85 \
+  --threshold-region-f1 0.80 \
+  --output /tmp/instructor_pilot_ta_v1/reports/agreement.json
+```
+
 ## Other Investigations
 
 - Statistical calibration (legacy experiment): see `statistical-calibration.md`.

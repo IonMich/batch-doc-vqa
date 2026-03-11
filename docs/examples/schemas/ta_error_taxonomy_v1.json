@@ -1,0 +1,55 @@
+{
+  "version": "ta_error_taxonomy_v1",
+  "tags": [
+    {
+      "id": "missing_assumption",
+      "name": "Missing assumption",
+      "description": "Key problem assumption or setup condition is omitted."
+    },
+    {
+      "id": "equation_misapplied",
+      "name": "Equation misapplied",
+      "description": "Correct formula selected but applied incorrectly."
+    },
+    {
+      "id": "algebraic_error",
+      "name": "Algebraic error",
+      "description": "Manipulation or simplification mistake in symbolic steps."
+    },
+    {
+      "id": "arithmetic_error",
+      "name": "Arithmetic error",
+      "description": "Numeric computation mistake."
+    },
+    {
+      "id": "units_error",
+      "name": "Units error",
+      "description": "Incorrect or missing units and dimensional mismatch."
+    },
+    {
+      "id": "sign_error",
+      "name": "Sign error",
+      "description": "Incorrect sign convention or sign handling."
+    },
+    {
+      "id": "diagram_misread",
+      "name": "Diagram misread",
+      "description": "Figure or diagram details interpreted incorrectly."
+    },
+    {
+      "id": "logic_gap",
+      "name": "Logic gap",
+      "description": "Major reasoning step missing between claims."
+    },
+    {
+      "id": "incomplete_solution",
+      "name": "Incomplete solution",
+      "description": "Solution starts correctly but is unfinished."
+    },
+    {
+      "id": "final_answer_incorrect",
+      "name": "Final answer incorrect",
+      "description": "Final submitted answer is incorrect despite prior work."
+    }
+  ]
+}
