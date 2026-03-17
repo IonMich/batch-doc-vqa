@@ -299,6 +299,26 @@
       "open_weights": false,
       "model_size": "??",
       "license": null
+    },
+    "mistralai/mistral-small-2603": {
+      "open_weights": true,
+      "model_size": "119A7",
+      "license": "Apache-2.0"
+    },
+    "mistralai/ministral-14b-2512": {
+      "open_weights": true,
+      "model_size": "14B",
+      "license": "Apache-2.0"
+    },
+    "openai/gpt-5.4-nano": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
+    },
+    "openai/gpt-5.4-mini": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
     }
   },
   "needs_review": []
