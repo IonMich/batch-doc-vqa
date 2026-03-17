@@ -289,6 +289,16 @@
       "open_weights": false,
       "model_size": "??",
       "license": null
+    },
+    "qwen/qwen3.5-9b": {
+      "open_weights": true,
+      "model_size": "9B",
+      "license": "Apache-2.0"
+    },
+    "openai/gpt-5.4": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
     }
   },
   "needs_review": []
