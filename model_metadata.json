@@ -319,6 +319,16 @@
       "open_weights": false,
       "model_size": "??",
       "license": null
+    },
+    "xiaomi/mimo-v2-omni": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
+    },
+    "z-ai/glm-5v-turbo": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
     }
   },
   "needs_review": []
