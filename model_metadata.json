@@ -329,6 +329,11 @@
       "open_weights": false,
       "model_size": "??",
       "license": null
+    },
+    "google/gemma-4-31b-it": {
+      "open_weights": true,
+      "model_size": "31B",
+      "license": "Apache-2.0"
     }
   },
   "needs_review": []
