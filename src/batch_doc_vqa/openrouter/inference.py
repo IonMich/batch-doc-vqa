@@ -8,6 +8,7 @@ import json
 import requests  # type: ignore[import]
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 from typing import Any, Dict, Optional, cast
 
@@ -770,16 +771,105 @@ def run_openrouter_inference(model_name: str,
             except Exception as exc:
                 console.print(f"[yellow]⚠️ Failed to write retry log: {exc}[/yellow]")
 
+    def safe_response_json(response: Any) -> Optional[Dict[str, Any]]:
+        try:
+            payload = response.json()
+        except Exception:
+            return None
+        if not isinstance(payload, dict):
+            return None
+        return payload
+
+    def normalize_response_error_code(code: Any) -> Optional[Any]:
+        if isinstance(code, int):
+            return code
+        if isinstance(code, float) and code.is_integer():
+            return int(code)
+        if isinstance(code, str):
+            stripped = code.strip()
+            if not stripped:
+                return None
+            if stripped.isdigit():
+                return int(stripped)
+            lowered = stripped.lower()
+            if lowered in {"rate_limit_exceeded", "rate_limited", "too_many_requests"}:
+                return 429
+            return stripped
+        return None
+
+    def extract_response_error(payload: Optional[Dict[str, Any]]) -> tuple[Optional[Any], Optional[str], Dict[str, Any]]:
+        if not isinstance(payload, dict):
+            return None, None, {}
+
+        error = payload.get("error")
+        if not isinstance(error, dict):
+            return None, None, {}
+
+        error_code = normalize_response_error_code(error.get("code"))
+        error_message = error.get("message")
+        if not isinstance(error_message, str) or not error_message.strip():
+            error_message = None
+
+        return error_code, error_message, error
+
+    def resolve_retry_after_delay_seconds(
+        response: Any,
+        *,
+        attempt: int,
+        default_delay: float,
+        max_delay: float = 120.0,
+    ) -> float:
+        headers_obj = getattr(response, "headers", None)
+        if headers_obj is None:
+            return min(max_delay, default_delay * (2 ** max(0, attempt - 1)))
+
+        try:
+            lowered_headers = {
+                str(key).strip().lower(): str(value).strip()
+                for key, value in headers_obj.items()
+            }
+        except Exception:
+            lowered_headers = {}
+
+        def _parse_seconds(raw_value: Optional[str], *, milliseconds: bool = False) -> Optional[float]:
+            if raw_value is None:
+                return None
+            text = raw_value.strip()
+            if not text:
+                return None
+            try:
+                numeric = float(text)
+            except ValueError:
+                try:
+                    retry_at = parsedate_to_datetime(text)
+                except Exception:
+                    return None
+                if retry_at.tzinfo is None:
+                    retry_at = retry_at.replace(tzinfo=timezone.utc)
+                numeric = (retry_at - datetime.now(timezone.utc)).total_seconds()
+            if milliseconds:
+                numeric /= 1000.0
+            return max(0.0, min(max_delay, numeric))
+
+        for header_name, milliseconds in (
+            ("retry-after-ms", True),
+            ("x-ratelimit-reset-after-ms", True),
+            ("retry-after", False),
+            ("x-ratelimit-reset-after", False),
+            ("ratelimit-reset", False),
+        ):
+            parsed = _parse_seconds(lowered_headers.get(header_name), milliseconds=milliseconds)
+            if parsed is not None:
+                return parsed
+
+        return min(max_delay, default_delay * (2 ** max(0, attempt - 1)))
+
     def extract_response_summary(response: Any) -> Dict[str, Any]:
         summary: Dict[str, Any] = {
             "status_code": getattr(response, "status_code", None),
         }
-        try:
-            payload = response.json()
-        except Exception:
-            return summary
-
-        if not isinstance(payload, dict):
+        payload = safe_response_json(response)
+        if payload is None:
             return summary
 
         provider = payload.get("provider")
@@ -801,6 +891,12 @@ def run_openrouter_inference(model_name: str,
             choice = choices[0]
             summary["finish_reason"] = choice.get("finish_reason")
             summary["native_finish_reason"] = choice.get("native_finish_reason")
+
+        error_code, error_message, _ = extract_response_error(payload)
+        if error_code is not None:
+            summary["error_code"] = error_code
+        if error_message is not None:
+            summary["error_message"] = error_message
 
         return summary
 
@@ -832,6 +928,13 @@ def run_openrouter_inference(model_name: str,
             detail_parts.append(f"completion_tokens={completion_tokens}")
         if total_tokens is not None:
             detail_parts.append(f"total_tokens={total_tokens}")
+        error_code = summary.get("error_code")
+        error_message = summary.get("error_message")
+        if error_code is not None:
+            error_text = f"error={error_code}"
+            if isinstance(error_message, str):
+                error_text += f":{error_message[:80]}"
+            detail_parts.append(error_text)
         if isinstance(request_max_tokens, int):
             detail_parts.append(f"request_max_tokens={request_max_tokens}")
 
@@ -1087,6 +1190,29 @@ def run_openrouter_inference(model_name: str,
                         entry["_used_reasoning_fallback"] = True
             return payload
 
+        def build_api_error_result(
+            *,
+            error_code: Any,
+            usage: Optional[Dict[str, Any]] = None,
+            error_details: Optional[Dict[str, Any]] = None,
+        ) -> Dict[str, Any]:
+            usage_dict = usage if isinstance(usage, dict) else {}
+            entry = base_result_entry()
+            entry.update({
+                "_api_error": error_code,
+                "_token_usage": {
+                    "prompt_tokens": usage_dict.get("prompt_tokens", 0),
+                    "completion_tokens": usage_dict.get("completion_tokens", 0),
+                    "total_tokens": usage_dict.get("total_tokens", 0),
+                },
+            })
+            if isinstance(error_details, dict) and error_details:
+                entry["_api_error_details"] = error_details
+                error_message = error_details.get("message")
+                if isinstance(error_message, str) and error_message.strip():
+                    entry["_api_error_message"] = error_message.strip()
+            return entry
+
         # Copy base inference config for this image
         local_inference_config: Dict[str, Any] = dict(inference_config)
         try:
@@ -1105,15 +1231,20 @@ def run_openrouter_inference(model_name: str,
 
             # Handle rate limiting with a single retry
             if response.status_code == 429:
+                rate_limit_delay = resolve_retry_after_delay_seconds(
+                    response,
+                    attempt=1,
+                    default_delay=10.0,
+                )
                 log_retry_event(
                     imagepath,
                     stage="initial_429",
                     attempt=1,
                     max_attempts=1,
-                    delay_seconds=10.0,
+                    delay_seconds=rate_limit_delay,
                     detail="rate-limited on first response",
                 )
-                time.sleep(10)
+                time.sleep(rate_limit_delay)
                 response = guarded_create_completion(model_name, local_inference_config, imagepath)
                 log_retry_response(
                     imagepath,
@@ -1196,19 +1327,14 @@ def run_openrouter_inference(model_name: str,
                 })
 
             if response.status_code >= 400:
-                try:
-                    error_usage = response.json().get("usage", {})
-                except Exception:
-                    error_usage = {}
-                api_error_entry = base_result_entry()
-                api_error_entry.update({
-                    "_api_error": response.status_code,
-                    "_token_usage": {
-                        "prompt_tokens": error_usage.get("prompt_tokens", 0),
-                        "completion_tokens": error_usage.get("completion_tokens", 0),
-                        "total_tokens": error_usage.get("total_tokens", 0)
-                    }
-                })
+                response_payload = safe_response_json(response) or {}
+                error_usage = response_payload.get("usage", {})
+                error_details = response_payload.get("error", {})
+                api_error_entry = build_api_error_result(
+                    error_code=response.status_code,
+                    usage=error_usage,
+                    error_details=error_details if isinstance(error_details, dict) else None,
+                )
                 local_results.append(api_error_entry)
                 status_msg = f"[red]API Error {response.status_code}[/red]"
                 return finalize_payload({
@@ -1227,20 +1353,35 @@ def run_openrouter_inference(model_name: str,
             if "choices" not in response_json or not response_json["choices"]:
                 missing_choices = True
                 no_choice_attempts = 0
+                latest_no_choice_response = response
+                latest_no_choice_payload = response_json
 
                 while missing_choices and no_choice_attempts < max_no_choice_retries:
                     no_choice_attempts += 1
                     no_choice_delay = min(5 * no_choice_attempts, 15)
+                    embedded_error_code, embedded_error_message, _ = extract_response_error(latest_no_choice_payload)
+                    if embedded_error_code == 429:
+                        no_choice_delay = resolve_retry_after_delay_seconds(
+                            latest_no_choice_response,
+                            attempt=no_choice_attempts,
+                            default_delay=float(no_choice_delay),
+                        )
+                    retry_detail = "retrying empty choices payload"
+                    if embedded_error_code is not None:
+                        retry_detail += f"; error={embedded_error_code}"
+                        if embedded_error_message:
+                            retry_detail += f": {embedded_error_message[:80]}"
                     log_retry_event(
                         imagepath,
                         stage="missing_choices",
                         attempt=no_choice_attempts,
                         max_attempts=max_no_choice_retries,
                         delay_seconds=float(no_choice_delay),
-                        detail="retrying empty choices payload",
+                        detail=retry_detail,
                     )
                     time.sleep(no_choice_delay)
                     retry_response = guarded_create_completion(model_name, local_inference_config, imagepath)
+                    latest_no_choice_response = retry_response
                     log_retry_response(
                         imagepath,
                         stage="missing_choices_result",
@@ -1253,19 +1394,28 @@ def run_openrouter_inference(model_name: str,
                             else None
                         ),
                     )
+                    retry_response_json = safe_response_json(retry_response)
+                    if retry_response_json is not None:
+                        latest_no_choice_payload = retry_response_json
                     if retry_response.status_code >= 500:
                         continue
                     if retry_response.status_code == 429:
+                        rate_limit_delay = resolve_retry_after_delay_seconds(
+                            retry_response,
+                            attempt=no_choice_attempts,
+                            default_delay=10.0,
+                        )
                         log_retry_event(
                             imagepath,
                             stage="missing_choices_429",
                             attempt=no_choice_attempts,
                             max_attempts=max_no_choice_retries,
-                            delay_seconds=10.0,
+                            delay_seconds=rate_limit_delay,
                             detail="rate-limited while recovering missing choices",
                         )
-                        time.sleep(10)
+                        time.sleep(rate_limit_delay)
                         retry_response = guarded_create_completion(model_name, local_inference_config, imagepath)
+                        latest_no_choice_response = retry_response
                         log_retry_response(
                             imagepath,
                             stage="missing_choices_429_result",
@@ -1278,27 +1428,49 @@ def run_openrouter_inference(model_name: str,
                                 else None
                             ),
                         )
+                        retry_response_json = safe_response_json(retry_response)
+                        if retry_response_json is not None:
+                            latest_no_choice_payload = retry_response_json
                     if retry_response.status_code != 200:
                         continue
-                    retry_response_json = retry_response.json()
+                    if retry_response_json is None:
+                        continue
                     if "provider" in retry_response_json:
                         local_providers.add(retry_response_json["provider"])
                     if "choices" in retry_response_json and retry_response_json["choices"]:
                         response_json = retry_response_json
+                        response = retry_response
                         missing_choices = False
                         break
 
                 if missing_choices:
-                    usage = response_json.get("usage", {})
-                    error_details = response_json.get("error", {})
+                    usage = latest_no_choice_payload.get("usage", {})
+                    usage_dict = usage if isinstance(usage, dict) else {}
+                    error_code, _, error_details = extract_response_error(latest_no_choice_payload)
+                    if error_code is not None:
+                        api_error_entry = build_api_error_result(
+                            error_code=error_code,
+                            usage=usage_dict,
+                            error_details=error_details,
+                        )
+                        local_results.append(api_error_entry)
+                        status_msg = f"[red]API Error {error_code}[/red]"
+                        return finalize_payload({
+                            "imagepath": imagepath,
+                            "results": local_results,
+                            "providers": list(local_providers),
+                            "rep_score": local_rep_score,
+                            "status_msg": status_msg,
+                            "success": False,
+                        })
                     no_response_entry = base_result_entry()
                     no_response_entry.update({
                         "_no_response": True,
-                        "_no_response_error": error_details,
+                        "_no_response_error": latest_no_choice_payload.get("error", {}),
                         "_token_usage": {
-                            "prompt_tokens": usage.get("prompt_tokens", 0),
-                            "completion_tokens": usage.get("completion_tokens", 0),
-                            "total_tokens": usage.get("total_tokens", 0)
+                            "prompt_tokens": usage_dict.get("prompt_tokens", 0),
+                            "completion_tokens": usage_dict.get("completion_tokens", 0),
+                            "total_tokens": usage_dict.get("total_tokens", 0)
                         }
                     })
                     local_results.append(no_response_entry)
@@ -1636,15 +1808,20 @@ def run_openrouter_inference(model_name: str,
                         request_max_tokens=step_request_max_tokens,
                     )
                     if retry_response.status_code == 429:
+                        rate_limit_delay = resolve_retry_after_delay_seconds(
+                            retry_response,
+                            attempt=step_index,
+                            default_delay=10.0,
+                        )
                         log_retry_event(
                             imagepath,
                             stage=f"adaptive_{step_label}_429",
                             attempt=step_index,
                             max_attempts=len(adaptive_steps),
-                            delay_seconds=10.0,
+                            delay_seconds=rate_limit_delay,
                             detail="rate-limited during adaptive retry",
                         )
-                        time.sleep(10)
+                        time.sleep(rate_limit_delay)
                         retry_response = guarded_create_completion(model_name, retry_config, imagepath)
                         log_retry_response(
                             imagepath,
@@ -1749,15 +1926,20 @@ def run_openrouter_inference(model_name: str,
                     ),
                 )
                 if retry_response.status_code == 429:
+                    rate_limit_delay = resolve_retry_after_delay_seconds(
+                        retry_response,
+                        attempt=schema_retry_attempts,
+                        default_delay=10.0,
+                    )
                     log_retry_event(
                         imagepath,
                         stage="schema_retry_429",
                         attempt=schema_retry_attempts,
                         max_attempts=schema_retry_max,
-                        delay_seconds=10.0,
+                        delay_seconds=rate_limit_delay,
                         detail="rate-limited during schema retry",
                     )
-                    time.sleep(10)
+                    time.sleep(rate_limit_delay)
                     retry_response = guarded_create_completion(
                         model_name,
                         local_inference_config,
