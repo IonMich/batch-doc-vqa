@@ -172,16 +172,21 @@ class TestOpenRouterGenerationParams(unittest.TestCase):
         self.assertEqual(sources["presence_penalty"], "global_default")
 
     def test_google_frontier_profile_uses_global_temp_and_model_sampling_overrides(self):
-        config = self._run_and_capture_config(model_name="google/gemini-2.5-flash-lite")
-        api = config["api"]
-        sources = config["additional"]["generation_param_sources"]
+        for model_name in (
+            "google/gemini-2.5-flash-lite",
+            "google/gemma-4-31b-it",
+        ):
+            with self.subTest(model_name=model_name):
+                config = self._run_and_capture_config(model_name=model_name)
+                api = config["api"]
+                sources = config["additional"]["generation_param_sources"]
 
-        self.assertEqual(api["temperature"], 1.0)
-        self.assertEqual(api["top_p"], 0.95)
-        self.assertEqual(api["top_k"], 64)
-        self.assertEqual(sources["temperature"], "global_default")
-        self.assertEqual(sources["top_p"], "model_override")
-        self.assertEqual(sources["top_k"], "model_override")
+                self.assertEqual(api["temperature"], 1.0)
+                self.assertEqual(api["top_p"], 0.95)
+                self.assertEqual(api["top_k"], 64)
+                self.assertEqual(sources["temperature"], "global_default")
+                self.assertEqual(sources["top_p"], "model_override")
+                self.assertEqual(sources["top_k"], "model_override")
 
     def test_nova_lite_profile_is_used_when_cli_overrides_are_omitted(self):
         config = self._run_and_capture_config(model_name="amazon/nova-lite-v1")

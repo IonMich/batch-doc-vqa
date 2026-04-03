@@ -91,6 +91,7 @@ MODEL_CONFIG_OVERRIDES = {
     "qwen/qwen3-vl-235b-a22b-thinking": dict(QWEN_3_VL_THINKING_LARGE_DEFAULTS),
     "google/gemma-3-4b-it": dict(GOOGLE_RECOMMENDED_SAMPLING_DEFAULTS),
     "google/gemma-3-27b-it": dict(GOOGLE_RECOMMENDED_SAMPLING_DEFAULTS),
+    "google/gemma-4-31b-it": dict(GOOGLE_RECOMMENDED_SAMPLING_DEFAULTS),
     "google/gemini-2.5-flash-lite": dict(GOOGLE_RECOMMENDED_SAMPLING_DEFAULTS),
     "google/gemini-2.5-flash-lite-preview-09-2025": dict(GOOGLE_RECOMMENDED_SAMPLING_DEFAULTS),
     "amazon/nova-lite-v1": dict(NOVA_LITE_RECOMMENDED_DEFAULTS),

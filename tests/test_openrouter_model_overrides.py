@@ -68,6 +68,7 @@ class TestOpenRouterModelOverrideResolution(unittest.TestCase):
         for model_name in (
             "google/gemma-3-4b-it",
             "google/gemma-3-27b-it",
+            "google/gemma-4-31b-it",
             "google/gemini-2.5-flash-lite",
             "google/gemini-2.5-flash-lite-preview-09-2025",
         ):
