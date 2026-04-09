@@ -15,3 +15,4 @@ ta_artifacts/
 **/__pycache__/
 .env
 AGENTS.md
+.vscode/
