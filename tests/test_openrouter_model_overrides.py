@@ -133,6 +133,15 @@ class TestOpenRouterModelOverrideResolution(unittest.TestCase):
             },
         )
 
+    def test_seed_2_0_mini_includes_recommended_defaults(self):
+        resolved = resolve_model_config_overrides("bytedance-seed/seed-2.0-mini")
+        self.assertEqual(
+            resolved,
+            {
+                "top_p": 0.7,
+            },
+        )
+
     def test_resolves_exact_model_override(self):
         with patch.dict(
             "batch_doc_vqa.openrouter.api.MODEL_CONFIG_OVERRIDES",

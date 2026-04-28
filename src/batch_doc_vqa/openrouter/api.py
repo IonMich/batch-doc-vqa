@@ -77,6 +77,12 @@ KIMI_K2_5_RECOMMENDED_DEFAULTS = {
     "top_p": 0.95,
 }
 
+# Public Seed 2.0 Mini API docs expose a nucleus-sampling default of 0.7.
+# Keep temperature at the global default (1.0) unless the CLI overrides it.
+SEED_20_MINI_RECOMMENDED_DEFAULTS = {
+    "top_p": 0.7,
+}
+
 # Model-specific configurations for special cases
 MODEL_CONFIG_OVERRIDES = {
     "z-ai/glm-4.5v": {
@@ -113,6 +119,7 @@ MODEL_CONFIG_OVERRIDES = {
     "google/gemini-2.5-flash-lite-preview-09-2025": dict(GOOGLE_RECOMMENDED_SAMPLING_DEFAULTS),
     "amazon/nova-lite-v1": dict(NOVA_LITE_RECOMMENDED_DEFAULTS),
     "moonshotai/kimi-k2.5": dict(KIMI_K2_5_RECOMMENDED_DEFAULTS),
+    "bytedance-seed/seed-2.0-mini": dict(SEED_20_MINI_RECOMMENDED_DEFAULTS),
     # Add more overrides as needed for models with special requirements
 }
 

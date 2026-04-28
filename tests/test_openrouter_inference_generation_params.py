@@ -270,6 +270,18 @@ class TestOpenRouterGenerationParams(unittest.TestCase):
         self.assertEqual(sources["top_p"], "model_override")
         self.assertEqual(sources["top_k"], "global_default")
 
+    def test_seed_2_0_mini_profile_uses_global_temp_and_model_top_p(self):
+        config = self._run_and_capture_config(model_name="bytedance-seed/seed-2.0-mini")
+        api = config["api"]
+        sources = config["additional"]["generation_param_sources"]
+
+        self.assertEqual(api["temperature"], 1.0)
+        self.assertEqual(api["top_p"], 0.7)
+        self.assertIsNone(api["top_k"])
+        self.assertEqual(sources["temperature"], "global_default")
+        self.assertEqual(sources["top_p"], "model_override")
+        self.assertEqual(sources["top_k"], "global_default")
+
     def test_cli_overrides_take_precedence_over_model_profile(self):
         config = self._run_and_capture_config(
             temperature=0.2,
