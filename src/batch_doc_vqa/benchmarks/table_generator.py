@@ -65,6 +65,7 @@ class BenchmarkTableGenerator:
     DEFAULT_DOC_INFO_FILE = "imgs/q11/doc_info.csv"
     DEFAULT_TEST_IDS_FILE = "tests/data/test_ids.csv"
     SCORING_VERSION = "relaxed-surname-v1"
+    COSTING_VERSION = "mixed-precise-fallback-v1"
     
     # Default rows to include in tables
     DEFAULT_ROWS = [
@@ -328,6 +329,8 @@ class BenchmarkTableGenerator:
                 # Scoring rules may evolve; refresh cached results when scorer version changes.
                 if cached_stats.get("_scoring_version") != self.SCORING_VERSION:
                     needs_recalc = True
+                if cached_stats.get("_costing_version") != self.COSTING_VERSION:
+                    needs_recalc = True
                 if (
                     cached_stats.get("fully_parallelizable_runtime_available")
                     and "fully_parallelizable_runtime_seconds" not in cached_stats
@@ -404,6 +407,7 @@ class BenchmarkTableGenerator:
             stats["_dataset_doc_info"] = current_doc_info_norm
             stats["_dataset_test_ids"] = current_test_ids_norm
             stats["_scoring_version"] = self.SCORING_VERSION
+            stats["_costing_version"] = self.COSTING_VERSION
             
             # Save table results for future use
             self.run_manager.save_table_results(run_name, stats)
@@ -1108,76 +1112,72 @@ class BenchmarkTableGenerator:
         """Calculate actual costs based on real token usage and cost data from API responses."""
         if not raw_results:
             return {"cost_per_image": 0.0, "total_cost": 0.0}
-        
-        # Check if any results have precise actual_cost data
-        total_actual_cost = 0.0
-        total_requests = 0
-        has_precise_costs = False
-        
-        # Collect actual costs when available (from generation API)
-        for filepath, result_list in raw_results.items():
-            if result_list and len(result_list) > 0:
-                result = result_list[0]
-                token_usage = result.get("_token_usage", {})
-                if token_usage and "actual_cost" in token_usage:
-                    actual_cost = token_usage.get("actual_cost", 0.0)
-                    if actual_cost > 0:
-                        total_actual_cost += actual_cost
-                        has_precise_costs = True
-                        total_requests += 1
-        
-        if has_precise_costs and total_requests > 0:
-            # Use precise costs from generation API
-            cost_per_image = total_actual_cost / total_requests
-            return {
-                "cost_per_image": cost_per_image,
-                "total_cost": total_actual_cost,
-                "total_requests": total_requests
-            }
-        
-        # Fallback: calculate from token counts and pricing rates
+
+        # Prefer precise generation API costs per row, but estimate any rows where
+        # OpenRouter no longer exposes the generation record.
         config = run_info["config"]
         additional = config.get("additional", {})
         pricing = additional.get("model_pricing", {})
-        
-        if not pricing:
-            return {"cost_per_image": 0.0, "total_cost": 0.0}
-        
-        # Get pricing rates (per token)
-        prompt_rate = float(pricing.get("prompt", "0"))
-        completion_rate = float(pricing.get("completion", "0"))
-        
-        # Collect token usage from API responses
+
+        prompt_rate = 0.0
+        completion_rate = 0.0
+        has_pricing = False
+        if pricing:
+            prompt_rate = float(pricing.get("prompt", "0"))
+            completion_rate = float(pricing.get("completion", "0"))
+            has_pricing = prompt_rate > 0 or completion_rate > 0
+
+        total_cost = 0.0
+        costed_requests = 0
+        precise_cost_requests = 0
+        estimated_cost_requests = 0
+        missing_cost_requests = 0
         total_prompt_tokens = 0
         total_completion_tokens = 0
-        total_requests = 0
-        
+
         for filepath, result_list in raw_results.items():
             if result_list and len(result_list) > 0:
                 result = result_list[0]
                 token_usage = result.get("_token_usage", {})
                 if token_usage:
-                    total_prompt_tokens += token_usage.get("prompt_tokens", 0)
-                    total_completion_tokens += token_usage.get("completion_tokens", 0)
-                    total_requests += 1
-        
-        if total_requests == 0:
+                    prompt_tokens = token_usage.get("prompt_tokens", 0) or 0
+                    completion_tokens = token_usage.get("completion_tokens", 0) or 0
+                    total_prompt_tokens += prompt_tokens
+                    total_completion_tokens += completion_tokens
+
+                    actual_cost = token_usage.get("actual_cost")
+                    if (
+                        isinstance(actual_cost, (int, float))
+                        and not isinstance(actual_cost, bool)
+                        and actual_cost >= 0
+                    ):
+                        total_cost += float(actual_cost)
+                        costed_requests += 1
+                        precise_cost_requests += 1
+                    elif has_pricing:
+                        total_cost += (
+                            prompt_rate * prompt_tokens
+                            + completion_rate * completion_tokens
+                        )
+                        costed_requests += 1
+                        estimated_cost_requests += 1
+                    else:
+                        missing_cost_requests += 1
+
+        if costed_requests == 0:
             return {"cost_per_image": 0.0, "total_cost": 0.0}
-        
-        # Calculate estimated costs from token counts
-        total_prompt_cost = prompt_rate * total_prompt_tokens
-        total_completion_cost = completion_rate * total_completion_tokens
-        total_cost = total_prompt_cost + total_completion_cost
-        
-        # Calculate cost per image (request)
-        cost_per_image = total_cost / total_requests if total_requests > 0 else 0.0
+
+        cost_per_image = total_cost / costed_requests if costed_requests > 0 else 0.0
         
         return {
             "cost_per_image": cost_per_image,
             "total_cost": total_cost,
-            "total_requests": total_requests,
+            "total_requests": costed_requests,
             "total_prompt_tokens": total_prompt_tokens,
-            "total_completion_tokens": total_completion_tokens
+            "total_completion_tokens": total_completion_tokens,
+            "precise_cost_requests": precise_cost_requests,
+            "estimated_cost_requests": estimated_cost_requests,
+            "missing_cost_requests": missing_cost_requests,
         }
     
     def _format_best_value(self, values: list, higher_is_better: bool = True, format_type: str = "rich") -> list:

@@ -17,6 +17,17 @@ class TestOpenRouterModelOverrideResolution(unittest.TestCase):
         self.assertEqual(resolved.get("presence_penalty"), 0.0)
         self.assertEqual(resolved.get("repetition_penalty"), 1.0)
 
+    def test_qwen_3_6_35b_a3b_includes_published_defaults(self):
+        resolved = resolve_model_config_overrides("qwen/qwen3.6-35b-a3b")
+        self.assertEqual(
+            resolved,
+            {
+                "temperature": 1.0,
+                "top_p": 0.95,
+                "top_k": 20,
+            },
+        )
+
     def test_qwen_3_vl_instruct_series_includes_recommended_defaults(self):
         expected = {
             "temperature": 0.7,

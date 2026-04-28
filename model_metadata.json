@@ -334,6 +334,31 @@
       "open_weights": true,
       "model_size": "31B",
       "license": "Apache-2.0"
+    },
+    "google/gemma-4-26b-a4b-it": {
+      "open_weights": true,
+      "model_size": "26A4",
+      "license": "Apache-2.0"
+    },
+    "qwen/qwen3.6-plus": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
+    },
+    "moonshotai/kimi-k2.6": {
+      "open_weights": true,
+      "model_size": "1000A32",
+      "license": "modified-mit"
+    },
+    "openai/gpt-5.5": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
+    },
+    "qwen/qwen3.6-35b-a3b": {
+      "open_weights": true,
+      "model_size": "35A3",
+      "license": "Apache-2.0"
     }
   },
   "needs_review": []

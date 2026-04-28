@@ -25,6 +25,14 @@ QWEN_35_RECOMMENDED_DEFAULTS = {
     "repetition_penalty": 1.0,
 }
 
+# Qwen 3.6 35B A3B published generation defaults.
+# Source: Hugging Face Qwen/Qwen3.6-35B-A3B generation_config.json.
+QWEN_36_35B_A3B_PUBLISHED_DEFAULTS = {
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 20,
+}
+
 # Qwen3-VL model-card generation defaults.
 # Source: Hugging Face Qwen3-VL model cards / generation_config.json.
 QWEN_3_VL_INSTRUCT_DEFAULTS = {
@@ -82,6 +90,7 @@ MODEL_CONFIG_OVERRIDES = {
         # Qwen provider "thinking mode" defaults.
         **QWEN_35_RECOMMENDED_DEFAULTS,
     },
+    "qwen/qwen3.6-35b-a3b": dict(QWEN_36_35B_A3B_PUBLISHED_DEFAULTS),
     "qwen/qwen3-vl-8b-instruct": dict(QWEN_3_VL_INSTRUCT_DEFAULTS),
     "qwen/qwen3-vl-30b-a3b-instruct": dict(QWEN_3_VL_INSTRUCT_DEFAULTS),
     "qwen/qwen3-vl-32b-instruct": dict(QWEN_3_VL_INSTRUCT_DEFAULTS),
