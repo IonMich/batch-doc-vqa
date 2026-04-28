@@ -364,6 +364,16 @@
       "open_weights": true,
       "model_size": "35A3",
       "license": "Apache-2.0"
+    },
+    "bytedance-seed/seed-2.0-mini": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
+    },
+    "xiaomi/mimo-v2.5": {
+      "open_weights": true,
+      "model_size": "310A15",
+      "license": "MIT"
     }
   },
   "needs_review": []
