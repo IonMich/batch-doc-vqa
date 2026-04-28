@@ -157,6 +157,24 @@ class TestOpenRouterGenerationParams(unittest.TestCase):
         self.assertEqual(sources["presence_penalty"], "global_default")
         self.assertEqual(sources["repetition_penalty"], "global_default")
 
+    def test_qwen_3_6_flash_published_profile_is_used_when_cli_overrides_are_omitted(self):
+        config = self._run_and_capture_config(model_name="qwen/qwen3.6-flash")
+        api = config["api"]
+        sources = config["additional"]["generation_param_sources"]
+
+        self.assertEqual(api["temperature"], 1.0)
+        self.assertEqual(api["top_p"], 0.95)
+        self.assertEqual(api["top_k"], 20)
+        self.assertIsNone(api["min_p"])
+        self.assertIsNone(api["presence_penalty"])
+        self.assertIsNone(api["repetition_penalty"])
+        self.assertEqual(sources["temperature"], "model_override")
+        self.assertEqual(sources["top_p"], "model_override")
+        self.assertEqual(sources["top_k"], "model_override")
+        self.assertEqual(sources["min_p"], "global_default")
+        self.assertEqual(sources["presence_penalty"], "global_default")
+        self.assertEqual(sources["repetition_penalty"], "global_default")
+
     def test_qwen_3_vl_instruct_profile_is_used_when_cli_overrides_are_omitted(self):
         config = self._run_and_capture_config(model_name="qwen/qwen3-vl-8b-instruct")
         api = config["api"]

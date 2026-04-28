@@ -27,6 +27,7 @@ QWEN_35_RECOMMENDED_DEFAULTS = {
 
 # Qwen 3.6 35B A3B published generation defaults.
 # Source: Hugging Face Qwen/Qwen3.6-35B-A3B generation_config.json.
+# Alibaba also exposes the same family through the qwen3.6-flash API name.
 QWEN_36_35B_A3B_PUBLISHED_DEFAULTS = {
     "temperature": 1.0,
     "top_p": 0.95,
@@ -91,6 +92,7 @@ MODEL_CONFIG_OVERRIDES = {
         **QWEN_35_RECOMMENDED_DEFAULTS,
     },
     "qwen/qwen3.6-35b-a3b": dict(QWEN_36_35B_A3B_PUBLISHED_DEFAULTS),
+    "qwen/qwen3.6-flash": dict(QWEN_36_35B_A3B_PUBLISHED_DEFAULTS),
     "qwen/qwen3-vl-8b-instruct": dict(QWEN_3_VL_INSTRUCT_DEFAULTS),
     "qwen/qwen3-vl-30b-a3b-instruct": dict(QWEN_3_VL_INSTRUCT_DEFAULTS),
     "qwen/qwen3-vl-32b-instruct": dict(QWEN_3_VL_INSTRUCT_DEFAULTS),

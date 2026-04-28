@@ -28,6 +28,17 @@ class TestOpenRouterModelOverrideResolution(unittest.TestCase):
             },
         )
 
+    def test_qwen_3_6_flash_includes_published_defaults(self):
+        resolved = resolve_model_config_overrides("qwen/qwen3.6-flash")
+        self.assertEqual(
+            resolved,
+            {
+                "temperature": 1.0,
+                "top_p": 0.95,
+                "top_k": 20,
+            },
+        )
+
     def test_qwen_3_vl_instruct_series_includes_recommended_defaults(self):
         expected = {
             "temperature": 0.7,
