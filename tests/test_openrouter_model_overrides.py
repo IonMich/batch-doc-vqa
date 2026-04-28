@@ -39,6 +39,20 @@ class TestOpenRouterModelOverrideResolution(unittest.TestCase):
             },
         )
 
+    def test_qwen_3_5_plus_20260420_includes_recommended_defaults(self):
+        resolved = resolve_model_config_overrides("qwen/qwen3.5-plus-20260420")
+        self.assertEqual(
+            resolved,
+            {
+                "temperature": 0.6,
+                "top_p": 0.95,
+                "top_k": 20,
+                "min_p": 0.0,
+                "presence_penalty": 0.0,
+                "repetition_penalty": 1.0,
+            },
+        )
+
     def test_qwen_3_vl_instruct_series_includes_recommended_defaults(self):
         expected = {
             "temperature": 0.7,

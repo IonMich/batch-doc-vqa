@@ -91,6 +91,12 @@ MODEL_CONFIG_OVERRIDES = {
         # Qwen provider "thinking mode" defaults.
         **QWEN_35_RECOMMENDED_DEFAULTS,
     },
+    "qwen/qwen3.5-plus-20260420": {
+        # Qwen provider "thinking mode" defaults remain the best published
+        # guidance for this refreshed Plus line until a newer model-card
+        # generation profile appears.
+        **QWEN_35_RECOMMENDED_DEFAULTS,
+    },
     "qwen/qwen3.6-35b-a3b": dict(QWEN_36_35B_A3B_PUBLISHED_DEFAULTS),
     "qwen/qwen3.6-flash": dict(QWEN_36_35B_A3B_PUBLISHED_DEFAULTS),
     "qwen/qwen3-vl-8b-instruct": dict(QWEN_3_VL_INSTRUCT_DEFAULTS),

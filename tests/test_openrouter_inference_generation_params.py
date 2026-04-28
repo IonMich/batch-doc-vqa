@@ -175,6 +175,28 @@ class TestOpenRouterGenerationParams(unittest.TestCase):
         self.assertEqual(sources["presence_penalty"], "global_default")
         self.assertEqual(sources["repetition_penalty"], "global_default")
 
+    def test_qwen_3_5_plus_20260420_profile_is_used_when_cli_overrides_are_omitted(self):
+        config = self._run_and_capture_config(model_name="qwen/qwen3.5-plus-20260420")
+        api = config["api"]
+        additional = config["additional"]
+        sources = additional["generation_param_sources"]
+        effective = additional["generation_params_effective"]
+
+        self.assertEqual(api["temperature"], 0.6)
+        self.assertEqual(api["top_p"], 0.95)
+        self.assertEqual(api["top_k"], 20)
+        self.assertEqual(api["min_p"], 0.0)
+        self.assertEqual(api["presence_penalty"], 0.0)
+        self.assertEqual(api["repetition_penalty"], 1.0)
+        self.assertEqual(sources["temperature"], "model_override")
+        self.assertEqual(sources["top_p"], "model_override")
+        self.assertEqual(sources["top_k"], "model_override")
+        self.assertEqual(sources["min_p"], "model_override")
+        self.assertEqual(sources["presence_penalty"], "model_override")
+        self.assertEqual(sources["repetition_penalty"], "model_override")
+        self.assertIsNone(effective.get("reasoning"))
+        self.assertNotIn("include_reasoning", effective)
+
     def test_qwen_3_vl_instruct_profile_is_used_when_cli_overrides_are_omitted(self):
         config = self._run_and_capture_config(model_name="qwen/qwen3-vl-8b-instruct")
         api = config["api"]
