@@ -374,6 +374,16 @@
       "open_weights": true,
       "model_size": "310A15",
       "license": "MIT"
+    },
+    "bytedance-seed/seed-2.0-lite": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
+    },
+    "google/gemini-3.1-flash-lite": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
     }
   },
   "needs_review": []
