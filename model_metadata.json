@@ -384,6 +384,16 @@
       "open_weights": false,
       "model_size": "??",
       "license": null
+    },
+    "mistralai/mistral-medium-3-5": {
+      "open_weights": true,
+      "model_size": "128B",
+      "license": "Modified MIT"
+    },
+    "google/gemini-3.5-flash": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
     }
   },
   "needs_review": []
