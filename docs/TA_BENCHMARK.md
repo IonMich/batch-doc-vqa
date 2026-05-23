@@ -18,6 +18,7 @@ This document describes the TA benchmark tooling for instructor-pilot documents.
 - This workflow may process real student identifiers.
 - Keep dataset artifacts local.
 - Do not commit raw instructor dataset exports.
+- Follow `docs/TA_STUDENT_DATA_SAFETY.md` before running exports, annotation, scoring, or reports on real Instructor Pilot data.
 
 ## Primary Commands
 

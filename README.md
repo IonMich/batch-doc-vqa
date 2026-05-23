@@ -134,6 +134,14 @@ This updates `BENCHMARKS.md`, `pareto_plot.png`, and the benchmark section in `R
 Use this when you want to automatically generate a labeled DocVQA benchmark dataset, then run the same benchmark pipeline end-to-end.
 This workflow uses **PyMuPDF** for both synthetic PDF rendering and PDF-to-image conversion; `uv run --with pymupdf ...` installs it on demand.
 
+For public-safe regression benchmarking, prefer the versioned suite in `docs/examples/synthetic/default_student_suite_v1.yaml`. It defines `clean`, `tabular`, and `noisy_mixed` variants with fixed seeds and writes only under the ignored `tests/output/synthetic/` tree:
+
+```bash
+uv run --with pymupdf generate-default-student-synthetic-suite --overwrite
+```
+
+The suite reads tracked synthetic inputs only. It does not read TA annotations, Instructor Pilot exports, or raw student files. See `docs/DEFAULT_STUDENT_SYNTHETIC_SUITE.md` for the artifact contract and variant definitions.
+
 ### 1. Generate synthetic PDFs + labels
 
 ```bash

@@ -1,0 +1,56 @@
+suite_id: default_student_synthetic_v1
+suite_version: 1
+task_type: default_student
+description: Public-safe synthetic robustness/regression suite for the default_student extraction task.
+entities_file: docs/examples/synthetic/default_student_suite_v1_entities.csv
+output_root: tests/output/synthetic/default_student_synthetic_v1
+dpi: 150
+variants:
+  - id: clean
+    profile: clean
+    seed: 4101
+    num_docs: 12
+    pages_per_doc: 4
+    target_pages: [1, 3]
+    expected_artifacts:
+      pdf: task_docs.pdf
+      labels: test_ids.csv
+      generation_plan: generation_plan.json
+      metadata: metadata.json
+      normalized_entities: entities.normalized.json
+      doc_info: images/doc_info.csv
+      benchmark_table: BENCHMARKS.md
+      pareto_plot: pareto_plot.png
+      id_lev_pareto_plot: pareto_plot_id_lev.png
+  - id: tabular
+    profile: tabular
+    seed: 4201
+    num_docs: 12
+    pages_per_doc: 4
+    target_pages: [1, 3]
+    expected_artifacts:
+      pdf: task_docs.pdf
+      labels: test_ids.csv
+      generation_plan: generation_plan.json
+      metadata: metadata.json
+      normalized_entities: entities.normalized.json
+      doc_info: images/doc_info.csv
+      benchmark_table: BENCHMARKS.md
+      pareto_plot: pareto_plot.png
+      id_lev_pareto_plot: pareto_plot_id_lev.png
+  - id: noisy_mixed
+    profile: noisy_mixed
+    seed: 4301
+    num_docs: 12
+    pages_per_doc: 4
+    target_pages: [1, 3]
+    expected_artifacts:
+      pdf: task_docs.pdf
+      labels: test_ids.csv
+      generation_plan: generation_plan.json
+      metadata: metadata.json
+      normalized_entities: entities.normalized.json
+      doc_info: images/doc_info.csv
+      benchmark_table: BENCHMARKS.md
+      pareto_plot: pareto_plot.png
+      id_lev_pareto_plot: pareto_plot_id_lev.png
