@@ -136,6 +136,41 @@ class TestCleanupBadRuns(unittest.TestCase):
             self.assertTrue(any("missing actual_cost" in reason for reason in diagnosis.reasons))
             self.assertTrue(any("generation_id still present" in reason for reason in diagnosis.reasons))
 
+    def test_diagnose_strict_costs_detects_generation_meta_id(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            run_dir = Path(tmp) / "google-gemma-3-4b-it_20260212_120000"
+            run_dir.mkdir(parents=True)
+            _write_yaml(run_dir / "config.yaml", _base_config())
+            _write_json(
+                run_dir / "results.json",
+                {
+                    "imgs/q11/doc-0-page-1-VHX7P2D0.png": [
+                        {
+                            "student_full_name": "Harry S. Truman",
+                            "university_id": "11800",
+                            "_token_usage": {
+                                "prompt_tokens": 100,
+                                "completion_tokens": 10,
+                                "total_tokens": 110,
+                                "actual_cost": 0.001,
+                            },
+                            "_generation_meta": {
+                                "generation_id": "gen-123",
+                            },
+                        }
+                    ]
+                },
+            )
+
+            diagnosis = diagnose_run(
+                run_dir,
+                strict=True,
+                strict_costs=True,
+                strict_reproducibility=False,
+            )
+
+            self.assertTrue(any("generation_id still present" in reason for reason in diagnosis.reasons))
+
     def test_diagnose_strict_reproducibility_detects_git_dirty_relevant(self):
         with tempfile.TemporaryDirectory() as tmp:
             run_dir = Path(tmp) / "google-gemma-3-4b-it_20260212_120000"

@@ -171,7 +171,15 @@ def _count_cost_issues(results: Dict[str, Any]) -> tuple[int, int, int]:
             missing_actual_cost += 1
             continue
 
-        if token_usage.get("generation_id"):
+        metadata_blocks = (
+            token_usage,
+            cost_fetch if isinstance(cost_fetch, dict) else None,
+            entry.get("_generation_meta"),
+        )
+        if any(
+            isinstance(block, dict) and block.get("generation_id")
+            for block in metadata_blocks
+        ):
             generation_id_leftovers += 1
 
         actual_cost = token_usage.get("actual_cost")
@@ -244,7 +252,7 @@ def diagnose_run(
                 )
             if generation_id_leftovers > 0:
                 reasons.append(
-                    f"generation_id still present for {generation_id_leftovers} image(s) (cost fetch incomplete)"
+                    f"generation_id still present for {generation_id_leftovers} image(s)"
                 )
             if missing_actual_cost > 0:
                 reasons.append(
