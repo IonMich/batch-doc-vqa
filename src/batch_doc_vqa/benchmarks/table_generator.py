@@ -3,16 +3,16 @@
 Enhanced benchmark table generation using the new run management system.
 Automatically discovers and processes runs from tests/output/runs.
 """
+import os
+import pandas as pd
 import argparse
 import hashlib
 import json
-import os
 import random
+import re
 import statistics
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
-
-import pandas as pd
+from typing import Dict, List, Optional, Any, Tuple
 
 from rich.console import Console
 from rich.table import Table
@@ -22,6 +22,13 @@ from ..core import format_runtime
 from .cohorts import (
     select_latest_cohorts,
     format_cohort_debug_report,
+)
+from .published_runs import (
+    DEFAULT_PUBLISHED_RUNS_DIR,
+    build_dataset_provenance,
+    is_complete_published_archive,
+    load_published_summaries,
+    summary_to_run_info,
 )
 from ..utils.string_matching import (
     D_CUTOFF,
@@ -67,7 +74,7 @@ class BenchmarkTableGenerator:
     DEFAULT_DOC_INFO_FILE = "imgs/q11/doc_info.csv"
     DEFAULT_TEST_IDS_FILE = "tests/data/test_ids.csv"
     SCORING_VERSION = "relaxed-surname-v1"
-    COSTING_VERSION = "mixed-precise-fallback-v1"
+    COSTING_VERSION = "cost-provenance-v2"
     DATASET_FINGERPRINT_VERSION = "sha256-v1"
     
     # Default rows to include in tables
@@ -113,8 +120,20 @@ class BenchmarkTableGenerator:
         "Total cost": "$0.00"
     }
     
-    def __init__(self, runs_base_dir: str = "tests/output/runs", metadata_file: str = "model_metadata.json", 
-                 interactive: bool = True, included_rows: List[str] = None):
+    def __init__(
+        self,
+        runs_base_dir: str = "tests/output/runs",
+        metadata_file: str = "model_metadata.json",
+        interactive: bool = True,
+        included_rows: List[str] = None,
+        *,
+        source: str = "local",
+        published_runs_dir: str = str(DEFAULT_PUBLISHED_RUNS_DIR),
+        cache_results: bool = True,
+        write_metadata: bool = True,
+    ):
+        if source not in {"local", "published", "auto"}:
+            raise ValueError("source must be one of: local, published, auto")
         self.run_manager = RunManager(runs_base_dir)
         self.console = Console()
         self.metadata_file = metadata_file
@@ -122,6 +141,19 @@ class BenchmarkTableGenerator:
         self.included_rows = included_rows or self.DEFAULT_ROWS
         self.model_metadata = self._load_model_metadata()
         self._expected_docs_cache: Dict[str, int] = {}
+        self.source = source
+        self.published_runs_dir = Path(published_runs_dir)
+        self.cache_results = cache_results
+        self.write_metadata = write_metadata
+
+    def _active_source(self) -> str:
+        """Resolve the source without switching to an incomplete archive."""
+        if self.source != "auto":
+            return self.source
+        manifest = self.published_runs_dir.parent / "archive.json"
+        if is_complete_published_archive(self.published_runs_dir, manifest):
+            return "published"
+        return "local"
         
     def _load_model_metadata(self) -> Dict:
         """Load model metadata from JSON file."""
@@ -137,6 +169,8 @@ class BenchmarkTableGenerator:
     
     def _save_model_metadata(self):
         """Save model metadata to JSON file."""
+        if not self.write_metadata:
+            return
         with open(self.metadata_file, 'w') as f:
             json.dump(self.model_metadata, f, indent=2)
     
@@ -292,16 +326,13 @@ class BenchmarkTableGenerator:
         return parent_dir
 
     def _dataset_fingerprint(self, doc_info_file: str, test_ids_file: str) -> str:
-        """Fingerprint scoring inputs by content so caches are portable."""
+        """Fingerprint scoring inputs by content for portable legacy caches."""
         digest = hashlib.sha256()
-        for label, input_file in (
-            ("doc_info", doc_info_file),
-            ("test_ids", test_ids_file),
-        ):
+        for label, input_file in (("doc_info", doc_info_file), ("test_ids", test_ids_file)):
             digest.update(label.encode("utf-8"))
             digest.update(b"\0")
             with Path(input_file).expanduser().open("rb") as file_handle:
-                while chunk := file_handle.read(1024 * 1024):
+                for chunk in iter(lambda: file_handle.read(1024 * 1024), b""):
                     digest.update(chunk)
             digest.update(b"\0")
         return f"{self.DATASET_FINGERPRINT_VERSION}:{digest.hexdigest()}"
@@ -314,14 +345,69 @@ class BenchmarkTableGenerator:
             and self._requested_test_ids_norm(test_ids_file) == default_test_ids
         )
 
+    def _result_paths_match_document_manifest(
+        self,
+        run_info: Dict[str, Any],
+        *,
+        doc_info_file: str,
+    ) -> Tuple[bool, Optional[str]]:
+        """Verify raw response keys against the exact scoring manifest.
+
+        A config path alone is not a dataset identity: generated image names can
+        change while keeping the same directory.  Publishing such a run against
+        a different manifest would silently turn a valid score into nonsense.
+        """
+        if isinstance(run_info.get("published_summary"), dict):
+            return True, None
+        try:
+            results = self.run_manager.load_results(run_info["run_name"])
+            manifest = pd.read_csv(doc_info_file)
+        except Exception as exc:
+            return False, f"unable to verify result paths ({type(exc).__name__})"
+        if not isinstance(results, dict) or not results or "filename" not in manifest.columns:
+            return False, "unable to verify result paths"
+
+        config = run_info.get("config", {})
+        additional = config.get("additional", {}) if isinstance(config, dict) else {}
+        configured_pages = additional.get("pages") if isinstance(additional, dict) else None
+        if isinstance(configured_pages, list) and configured_pages and "page" in manifest.columns:
+            requested_pages = {str(page) for page in configured_pages}
+            manifest = manifest[manifest["page"].astype(str).isin(requested_pages)]
+
+        expected_names = {str(name) for name in manifest["filename"].dropna()}
+        result_names = {Path(str(path)).name for path in results}
+        matched = len(expected_names & result_names)
+        if not result_names:
+            return False, "empty results payload"
+        if matched != len(result_names):
+            return False, f"result keys do not match requested document manifest ({matched}/{len(result_names)} matched)"
+        return True, None
+
     def _matches_requested_dataset(
         self,
         run_info: Dict[str, Any],
         *,
         doc_info_file: str,
         test_ids_file: str,
+        dataset_provenance: Optional[Dict[str, Any]] = None,
+        validate_result_paths: bool = False,
     ) -> Tuple[bool, Optional[str]]:
         """Return whether run dataset metadata matches requested scoring dataset."""
+        published_dataset_hash = run_info.get("dataset_content_hash")
+        if isinstance(published_dataset_hash, str):
+            requested_provenance = dataset_provenance or build_dataset_provenance(
+                doc_info_file,
+                test_ids_file,
+            )
+            if published_dataset_hash == requested_provenance["content_hash"]:
+                return True, None
+            return False, "dataset content hash mismatch"
+
+        def _validated_match() -> Tuple[bool, Optional[str]]:
+            if validate_result_paths:
+                return self._result_paths_match_document_manifest(run_info, doc_info_file=doc_info_file)
+            return True, None
+
         config = run_info.get("config", {})
         additional = config.get("additional", {}) if isinstance(config, dict) else {}
         if not isinstance(additional, dict):
@@ -337,16 +423,16 @@ class BenchmarkTableGenerator:
         if run_doc_info:
             if run_doc_info != requested_doc_info:
                 return False, f"dataset mismatch (run doc_info={run_doc_info})"
-            return True, None
+            return _validated_match()
 
         if run_images_dir:
             if run_images_dir != requested_images_dir:
                 return False, f"dataset mismatch (run images_dir={run_images_dir})"
-            return True, None
+            return _validated_match()
 
         # Legacy runs without explicit dataset metadata are treated as q11-only.
         if is_default_request:
-            return True, None
+            return _validated_match()
         return False, "dataset mismatch (legacy run without dataset metadata)"
 
     def _get_expected_docs_count(self, test_ids_file: str) -> int:
@@ -368,16 +454,26 @@ class BenchmarkTableGenerator:
         self._expected_docs_cache[normalized] = expected_docs
         return expected_docs
     
-    def compute_run_stats(self, run_info: Dict, doc_info_file: str, test_ids_file: str) -> Optional[Dict]:
+    def compute_run_stats(
+        self,
+        run_info: Dict,
+        doc_info_file: str,
+        test_ids_file: str,
+        *,
+        dataset_provenance: Optional[Dict[str, Any]] = None,
+    ) -> Optional[Dict]:
         """Compute statistics for a single run."""
+        published_summary = run_info.get("published_summary")
+        if isinstance(published_summary, dict):
+            stats = published_summary.get("stats")
+            return dict(stats) if isinstance(stats, dict) else None
+
         run_name = run_info["run_name"]
+        dataset_provenance = dataset_provenance or build_dataset_provenance(doc_info_file, test_ids_file)
+        dataset_content_hash = dataset_provenance["content_hash"]
+        dataset_fingerprint = self._dataset_fingerprint(doc_info_file, test_ids_file)
         
         try:
-            current_dataset_fingerprint = self._dataset_fingerprint(
-                doc_info_file,
-                test_ids_file,
-            )
-
             # Check if table results already exist and have cost data
             if run_info["has_table_results"]:
                 cached_stats = self.run_manager.load_table_results(run_name)
@@ -385,6 +481,8 @@ class BenchmarkTableGenerator:
 
                 # If cached stats don't have cost data, recalculate
                 if "cost_per_image" not in cached_stats or "total_cost" not in cached_stats:
+                    needs_recalc = True
+                if "cost_status" not in cached_stats or "cost_complete" not in cached_stats:
                     needs_recalc = True
 
                 # Runtime coverage metadata was added later; refresh legacy cached entries once.
@@ -402,8 +500,12 @@ class BenchmarkTableGenerator:
                 ):
                     needs_recalc = True
 
-                # Cache is dataset-specific; invalidate when scoring inputs differ.
-                if cached_stats.get("_dataset_fingerprint") != current_dataset_fingerprint:
+                # Cache is dataset-specific; absolute source paths are never
+                # persisted because they are machine-specific and sensitive.
+                if (
+                    cached_stats.get("_dataset_content_hash") != dataset_content_hash
+                    and cached_stats.get("_dataset_fingerprint") != dataset_fingerprint
+                ):
                     needs_recalc = True
 
                 if needs_recalc:
@@ -466,13 +568,17 @@ class BenchmarkTableGenerator:
             cost_data = self._calculate_actual_costs(run_info, results)
             stats.update(cost_data)
 
-            # Cache provenance: scoring dataset inputs used for this run's stats.
-            stats["_dataset_fingerprint"] = current_dataset_fingerprint
+            # Cache provenance: content address, not machine-local paths.
+            stats["_dataset_content_hash"] = dataset_content_hash
+            stats["_dataset_fingerprint"] = dataset_fingerprint
+            stats["_dataset_id"] = dataset_provenance.get("dataset_id")
             stats["_scoring_version"] = self.SCORING_VERSION
             stats["_costing_version"] = self.COSTING_VERSION
             
-            # Save table results for future use
-            self.run_manager.save_table_results(run_name, stats)
+            # Raw-run caches are a local optimization, never a requirement for
+            # deterministic publication checks.
+            if self.cache_results:
+                self.run_manager.save_table_results(run_name, stats)
             
             # Cleanup
             os.remove(temp_results_file)
@@ -493,8 +599,11 @@ class BenchmarkTableGenerator:
             "lastname_avg_lev": 0.0,
             "docs_detected": 0.0,
             "docs_detected_count": 0,
-            "cost_per_image": 0.0,
-            "total_cost": 0.0,
+            "cost_per_image": None,
+            "total_cost": None,
+            "observed_total_cost": None,
+            "cost_status": "unavailable",
+            "cost_complete": False,
         }
     
     def _calculate_stats(
@@ -587,6 +696,16 @@ class BenchmarkTableGenerator:
 
     def _collect_matching_runs(self, run_patterns: Optional[List[str]] = None) -> List[Dict[str, Any]]:
         """Collect runs that match optional patterns."""
+        if self._active_source() == "published":
+            runs = [summary_to_run_info(summary) for summary in load_published_summaries(self.published_runs_dir)]
+            if not run_patterns:
+                return runs
+            return [
+                run
+                for run in runs
+                if any(re.search(pattern, run["run_name"], re.IGNORECASE) for pattern in run_patterns)
+            ]
+
         all_runs: List[Dict[str, Any]] = []
         if run_patterns:
             for pattern in run_patterns:
@@ -598,6 +717,12 @@ class BenchmarkTableGenerator:
 
     def _is_run_eligible_for_cohort(self, run_info: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
         """Return whether a run should participate in latest-cohort aggregation."""
+        if isinstance(run_info.get("published_summary"), dict):
+            stats = run_info["published_summary"].get("stats")
+            if not isinstance(stats, dict):
+                return False, "invalid published stats"
+            return True, None
+
         run_name = run_info.get("run_name", "unknown")
         config = run_info.get("config", {})
         runtime_value = config.get("environment", {}).get("runtime")
@@ -667,8 +792,6 @@ class BenchmarkTableGenerator:
             "docs_detected",
             "docs_detected_count",
             "expected_docs_count",
-            "cost_per_image",
-            "total_cost",
         ]
 
         aggregated: Dict[str, Any] = {
@@ -693,6 +816,71 @@ class BenchmarkTableGenerator:
             ci = self._bootstrap_median_ci(values)
             if ci is not None:
                 aggregated["ci"][metric] = [float(ci[0]), float(ci[1])]
+
+        # Cost comparisons are valid only when every request in every cohort
+        # member has a cost.  Never median an observed subtotal with a complete
+        # total: that would make an incomplete run look artificially cheap.
+        cost_statuses = [str(entry["stats"].get("cost_status", "unavailable")) for entry in cohort_entries]
+        total_requests = sum(int(entry["stats"].get("total_requests", 0) or 0) for entry in cohort_entries)
+        costed_requests = sum(int(entry["stats"].get("costed_requests", 0) or 0) for entry in cohort_entries)
+        precise_requests = sum(int(entry["stats"].get("precise_cost_requests", 0) or 0) for entry in cohort_entries)
+        estimated_requests = sum(int(entry["stats"].get("estimated_cost_requests", 0) or 0) for entry in cohort_entries)
+        missing_requests = sum(int(entry["stats"].get("missing_cost_requests", 0) or 0) for entry in cohort_entries)
+        zero_precise_requests = sum(int(entry["stats"].get("zero_cost_precise_requests", 0) or 0) for entry in cohort_entries)
+        aggregated.update(
+            {
+                "total_requests": total_requests,
+                "costed_requests": costed_requests,
+                "precise_cost_requests": precise_requests,
+                "estimated_cost_requests": estimated_requests,
+                "missing_cost_requests": missing_requests,
+                "zero_cost_precise_requests": zero_precise_requests,
+                "cost_complete": missing_requests == 0 and total_requests > 0,
+            }
+        )
+
+        observed_totals = [
+            float(entry["stats"]["observed_total_cost"])
+            for entry in cohort_entries
+            if isinstance(entry["stats"].get("observed_total_cost"), (int, float))
+        ]
+        if observed_totals:
+            aggregated["observed_total_cost"] = float(statistics.median(observed_totals))
+
+        if total_requests == 0 or costed_requests == 0:
+            aggregated["cost_status"] = "unavailable"
+        elif missing_requests > 0:
+            aggregated["cost_status"] = "partial"
+        elif estimated_requests > 0:
+            aggregated["cost_status"] = "estimated"
+        elif precise_requests == total_requests and all(status == "verified-zero" for status in cost_statuses):
+            aggregated["cost_status"] = "verified-zero"
+        elif precise_requests == total_requests:
+            aggregated["cost_status"] = "precise"
+        else:
+            # Defensive fallback for malformed historical stats.  It remains
+            # excluded from plots until a complete cost can be established.
+            aggregated["cost_status"] = "partial"
+
+        if aggregated["cost_complete"]:
+            for metric in ("cost_per_image", "total_cost"):
+                values = [
+                    float(entry["stats"][metric])
+                    for entry in cohort_entries
+                    if isinstance(entry["stats"].get(metric), (int, float))
+                ]
+                if len(values) != len(cohort_entries):
+                    aggregated["cost_complete"] = False
+                    aggregated["cost_status"] = "partial"
+                    break
+                aggregated[metric] = float(statistics.median(values))
+                ci = self._bootstrap_median_ci(values)
+                if ci is not None:
+                    aggregated["ci"][metric] = [float(ci[0]), float(ci[1])]
+
+        if not aggregated["cost_complete"]:
+            aggregated["cost_per_image"] = None
+            aggregated["total_cost"] = None
 
         runtime_values: List[float] = []
         for entry in cohort_entries:
@@ -750,6 +938,29 @@ class BenchmarkTableGenerator:
             return f"{base} (n={n_runs})"
         return base
 
+    def _format_cost_cell(self, stats: Dict[str, Any], metric: str, *, decimals: int) -> str:
+        """Format a cost without disguising incomplete coverage as a price."""
+        status = str(stats.get("cost_status", "unavailable"))
+        if status == "unavailable":
+            return "Unavailable"
+        if status == "partial":
+            observed = stats.get("observed_total_cost")
+            if isinstance(observed, (int, float)):
+                return f"Partial (${float(observed):.{decimals}f} observed)"
+            return "Partial"
+
+        value = stats.get(metric)
+        if not isinstance(value, (int, float)):
+            return "Unavailable"
+        suffix = ""
+        if status == "estimated":
+            suffix = " (estimated)"
+        elif status == "verified-zero":
+            suffix = " (verified zero)"
+        n_runs = int(stats.get("n_runs", 1) or 1)
+        cohort_suffix = f" (n={n_runs})" if n_runs > 1 else ""
+        return f"${float(value):.{decimals}f}{suffix}{cohort_suffix}"
+
     def _format_docs_detected_cell(self, stats: Dict[str, Any]) -> str:
         value = stats.get("docs_detected")
         count = stats.get("docs_detected_count")
@@ -803,6 +1014,7 @@ class BenchmarkTableGenerator:
         debug_cohorts: bool = False,
     ) -> Dict[str, Dict[str, Any]]:
         """Build aggregated run stats grouped by latest cohort per model."""
+        dataset_provenance = build_dataset_provenance(doc_info_file, test_ids_file)
         discovered_runs = self._collect_matching_runs(run_patterns)
         if not discovered_runs:
             return {}
@@ -814,6 +1026,8 @@ class BenchmarkTableGenerator:
                 run_info,
                 doc_info_file=doc_info_file,
                 test_ids_file=test_ids_file,
+                dataset_provenance=dataset_provenance,
+                validate_result_paths=True,
             )
             if not dataset_ok:
                 excluded_runs.append((run_info.get("run_name", "unknown"), dataset_reason or "dataset mismatch"))
@@ -842,6 +1056,7 @@ class BenchmarkTableGenerator:
             eligible_runs,
             model_key_getter=self._get_model_key,
             window_hours=cohort_window_hours,
+            dataset_provenance=dataset_provenance,
         )
 
         if debug_cohorts:
@@ -868,7 +1083,12 @@ class BenchmarkTableGenerator:
 
             cohort_entries: List[Dict[str, Any]] = []
             for run_info in cohort.runs:
-                stats = self.compute_run_stats(run_info, doc_info_file, test_ids_file)
+                stats = self.compute_run_stats(
+                    run_info,
+                    doc_info_file,
+                    test_ids_file,
+                    dataset_provenance=dataset_provenance,
+                )
                 if not stats:
                     print(f"  Skipping {run_info['run_name']} (no usable results)")
                     continue
@@ -1065,7 +1285,7 @@ class BenchmarkTableGenerator:
                 values = (
                     [baseline_value] if include_baseline else []
                 ) + [
-                    self._format_metric_cell(data["stats"], "cost_per_image", decimals=6, prefix="$")
+                    self._format_cost_cell(data["stats"], "cost_per_image", decimals=6)
                     for _, data in ordered_models
                 ]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=False, format_type="markdown")
@@ -1074,7 +1294,7 @@ class BenchmarkTableGenerator:
                 values = (
                     [baseline_value] if include_baseline else []
                 ) + [
-                    self._format_metric_cell(data["stats"], "total_cost", decimals=4, prefix="$")
+                    self._format_cost_cell(data["stats"], "total_cost", decimals=4)
                     for _, data in ordered_models
                 ]
                 row_data = [row_name] + self._format_best_value(values, higher_is_better=False, format_type="markdown")
@@ -1094,7 +1314,7 @@ class BenchmarkTableGenerator:
     
     def _extract_numeric_value(self, value_str: str) -> float:
         """Extract numeric value from string for comparison."""
-        if not value_str or value_str in ["N/A", "??", "Unknown"]:
+        if not value_str or value_str in ["N/A", "??", "Unknown", "Unavailable", "Partial"] or value_str.startswith("Partial ("):
             return float('-inf')  # Non-comparable values get lowest priority
         
         # Extract percentage values
@@ -1172,9 +1392,27 @@ class BenchmarkTableGenerator:
         }
     
     def _calculate_actual_costs(self, run_info: Dict, raw_results: Dict) -> Dict:
-        """Calculate actual costs based on real token usage and cost data from API responses."""
+        """Calculate cost plus explicit coverage/provenance status.
+
+        ``total_cost`` is deliberately ``None`` when coverage is partial or
+        unavailable.  ``observed_total_cost`` retains any known subtotal for
+        diagnostics without allowing a Pareto plot to treat it as a complete
+        model cost.
+        """
         if not raw_results:
-            return {"cost_per_image": 0.0, "total_cost": 0.0}
+            return {
+                "cost_per_image": None,
+                "total_cost": None,
+                "observed_total_cost": None,
+                "cost_status": "unavailable",
+                "cost_complete": False,
+                "total_requests": 0,
+                "costed_requests": 0,
+                "precise_cost_requests": 0,
+                "estimated_cost_requests": 0,
+                "missing_cost_requests": 0,
+                "zero_cost_precise_requests": 0,
+            }
 
         # Prefer precise generation API costs per row, but estimate any rows where
         # OpenRouter no longer exposes the generation record.
@@ -1191,56 +1429,75 @@ class BenchmarkTableGenerator:
             has_pricing = prompt_rate > 0 or completion_rate > 0
 
         total_cost = 0.0
+        total_requests = 0
         costed_requests = 0
         precise_cost_requests = 0
         estimated_cost_requests = 0
         missing_cost_requests = 0
+        zero_cost_precise_requests = 0
         total_prompt_tokens = 0
         total_completion_tokens = 0
 
         for filepath, result_list in raw_results.items():
-            if result_list and len(result_list) > 0:
-                result = result_list[0]
-                token_usage = result.get("_token_usage", {})
-                if token_usage:
-                    prompt_tokens = token_usage.get("prompt_tokens", 0) or 0
-                    completion_tokens = token_usage.get("completion_tokens", 0) or 0
-                    total_prompt_tokens += prompt_tokens
-                    total_completion_tokens += completion_tokens
+            total_requests += 1
+            if not result_list or not isinstance(result_list[0], dict):
+                missing_cost_requests += 1
+                continue
+            result = result_list[0]
+            token_usage = result.get("_token_usage", {})
+            if not isinstance(token_usage, dict):
+                missing_cost_requests += 1
+                continue
+            prompt_tokens = token_usage.get("prompt_tokens", 0) or 0
+            completion_tokens = token_usage.get("completion_tokens", 0) or 0
+            total_prompt_tokens += prompt_tokens
+            total_completion_tokens += completion_tokens
 
-                    actual_cost = token_usage.get("actual_cost")
-                    if (
-                        isinstance(actual_cost, (int, float))
-                        and not isinstance(actual_cost, bool)
-                        and actual_cost >= 0
-                    ):
-                        total_cost += float(actual_cost)
-                        costed_requests += 1
-                        precise_cost_requests += 1
-                    elif has_pricing:
-                        total_cost += (
-                            prompt_rate * prompt_tokens
-                            + completion_rate * completion_tokens
-                        )
-                        costed_requests += 1
-                        estimated_cost_requests += 1
-                    else:
-                        missing_cost_requests += 1
+            actual_cost = token_usage.get("actual_cost")
+            if (
+                isinstance(actual_cost, (int, float))
+                and not isinstance(actual_cost, bool)
+                and actual_cost >= 0
+            ):
+                actual_cost = float(actual_cost)
+                total_cost += actual_cost
+                costed_requests += 1
+                precise_cost_requests += 1
+                if actual_cost == 0:
+                    zero_cost_precise_requests += 1
+            elif has_pricing:
+                total_cost += prompt_rate * prompt_tokens + completion_rate * completion_tokens
+                costed_requests += 1
+                estimated_cost_requests += 1
+            else:
+                missing_cost_requests += 1
 
+        cost_complete = total_requests > 0 and missing_cost_requests == 0
         if costed_requests == 0:
-            return {"cost_per_image": 0.0, "total_cost": 0.0}
+            cost_status = "unavailable"
+        elif not cost_complete:
+            cost_status = "partial"
+        elif precise_cost_requests == total_requests and total_cost == 0:
+            cost_status = "verified-zero"
+        elif precise_cost_requests == total_requests:
+            cost_status = "precise"
+        else:
+            cost_status = "estimated"
 
-        cost_per_image = total_cost / costed_requests if costed_requests > 0 else 0.0
-        
         return {
-            "cost_per_image": cost_per_image,
-            "total_cost": total_cost,
-            "total_requests": costed_requests,
+            "cost_per_image": (total_cost / total_requests) if cost_complete else None,
+            "total_cost": total_cost if cost_complete else None,
+            "observed_total_cost": total_cost if costed_requests else None,
+            "cost_status": cost_status,
+            "cost_complete": cost_complete,
+            "total_requests": total_requests,
+            "costed_requests": costed_requests,
             "total_prompt_tokens": total_prompt_tokens,
             "total_completion_tokens": total_completion_tokens,
             "precise_cost_requests": precise_cost_requests,
             "estimated_cost_requests": estimated_cost_requests,
             "missing_cost_requests": missing_cost_requests,
+            "zero_cost_precise_requests": zero_cost_precise_requests,
         }
     
     def _format_best_value(self, values: list, higher_is_better: bool = True, format_type: str = "rich") -> list:
@@ -1409,13 +1666,13 @@ class BenchmarkTableGenerator:
         
         # Cost metrics (lower is better) - handle missing cost data for backward compatibility
         cost_per_image_values = (["$0.00"] if include_baseline else []) + [
-            self._format_metric_cell(data["stats"], "cost_per_image", decimals=6, prefix="$")
+            self._format_cost_cell(data["stats"], "cost_per_image", decimals=6)
             for _, data in ordered_models
         ]
         table.add_row("Cost per image", *self._format_best_value(cost_per_image_values, higher_is_better=False))
         
         total_cost_values = (["$0.00"] if include_baseline else []) + [
-            self._format_metric_cell(data["stats"], "total_cost", decimals=4, prefix="$")
+            self._format_cost_cell(data["stats"], "total_cost", decimals=4)
             for _, data in ordered_models
         ]
         table.add_row("Total cost", *self._format_best_value(total_cost_values, higher_is_better=False))
@@ -1484,6 +1741,17 @@ class BenchmarkTableGenerator:
 def main():
     parser = argparse.ArgumentParser(description="Generate benchmark table from runs")
     parser.add_argument("--runs-dir", default="tests/output/runs", help="Base directory for runs")
+    parser.add_argument(
+        "--source",
+        choices=("auto", "local", "published"),
+        default="auto",
+        help="Use the finalized published archive when available (default: auto).",
+    )
+    parser.add_argument(
+        "--published-runs-dir",
+        default=str(DEFAULT_PUBLISHED_RUNS_DIR),
+        help="Directory containing sanitized published run summaries.",
+    )
     parser.add_argument("--patterns", nargs="*", help="Patterns to filter runs (e.g., 'glm' 'qwen')")
     parser.add_argument("--doc-info", default="imgs/q11/doc_info.csv", help="Document info CSV")
     parser.add_argument("--test-ids", default="tests/data/test_ids.csv", help="Test IDs CSV") 
@@ -1492,6 +1760,8 @@ def main():
                        help="Output format: 'rich' for terminal display (default), 'markdown' for plain markdown")
     parser.add_argument("--no-interactive", action="store_true", 
                        help="Skip interactive model review (add unknown models to needs_review list)")
+    parser.add_argument("--no-cache", action="store_true",
+                        help="Do not write machine-local table_results caches.")
     parser.add_argument("--readme", action="store_true",
                        help="Generate README-friendly table with top performers only")
     parser.add_argument("--cohort-window-hours", type=float, default=24.0,
@@ -1500,7 +1770,14 @@ def main():
                        help="Print latest-cohort grouping details before stats generation")
     args = parser.parse_args()
     
-    generator = BenchmarkTableGenerator(args.runs_dir, interactive=not args.no_interactive)
+    generator = BenchmarkTableGenerator(
+        args.runs_dir,
+        interactive=not args.no_interactive,
+        source=args.source,
+        published_runs_dir=args.published_runs_dir,
+        cache_results=not args.no_cache,
+        write_metadata=not args.no_cache,
+    )
     
     if args.readme:
         # Generate README section with top performers only (from latest cohorts)

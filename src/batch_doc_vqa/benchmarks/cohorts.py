@@ -3,10 +3,11 @@
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional
+
+from .published_runs import build_aggregation_fingerprint
 
 
 @dataclass
@@ -17,7 +18,7 @@ class LatestCohort:
     anchor_run: Dict[str, Any]
     runs: List[Dict[str, Any]]
     window_hours: float
-    anchor_signature: Optional[Tuple[str, str, str]]
+    anchor_signature: Optional[str]
 
 
 def extract_model_key_from_config(config: Dict[str, Any]) -> str:
@@ -57,19 +58,18 @@ def get_run_timestamp(run: Dict[str, Any]) -> Optional[datetime]:
     return None
 
 
-def _generation_signature_from_config(config: Dict[str, Any]) -> str:
-    """Return canonical generation params for cohort compatibility checks."""
-    additional = config.get("additional", {})
-    if not isinstance(additional, dict):
-        return "{}"
-    generation_params = additional.get("generation_params_effective")
-    if not isinstance(generation_params, dict):
-        return "{}"
-    return json.dumps(generation_params, sort_keys=True, separators=(",", ":"))
+def get_reproducibility_signature(
+    run: Dict[str, Any],
+    *,
+    dataset_provenance: Optional[Dict[str, Any]] = None,
+) -> Optional[str]:
+    """Return an explicit compatibility fingerprint when provenance is available.
 
-
-def get_reproducibility_signature(run: Dict[str, Any]) -> Optional[Tuple[str, str, str]]:
-    """Return (git_commit, prompt_hash, generation_params) signature when available."""
+    The fingerprint covers the dataset contents, schema/extraction settings,
+    routing, generation parameters, and reproducibility metadata.  Existing
+    runs without a committed source revision or prompt hash retain the safe
+    single-run fallback.
+    """
     config = run.get("config", {})
     run_info = config.get("run_info", {})
     reproducibility = run_info.get("reproducibility", {})
@@ -81,7 +81,11 @@ def get_reproducibility_signature(run: Dict[str, Any]) -> Optional[Tuple[str, st
         return None
     if not isinstance(prompt_hash, str) or not prompt_hash:
         return None
-    return git_commit, prompt_hash, _generation_signature_from_config(config)
+    existing = reproducibility.get("aggregation_fingerprint")
+    if isinstance(existing, str) and existing:
+        return existing
+    dataset = dataset_provenance or {"content_hash": "legacy-unverified", "pages": []}
+    return build_aggregation_fingerprint(config, dataset)
 
 
 def _unique_runs_by_name(runs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -103,14 +107,14 @@ def select_latest_cohorts(
     model_key_getter: Callable[[Dict[str, Any]], str] = extract_model_key_from_config,
     *,
     window_hours: float = 24.0,
+    dataset_provenance: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, LatestCohort]:
     """Select latest cohorts per model key.
 
     Policy:
     - Anchor = newest run for model key.
-    - Cohort members must match anchor's reproducibility signature
-      (git_commit + prompt_hash + effective generation params) and be within
-      `window_hours` before anchor.
+    - Cohort members must match the anchor's explicit aggregation fingerprint
+      and be within `window_hours` before anchor.
     - If anchor signature is missing, fallback to single-run cohort (anchor only).
     """
 
@@ -134,13 +138,16 @@ def select_latest_cohorts(
         model_runs.sort(key=_sort_key, reverse=True)
         anchor = model_runs[0]
         anchor_timestamp = get_run_timestamp(anchor)
-        anchor_signature = get_reproducibility_signature(anchor)
+        anchor_signature = get_reproducibility_signature(anchor, dataset_provenance=dataset_provenance)
 
         cohort_runs = [anchor]
         if anchor_signature is not None and anchor_timestamp is not None and window_hours > 0:
             max_age = timedelta(hours=window_hours)
             for candidate in model_runs[1:]:
-                candidate_signature = get_reproducibility_signature(candidate)
+                candidate_signature = get_reproducibility_signature(
+                    candidate,
+                    dataset_provenance=dataset_provenance,
+                )
                 if candidate_signature != anchor_signature:
                     continue
 
@@ -184,10 +191,7 @@ def format_cohort_debug_report(cohorts: Dict[str, LatestCohort]) -> str:
         if sig is None:
             sig_text = "signature=missing (fallback to anchor only)"
         else:
-            commit_short = sig[0][:8]
-            prompt_short = sig[1][:10]
-            generation_short = sig[2][:18]
-            sig_text = f"signature=({commit_short}, {prompt_short}..., {generation_short}...)"
+            sig_text = f"fingerprint={sig[:16]}..."
         lines.append(
             f"- {model_key}: n={len(cohort.runs)}, anchor={anchor}, {sig_text}"
         )

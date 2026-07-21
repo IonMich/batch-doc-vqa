@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Iterable, List
 
+from .published_runs import DEFAULT_PUBLISHED_RUNS_DIR
 from .table_generator import BenchmarkTableGenerator
 
 
@@ -26,8 +27,13 @@ def _extract_points(run_stats: Dict[str, Any], y_metric: str) -> List[Dict[str, 
         model_config = config.get("model") if isinstance(config, dict) else None
         if not isinstance(model_config, dict):
             continue
+        # Backwards-compatible for direct callers; stored run stats are
+        # recalculated to include explicit provenance before publication.
+        cost_status = str(stats.get("cost_status") or "precise")
+        if cost_status not in {"precise", "estimated"}:
+            continue
         try:
-            total_cost = float(stats.get("total_cost", 0) or 0)
+            total_cost = float(stats.get("total_cost"))
             accuracy = float(stats.get(y_metric, 0) or 0)
         except (TypeError, ValueError):
             continue
@@ -46,6 +52,7 @@ def _extract_points(run_stats: Dict[str, Any], y_metric: str) -> List[Dict[str, 
                 "model": model_name,
                 "cost": total_cost,
                 "accuracy": accuracy,
+                "cost_status": cost_status,
             }
         )
     return sorted(points, key=lambda item: (item["cost"], item["organization"], item["model"]))
@@ -120,7 +127,7 @@ _HTML_TEMPLATE = r"""<!doctype html>
 <body>
   <main>
     <h1>__TITLE__</h1>
-    <p class="subtitle">Cost is logarithmic. Point color identifies the model organization.</p>
+    <p class="subtitle">Cost is logarithmic. Point color identifies the model organization. Models with partial, unavailable, or verified-zero costs are excluded.</p>
     <section class="controls" aria-label="Plot controls">
       <label><input type="checkbox" id="pareto-only"> Pareto frontier only</label>
       <label><input type="checkbox" id="frontier-labels"> Label frontier points</label>
@@ -178,7 +185,7 @@ _HTML_TEMPLATE = r"""<!doctype html>
     };
     const setDetail = (item) => {
       inspectedId = item ? `${item.organization}/${item.model}` : null;
-      detail.textContent = item ? `${item.organization}/${item.model} — ${formatCost(item.cost)} total cost · ${item.accuracy.toFixed(2)}% ID accuracy` : "Choose an organization and model, or hover a point, to inspect it.";
+      detail.textContent = item ? `${item.organization}/${item.model} — ${formatCost(item.cost)} total cost (${item.cost_status}) · ${item.accuracy.toFixed(2)}% ID accuracy` : "Choose an organization and model, or hover a point, to inspect it.";
     };
     const syncModelSelector = () => {
       const organization = inspectOrg.value;
@@ -200,7 +207,7 @@ _HTML_TEMPLATE = r"""<!doctype html>
     };
     const hideTooltip = () => { tooltip.style.visibility = "hidden"; };
     const showTooltip = (event, item) => {
-      tooltip.textContent = `${item.organization}/${item.model} · ${formatCost(item.cost)} · ${item.accuracy.toFixed(2)}%`;
+      tooltip.textContent = `${item.organization}/${item.model} · ${formatCost(item.cost)} (${item.cost_status}) · ${item.accuracy.toFixed(2)}%`;
       tooltip.style.visibility = "hidden";
       const bounds = chartWrap.getBoundingClientRect();
       const pointX = event.clientX - bounds.left;
@@ -305,17 +312,29 @@ def create_interactive_pareto_html(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate a standalone interactive Pareto plot")
     parser.add_argument("--runs-dir", default="tests/output/runs", help="Base directory for runs")
+    parser.add_argument("--source", choices=("auto", "local", "published"), default="auto",
+                        help="Use the finalized published archive when available (default: auto).")
+    parser.add_argument("--published-runs-dir", default=str(DEFAULT_PUBLISHED_RUNS_DIR),
+                        help="Directory containing sanitized published run summaries.")
     parser.add_argument("--patterns", nargs="*", help="Patterns to filter runs")
     parser.add_argument("--doc-info", default="imgs/q11/doc_info.csv", help="Document info CSV")
     parser.add_argument("--test-ids", default="tests/data/test_ids.csv", help="Test IDs CSV")
     parser.add_argument("--output", default="docs/pareto.html", help="Output HTML file")
     parser.add_argument("--title", default="Model performance vs cost", help="Page title")
     parser.add_argument("--no-interactive", action="store_true", help="Skip interactive model review")
+    parser.add_argument("--no-cache", action="store_true", help="Do not write machine-local table_results caches")
     parser.add_argument("--cohort-window-hours", type=float, default=24.0, help="Latest-cohort grouping window")
     parser.add_argument("--debug-cohorts", action="store_true", help="Print latest-cohort grouping details")
     args = parser.parse_args()
 
-    generator = BenchmarkTableGenerator(args.runs_dir, interactive=not args.no_interactive)
+    generator = BenchmarkTableGenerator(
+        args.runs_dir,
+        interactive=not args.no_interactive,
+        source=args.source,
+        published_runs_dir=args.published_runs_dir,
+        cache_results=not args.no_cache,
+        write_metadata=not args.no_cache,
+    )
     run_stats = generator.build_run_stats(
         run_patterns=args.patterns,
         doc_info_file=args.doc_info,

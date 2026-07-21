@@ -1,0 +1,41 @@
+name: Verify published benchmark artifacts
+
+on:
+  pull_request:
+    paths:
+      - "benchmarks/published/**"
+      - "BENCHMARKS.md"
+      - "README.md"
+      - "pareto_plot.png"
+      - "docs/pareto.html"
+      - "src/batch_doc_vqa/benchmarks/**"
+      - "src/batch_doc_vqa/update_benchmarks.py"
+      - "pyproject.toml"
+      - "uv.lock"
+  push:
+    branches: [main]
+    paths:
+      - "benchmarks/published/**"
+      - "BENCHMARKS.md"
+      - "README.md"
+      - "pareto_plot.png"
+      - "docs/pareto.html"
+      - "src/batch_doc_vqa/benchmarks/**"
+      - "src/batch_doc_vqa/update_benchmarks.py"
+      - "pyproject.toml"
+      - "uv.lock"
+
+jobs:
+  check:
+    # The repository is transitioning from local raw runs.  Once a finalized
+    # archive is committed, this check makes all generated public artifacts
+    # deterministic and rejects stale Markdown, PNG, or HTML.
+    if: ${{ hashFiles('benchmarks/published/q11/archive.json') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+      - run: uv sync --locked
+      - run: uv run update-benchmarks --source published --no-interactive --check

@@ -100,11 +100,22 @@ Do not use `--skip-reproducibility-checks` for clean benchmark runs.
 
 ## Refresh Benchmark Artifacts
 
-After successful inference runs:
+After successful inference runs, publish the sanitized benchmark evidence before
+regenerating public artifacts:
 
 ```bash
-uv run update-benchmarks
+uv run publish-benchmark-runs --finalize
+uv run update-benchmarks --source published --no-interactive
+uv run update-benchmarks --source published --no-interactive --check
 ```
+
+Raw `tests/output/runs/` artifacts remain ignored and machine-local. The
+published archive retains run configuration, aggregation provenance, aggregate
+scores, and per-request timing/token/cost/failure evidence—never raw names,
+IDs, prompts, paths, or provider request identifiers.
+
+Keep raw runs in private storage if future work needs to rescore the extracted
+text itself. The public archive intentionally cannot reconstruct those values.
 
 If unknown model metadata is detected, review/update `model_metadata.json` with:
 

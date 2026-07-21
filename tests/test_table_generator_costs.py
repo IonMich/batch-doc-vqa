@@ -51,12 +51,14 @@ class TableGeneratorCostTests(unittest.TestCase):
 
         self.assertAlmostEqual(stats["total_cost"], 0.293)
         self.assertAlmostEqual(stats["cost_per_image"], 0.1465)
+        self.assertEqual(stats["cost_status"], "estimated")
+        self.assertTrue(stats["cost_complete"])
         self.assertEqual(stats["total_requests"], 2)
         self.assertEqual(stats["precise_cost_requests"], 1)
         self.assertEqual(stats["estimated_cost_requests"], 1)
         self.assertEqual(stats["missing_cost_requests"], 0)
 
-    def test_missing_cost_without_pricing_preserves_precise_only_total(self) -> None:
+    def test_missing_cost_without_pricing_is_not_reported_as_complete_total(self) -> None:
         run_info = {"config": {"additional": {}}}
         raw_results = {
             "precise.png": [
@@ -84,12 +86,29 @@ class TableGeneratorCostTests(unittest.TestCase):
 
         stats = self.generator._calculate_actual_costs(run_info, raw_results)
 
-        self.assertAlmostEqual(stats["total_cost"], 0.25)
-        self.assertAlmostEqual(stats["cost_per_image"], 0.25)
-        self.assertEqual(stats["total_requests"], 1)
+        self.assertIsNone(stats["total_cost"])
+        self.assertIsNone(stats["cost_per_image"])
+        self.assertAlmostEqual(stats["observed_total_cost"], 0.25)
+        self.assertEqual(stats["cost_status"], "partial")
+        self.assertFalse(stats["cost_complete"])
+        self.assertEqual(stats["total_requests"], 2)
+        self.assertEqual(stats["costed_requests"], 1)
         self.assertEqual(stats["precise_cost_requests"], 1)
         self.assertEqual(stats["estimated_cost_requests"], 0)
         self.assertEqual(stats["missing_cost_requests"], 1)
+
+    def test_all_precise_zero_costs_are_verified(self) -> None:
+        stats = self.generator._calculate_actual_costs(
+            {"config": {"additional": {}}},
+            {
+                "a.png": [{"_token_usage": {"prompt_tokens": 1, "completion_tokens": 1, "actual_cost": 0.0}}],
+                "b.png": [{"_token_usage": {"prompt_tokens": 1, "completion_tokens": 1, "actual_cost": 0.0}}],
+            },
+        )
+        self.assertEqual(stats["cost_status"], "verified-zero")
+        self.assertTrue(stats["cost_complete"])
+        self.assertEqual(stats["total_cost"], 0.0)
+        self.assertEqual(stats["zero_cost_precise_requests"], 2)
 
 
 if __name__ == "__main__":

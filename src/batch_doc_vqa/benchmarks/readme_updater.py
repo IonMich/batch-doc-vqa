@@ -123,6 +123,12 @@ def main():
     parser = argparse.ArgumentParser(description="Update README.md benchmark section")
     parser.add_argument("--readme", default="README.md", help="Path to README.md file")
     parser.add_argument("--table-file", help="File containing new table content")
+    parser.add_argument("--source", choices=("auto", "local", "published"), default="auto",
+                        help="Benchmark run source to use when generating the table")
+    parser.add_argument("--published-runs-dir", default="benchmarks/published/q11/runs",
+                        help="Directory containing sanitized published run summaries")
+    parser.add_argument("--no-cache", action="store_true",
+                        help="Do not write machine-local table_results caches while generating")
     parser.add_argument("--start-marker", default="<!-- BENCHMARK_TABLE_START -->", 
                        help="Start marker for section")
     parser.add_argument("--end-marker", default="<!-- BENCHMARK_TABLE_END -->", 
@@ -146,6 +152,9 @@ def main():
             result = subprocess.run([
                 'uv', 'run', 'generate-benchmark-table', 
                 '--readme', '--format', 'markdown', '--no-interactive',
+                '--source', args.source,
+                '--published-runs-dir', args.published_runs_dir,
+                *( ["--no-cache"] if args.no_cache else [] ),
                 '--output', tmp_path
             ], capture_output=True, text=True)
             

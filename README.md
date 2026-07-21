@@ -123,13 +123,22 @@ Interactive flow:
 5. Review provider policies for hosts serving that model and approve to continue.
 6. Confirm and start the run.
 
-### 5. Regenerate benchmark artifacts
+### 5. Publish benchmark evidence and regenerate artifacts
 
 ```bash
-uv run update-benchmarks
+uv run publish-benchmark-runs --finalize
+uv run update-benchmarks --source published --no-interactive
+uv run update-benchmarks --source published --no-interactive --check
 ```
 
-This updates `BENCHMARKS.md`, `pareto_plot.png`, `docs/pareto.html`, and the benchmark section in `README.md`.
+The publish step exports sanitized, per-request operational evidence into the
+tracked archive. It excludes raw predictions, identifiers, prompts, local paths,
+and provider request IDs. The update step regenerates `BENCHMARKS.md`,
+`pareto_plot.png`, `docs/pareto.html`, and the benchmark section in `README.md`.
+The final check verifies that the committed generated files are current.
+Keep the ignored raw run directory in private storage when arbitrary future
+rescoring of extracted text is required; the public archive cannot reconstruct
+those deliberately omitted values.
 
 ## Run Benchmark: Synthetic Dataset (default_student, No Code Changes)
 

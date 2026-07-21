@@ -16,6 +16,7 @@ def _run(
     model: str = "gemma-3-4b-it",
     git_commit: Optional[str] = "abc123def456",
     prompt_hash: Optional[str] = "prompt-hash-1",
+    additional: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     dt = datetime.strptime(timestamp, "%Y%m%d_%H%M%S").replace(tzinfo=timezone.utc)
     run_info: Dict[str, Any] = {
@@ -38,6 +39,7 @@ def _run(
                 "model": model,
                 "variant": None,
             },
+            "additional": additional or {},
         },
     }
 
@@ -99,6 +101,27 @@ class TestLatestCohorts(unittest.TestCase):
         cohorts = select_latest_cohorts(runs, window_hours=24)
         cohort = cohorts["google/gemma-3-4b-it"]
         self.assertEqual([r["run_name"] for r in cohort.runs], ["m-new", "m-old"])
+
+    def test_excludes_runs_with_different_routing_or_schema_settings(self):
+        runs = [
+            _run(
+                "m-new",
+                "20260211_120000",
+                additional={"strict_schema": True, "provider_routing_effective": {"zdr": True}},
+            ),
+            _run(
+                "m-old",
+                "20260211_080000",
+                additional={"strict_schema": False, "provider_routing_effective": {"zdr": True}},
+            ),
+        ]
+        cohorts = select_latest_cohorts(
+            runs,
+            window_hours=24,
+            dataset_provenance={"content_hash": "fixture-dataset", "pages": [1, 3]},
+        )
+        cohort = cohorts["google/gemma-3-4b-it"]
+        self.assertEqual([r["run_name"] for r in cohort.runs], ["m-new"])
 
 
 if __name__ == "__main__":

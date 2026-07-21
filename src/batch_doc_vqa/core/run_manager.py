@@ -46,6 +46,23 @@ def _stable_hash(payload: Any) -> str:
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
+def _file_sha256(path_value: Any) -> Optional[str]:
+    """Return a file content hash without persisting the local path itself."""
+    if not isinstance(path_value, str) or not path_value.strip():
+        return None
+    try:
+        source = Path(path_value).expanduser()
+        if not source.is_file():
+            return None
+        digest = hashlib.sha256()
+        with source.open("rb") as handle:
+            for block in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(block)
+        return digest.hexdigest()
+    except OSError:
+        return None
+
+
 def _safe_run_git_command(args: List[str]) -> Optional[str]:
     """Run a git command safely and return stripped stdout when available."""
     try:
@@ -165,6 +182,13 @@ class RunConfig:
         self.parser_version = parser_version
         self.schema_version = schema_version
         self.additional_config = additional_config or {}
+        manifest_path = (
+            self.additional_config.get("dataset_manifest_file")
+            or self.additional_config.get("doc_info_file")
+        )
+        manifest_hash = _file_sha256(manifest_path)
+        if manifest_hash:
+            self.additional_config.setdefault("dataset_manifest_sha256", manifest_hash)
         
         # Generate run timestamp
         self.timestamp = datetime.utcnow()

@@ -9,6 +9,7 @@ from typing import Dict, List, Tuple
 from adjustText import adjust_text
 
 from .table_generator import BenchmarkTableGenerator
+from .published_runs import DEFAULT_PUBLISHED_RUNS_DIR
 
 
 def calculate_pareto_frontier(points: List[Tuple[float, float]], maximize_y: bool = True) -> List[int]:
@@ -110,6 +111,7 @@ def create_pareto_plot(
     y_ci_highs = []
     total_cost_ci_lows = []
     total_cost_ci_highs = []
+    excluded_cost_statuses: Dict[str, int] = {}
 
     for model_key, data in run_stats.items():
         if not isinstance(data, dict):
@@ -128,14 +130,27 @@ def create_pareto_plot(
             continue
 
         try:
-            total_cost = float(stats.get("total_cost", 0) or 0)
+            total_cost_value = stats.get("total_cost")
             y_value = float(stats.get(y_metric, 0) or 0)
         except (TypeError, ValueError):
             print(f"  Skipping {model_key}: non-numeric cost or score")
             continue
 
-        # Skip models with zero cost (likely free or estimation failed)
+        # Direct callers from older integrations may supply only a numeric
+        # total. Cached repository runs are always recalculated to v2 first.
+        cost_status = str(stats.get("cost_status") or "precise")
+        if cost_status not in {"precise", "estimated", "verified-zero"}:
+            excluded_cost_statuses[cost_status] = excluded_cost_statuses.get(cost_status, 0) + 1
+            continue
+        if not isinstance(total_cost_value, (int, float)):
+            excluded_cost_statuses[cost_status] = excluded_cost_statuses.get(cost_status, 0) + 1
+            continue
+        total_cost = float(total_cost_value)
+
+        # A verified zero is valid provenance, but cannot be placed on the log
+        # axis.  It is reported explicitly rather than misrepresented.
         if total_cost <= 0:
+            excluded_cost_statuses[cost_status] = excluded_cost_statuses.get(cost_status, 0) + 1
             continue
 
         model_config = config["model"]
@@ -173,6 +188,12 @@ def create_pareto_plot(
     if len(model_names) == 0:
         print("No models with cost data found")
         return
+
+    if excluded_cost_statuses:
+        status_text = ", ".join(
+            f"{status}: {count}" for status, count in sorted(excluded_cost_statuses.items())
+        )
+        print(f"Excluded from log-cost plot by cost provenance: {status_text}")
 
     # Calculate Pareto frontier
     points = list(zip(total_costs, y_values))
@@ -363,6 +384,10 @@ def create_pareto_plot(
 def main():
     parser = argparse.ArgumentParser(description="Generate Pareto frontier plot")
     parser.add_argument("--runs-dir", default="tests/output/runs", help="Base directory for runs")
+    parser.add_argument("--source", choices=("auto", "local", "published"), default="auto",
+                       help="Use the finalized published archive when available (default: auto).")
+    parser.add_argument("--published-runs-dir", default=str(DEFAULT_PUBLISHED_RUNS_DIR),
+                       help="Directory containing sanitized published run summaries.")
     parser.add_argument("--patterns", nargs="*", help="Patterns to filter runs")
     parser.add_argument("--doc-info", default="imgs/q11/doc_info.csv", help="Document info CSV")
     parser.add_argument("--test-ids", default="tests/data/test_ids.csv", help="Test IDs CSV") 
@@ -384,6 +409,7 @@ def main():
         help="Title for optional ID Avg d_Lev Pareto plot",
     )
     parser.add_argument("--no-interactive", action="store_true", help="Skip interactive model review")
+    parser.add_argument("--no-cache", action="store_true", help="Do not write machine-local table_results caches")
     parser.add_argument(
         "--label-mode",
         choices=("frontier", "none", "all"),
@@ -402,7 +428,14 @@ def main():
     args = parser.parse_args()
     
     # Generate benchmark data
-    generator = BenchmarkTableGenerator(args.runs_dir, interactive=not args.no_interactive)
+    generator = BenchmarkTableGenerator(
+        args.runs_dir,
+        interactive=not args.no_interactive,
+        source=args.source,
+        published_runs_dir=args.published_runs_dir,
+        cache_results=not args.no_cache,
+        write_metadata=not args.no_cache,
+    )
     
     run_stats = generator.build_run_stats(
         run_patterns=args.patterns,

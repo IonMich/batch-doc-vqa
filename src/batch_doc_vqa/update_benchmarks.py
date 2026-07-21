@@ -5,6 +5,9 @@ Combined script to update both BENCHMARKS.md and README.md benchmark sections.
 import subprocess
 import sys
 import argparse
+import filecmp
+import shutil
+import tempfile
 from pathlib import Path
 
 def run_command(command, description, interactive=False):
@@ -29,6 +32,10 @@ def run_command(command, description, interactive=False):
 def main():
     parser = argparse.ArgumentParser(description="Update both BENCHMARKS.md and README.md")
     parser.add_argument("--patterns", nargs="*", help="Patterns to filter runs (e.g., 'glm' 'qwen')")
+    parser.add_argument("--source", choices=("auto", "local", "published"), default="auto",
+                        help="Use the finalized published archive when available (default: auto).")
+    parser.add_argument("--published-runs-dir", default="benchmarks/published/q11/runs",
+                        help="Directory containing sanitized published run summaries.")
     parser.add_argument("--no-interactive", action="store_true", 
                        help="Skip interactive model review (add unknown models to needs_review list)")
     parser.add_argument("--interactive", action="store_true",
@@ -64,10 +71,33 @@ def main():
         action="store_true",
         help="Skip generating the standalone interactive Pareto plot",
     )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Regenerate into temporary files and fail if committed benchmark artifacts are stale.",
+    )
     args = parser.parse_args()
+
+    check_dir = None
+    benchmarks_output = "BENCHMARKS.md"
+    pareto_output = "pareto_plot.png"
+    id_lev_output = args.id_lev_output
+    interactive_output = args.interactive_pareto_output
+    readme_output = "README.md"
+    if args.check:
+        check_dir = Path(tempfile.mkdtemp(prefix="batch-doc-vqa-benchmarks-"))
+        benchmarks_output = str(check_dir / "BENCHMARKS.md")
+        pareto_output = str(check_dir / "pareto_plot.png")
+        id_lev_output = str(check_dir / "pareto_plot_id_lev.png")
+        interactive_output = str(check_dir / "pareto.html")
+        readme_output = str(check_dir / "README.md")
+        shutil.copyfile("README.md", readme_output)
     
     # Build command for benchmark table generation
-    cmd_parts = ["uv", "run", "generate-benchmark-table", "--format", "markdown", "--output", "BENCHMARKS.md"]
+    cmd_parts = ["uv", "run", "generate-benchmark-table", "--format", "markdown", "--output", benchmarks_output]
+    cmd_parts.extend(["--source", args.source, "--published-runs-dir", args.published_runs_dir])
+    if args.check:
+        cmd_parts.append("--no-cache")
     
     if args.patterns:
         cmd_parts.extend(["--patterns"] + args.patterns)
@@ -88,7 +118,10 @@ def main():
         sys.exit(1)
     
     # Generate Pareto plot
-    pareto_cmd_parts = ["uv", "run", "generate-pareto-plot", "--output", "pareto_plot.png"]
+    pareto_cmd_parts = ["uv", "run", "generate-pareto-plot", "--output", pareto_output]
+    pareto_cmd_parts.extend(["--source", args.source, "--published-runs-dir", args.published_runs_dir])
+    if args.check:
+        pareto_cmd_parts.append("--no-cache")
     if args.patterns:
         pareto_cmd_parts.extend(["--patterns"] + args.patterns)
     if args.no_interactive:
@@ -97,7 +130,7 @@ def main():
     pareto_cmd_parts.extend(["--label-mode", pareto_label_mode])
     if args.extra_id_lev_pareto:
         pareto_cmd_parts.append("--extra-id-lev-pareto")
-        pareto_cmd_parts.extend(["--id-lev-output", args.id_lev_output])
+        pareto_cmd_parts.extend(["--id-lev-output", id_lev_output])
     
     pareto_cmd = " ".join(pareto_cmd_parts)
     if not run_command(pareto_cmd, "Generating Pareto plot", interactive=is_interactive):
@@ -109,8 +142,11 @@ def main():
             "run",
             "generate-interactive-pareto",
             "--output",
-            args.interactive_pareto_output,
+            interactive_output,
         ]
+        interactive_pareto_cmd_parts.extend(["--source", args.source, "--published-runs-dir", args.published_runs_dir])
+        if args.check:
+            interactive_pareto_cmd_parts.append("--no-cache")
         if args.patterns:
             interactive_pareto_cmd_parts.extend(["--patterns"] + args.patterns)
         if args.no_interactive:
@@ -124,9 +160,36 @@ def main():
             sys.exit(1)
     
     # Update README.md
-    readme_cmd = "uv run update-readme-section"
+    readme_cmd = (
+        "uv run update-readme-section"
+        f" --readme {readme_output}"
+        f" --source {args.source}"
+        f" --published-runs-dir {args.published_runs_dir}"
+    )
+    if args.check:
+        readme_cmd += " --no-cache"
     if not run_command(readme_cmd, "Updating README.md", interactive=False):
         sys.exit(1)
+
+    if args.check:
+        expected_outputs = [
+            (Path(benchmarks_output), Path("BENCHMARKS.md")),
+            (Path(pareto_output), Path("pareto_plot.png")),
+            (Path(readme_output), Path("README.md")),
+        ]
+        if not args.no_interactive_pareto:
+            expected_outputs.append((Path(interactive_output), Path(args.interactive_pareto_output)))
+        if args.extra_id_lev_pareto:
+            expected_outputs.append((Path(id_lev_output), Path(args.id_lev_output)))
+        stale = [str(committed) for generated, committed in expected_outputs if not committed.exists() or not filecmp.cmp(generated, committed, shallow=False)]
+        shutil.rmtree(check_dir, ignore_errors=True)
+        if stale:
+            print("Generated benchmark artifacts are stale:")
+            for path in stale:
+                print(f"  - {path}")
+            sys.exit(1)
+        print("✅ Generated benchmark artifacts are current.")
+        return
     
     generated_plot_label = "Pareto plots" if args.extra_id_lev_pareto else "Pareto plot"
     print(f"\n✅ Successfully updated BENCHMARKS.md, README.md, and {generated_plot_label}!")
