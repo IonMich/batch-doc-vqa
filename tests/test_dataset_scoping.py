@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from pathlib import Path
+import tempfile
 import unittest
+from pathlib import Path
 
 from batch_doc_vqa.benchmarks.table_generator import BenchmarkTableGenerator
 
@@ -66,6 +67,43 @@ class DatasetScopingTests(unittest.TestCase):
         )
         self.assertTrue(ok)
         self.assertIsNone(reason)
+
+    def test_dataset_fingerprint_depends_on_contents_not_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            first_dir = tmp_path / "first"
+            second_dir = tmp_path / "second"
+            first_dir.mkdir()
+            second_dir.mkdir()
+
+            first_doc_info = first_dir / "doc_info.csv"
+            first_test_ids = first_dir / "test_ids.csv"
+            second_doc_info = second_dir / "doc_info.csv"
+            second_test_ids = second_dir / "test_ids.csv"
+            for path, content in (
+                (first_doc_info, "doc,page\n1,1\n"),
+                (second_doc_info, "doc,page\n1,1\n"),
+                (first_test_ids, "doc,id\n1,12345678\n"),
+                (second_test_ids, "doc,id\n1,12345678\n"),
+            ):
+                path.write_text(content, encoding="utf-8")
+
+            first_fingerprint = self.generator._dataset_fingerprint(
+                str(first_doc_info),
+                str(first_test_ids),
+            )
+            second_fingerprint = self.generator._dataset_fingerprint(
+                str(second_doc_info),
+                str(second_test_ids),
+            )
+            self.assertEqual(first_fingerprint, second_fingerprint)
+
+            second_test_ids.write_text("doc,id\n1,87654321\n", encoding="utf-8")
+            changed_fingerprint = self.generator._dataset_fingerprint(
+                str(second_doc_info),
+                str(second_test_ids),
+            )
+            self.assertNotEqual(first_fingerprint, changed_fingerprint)
 
     def test_non_default_dataset_table_hides_opencv_baseline_column(self) -> None:
         run_stats = {

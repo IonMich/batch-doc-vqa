@@ -6,8 +6,8 @@ additional:
   concurrency: 64
   cost_fetch_max_workers: 64
   dataset_manifest_autodiscovered: true
-  dataset_manifest_file: /Users/ioannism/repos/batch-doc-vqa/imgs/q11/doc_info.csv
-  doc_info_file: /Users/ioannism/repos/batch-doc-vqa/imgs/q11/doc_info.csv
+  dataset_manifest_file: imgs/q11/doc_info.csv
+  doc_info_file: imgs/q11/doc_info.csv
   endpoint_type: chat_completions
   extraction_mode: default_student
   generation_param_sources:

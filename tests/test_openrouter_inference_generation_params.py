@@ -32,6 +32,26 @@ class _DummyProgress:
 
 
 class TestOpenRouterGenerationParams(unittest.TestCase):
+    def test_repository_absolute_path_is_recorded_as_relative(self):
+        doc_info = inference._REPOSITORY_ROOT / "imgs" / "q11" / "doc_info.csv"
+        self.assertEqual(
+            inference._portable_config_path(str(doc_info)),
+            "imgs/q11/doc_info.csv",
+        )
+
+    def test_relative_path_remains_relative(self):
+        self.assertEqual(
+            inference._portable_config_path("imgs/q11/doc_info.csv"),
+            "imgs/q11/doc_info.csv",
+        )
+
+    def test_home_path_does_not_record_username(self):
+        external_dataset = Path.home() / "benchmark-data" / "doc_info.csv"
+        self.assertEqual(
+            inference._portable_config_path(str(external_dataset)),
+            "~/benchmark-data/doc_info.csv",
+        )
+
     def _run_and_capture_config(self, *, model_name: str = "qwen/qwen3.5-plus-02-15", **run_kwargs: Any) -> Dict[str, Any]:
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_path = Path(tmp_dir)

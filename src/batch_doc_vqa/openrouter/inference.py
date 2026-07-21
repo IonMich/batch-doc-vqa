@@ -41,6 +41,30 @@ from .extraction_adapter import build_extraction_adapter
 
 console = Console()
 
+_REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
+
+
+def _portable_config_path(path_value: Optional[str]) -> Optional[str]:
+    """Store repository paths without embedding a checkout's absolute location."""
+    if not isinstance(path_value, str) or not path_value.strip():
+        return None
+
+    path = Path(path_value).expanduser()
+    if not path.is_absolute():
+        return path.as_posix()
+
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(_REPOSITORY_ROOT).as_posix()
+    except ValueError:
+        pass
+
+    try:
+        home_relative = resolved_path.relative_to(Path.home().resolve(strict=False))
+        return (Path("~") / home_relative).as_posix()
+    except ValueError:
+        return resolved_path.as_posix()
+
 
 def assess_repetition(text: str, *, min_tokens: int = 80) -> tuple[bool, float]:
     """Heuristically determine whether a response is highly repetitive."""
@@ -161,6 +185,9 @@ def run_openrouter_inference(model_name: str,
             console.print(
                 f"[dim]Auto-detected dataset manifest: {effective_dataset_manifest}[/dim]"
             )
+
+    recorded_images_dir = _portable_config_path(effective_images_dir)
+    recorded_dataset_manifest = _portable_config_path(effective_dataset_manifest)
 
     def _normalize_model_id(value: str) -> str:
         return value.strip().lower()
@@ -636,9 +663,9 @@ def run_openrouter_inference(model_name: str,
             "repetition_penalty": effective_repetition_penalty,
             "provider_routing_requested": provider_routing_requested,
             "provider_routing_effective": provider_routing_effective,
-            "images_dir": effective_images_dir,
-            "dataset_manifest_file": effective_dataset_manifest,
-            "doc_info_file": effective_dataset_manifest,
+            "images_dir": recorded_images_dir,
+            "dataset_manifest_file": recorded_dataset_manifest,
+            "doc_info_file": recorded_dataset_manifest,
             "dataset_manifest_autodiscovered": dataset_manifest_autodiscovered,
             "pages": selected_pages,
             "prompt_template": extraction_spec.prompt_text,

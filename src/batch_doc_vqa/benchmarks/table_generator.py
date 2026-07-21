@@ -3,14 +3,16 @@
 Enhanced benchmark table generation using the new run management system.
 Automatically discovers and processes runs from tests/output/runs.
 """
-import os
-import pandas as pd
 import argparse
+import hashlib
 import json
+import os
 import random
 import statistics
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+
+import pandas as pd
 
 from rich.console import Console
 from rich.table import Table
@@ -66,6 +68,7 @@ class BenchmarkTableGenerator:
     DEFAULT_TEST_IDS_FILE = "tests/data/test_ids.csv"
     SCORING_VERSION = "relaxed-surname-v1"
     COSTING_VERSION = "mixed-precise-fallback-v1"
+    DATASET_FINGERPRINT_VERSION = "sha256-v1"
     
     # Default rows to include in tables
     DEFAULT_ROWS = [
@@ -288,6 +291,21 @@ class BenchmarkTableGenerator:
         parent_dir = str(Path(doc_info_file).expanduser().resolve(strict=False).parent)
         return parent_dir
 
+    def _dataset_fingerprint(self, doc_info_file: str, test_ids_file: str) -> str:
+        """Fingerprint scoring inputs by content so caches are portable."""
+        digest = hashlib.sha256()
+        for label, input_file in (
+            ("doc_info", doc_info_file),
+            ("test_ids", test_ids_file),
+        ):
+            digest.update(label.encode("utf-8"))
+            digest.update(b"\0")
+            with Path(input_file).expanduser().open("rb") as file_handle:
+                while chunk := file_handle.read(1024 * 1024):
+                    digest.update(chunk)
+            digest.update(b"\0")
+        return f"{self.DATASET_FINGERPRINT_VERSION}:{digest.hexdigest()}"
+
     def _is_default_dataset_request(self, doc_info_file: str, test_ids_file: str) -> bool:
         default_doc_info = self._normalize_path(self.DEFAULT_DOC_INFO_FILE)
         default_test_ids = self._normalize_path(self.DEFAULT_TEST_IDS_FILE)
@@ -353,10 +371,13 @@ class BenchmarkTableGenerator:
     def compute_run_stats(self, run_info: Dict, doc_info_file: str, test_ids_file: str) -> Optional[Dict]:
         """Compute statistics for a single run."""
         run_name = run_info["run_name"]
-        current_doc_info_norm = self._requested_doc_info_norm(doc_info_file)
-        current_test_ids_norm = self._requested_test_ids_norm(test_ids_file)
         
         try:
+            current_dataset_fingerprint = self._dataset_fingerprint(
+                doc_info_file,
+                test_ids_file,
+            )
+
             # Check if table results already exist and have cost data
             if run_info["has_table_results"]:
                 cached_stats = self.run_manager.load_table_results(run_name)
@@ -382,9 +403,7 @@ class BenchmarkTableGenerator:
                     needs_recalc = True
 
                 # Cache is dataset-specific; invalidate when scoring inputs differ.
-                if cached_stats.get("_dataset_doc_info") != current_doc_info_norm:
-                    needs_recalc = True
-                if cached_stats.get("_dataset_test_ids") != current_test_ids_norm:
+                if cached_stats.get("_dataset_fingerprint") != current_dataset_fingerprint:
                     needs_recalc = True
 
                 if needs_recalc:
@@ -448,8 +467,7 @@ class BenchmarkTableGenerator:
             stats.update(cost_data)
 
             # Cache provenance: scoring dataset inputs used for this run's stats.
-            stats["_dataset_doc_info"] = current_doc_info_norm
-            stats["_dataset_test_ids"] = current_test_ids_norm
+            stats["_dataset_fingerprint"] = current_dataset_fingerprint
             stats["_scoring_version"] = self.SCORING_VERSION
             stats["_costing_version"] = self.COSTING_VERSION
             
