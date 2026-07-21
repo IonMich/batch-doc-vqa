@@ -394,7 +394,21 @@
       "open_weights": false,
       "model_size": "??",
       "license": null
+    },
+    "google/gemini-3.5-flash-lite": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
+    },
+    "google/gemini-3.6-flash": {
+      "open_weights": false,
+      "model_size": "??",
+      "license": null
     }
   },
-  "needs_review": []
+  "needs_review": [
+    "stepfun/step-3.7-flash",
+    "minimax/minimax-m3",
+    "qwen/qwen3.7-plus"
+  ]
 }
