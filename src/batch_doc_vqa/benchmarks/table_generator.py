@@ -142,7 +142,51 @@ class BenchmarkTableGenerator:
         model_key = f"{config['model']['org']}/{config['model']['model']}"
         if config['model']['variant']:
             model_key += f"-{config['model']['variant']}"
+        reasoning_label = self._reasoning_label(config)
+        if reasoning_label != "default":
+            model_key += f" [r={reasoning_label}]"
         return model_key
+
+    def _get_base_model_key(self, config: Dict) -> str:
+        """Generate model key without generation-profile suffixes."""
+        model_key = f"{config['model']['org']}/{config['model']['model']}"
+        if config['model']['variant']:
+            model_key += f"-{config['model']['variant']}"
+        return model_key
+
+    def _reasoning_label(self, config: Dict) -> str:
+        additional = config.get("additional", {}) if isinstance(config, dict) else {}
+        generation_params = (
+            additional.get("generation_params_effective", {})
+            if isinstance(additional, dict)
+            else {}
+        )
+        reasoning = (
+            generation_params.get("reasoning")
+            if isinstance(generation_params, dict)
+            else None
+        )
+        if isinstance(reasoning, dict):
+            effort = reasoning.get("effort")
+            if isinstance(effort, str) and effort.strip():
+                return effort.strip()
+            enabled = reasoning.get("enabled")
+            if enabled is False:
+                return "none"
+            if enabled is True:
+                return "enabled"
+        elif isinstance(reasoning, str) and reasoning.strip():
+            return reasoning.strip()
+        return "default"
+
+    def _display_model_name(self, config: Dict) -> str:
+        model_name = config['model']['model']
+        if config['model']['variant']:
+            model_name += f"-{config['model']['variant']}"
+        reasoning_label = self._reasoning_label(config)
+        if reasoning_label == "default":
+            return model_name
+        return f"{model_name} [r={reasoning_label}]"
     
     def _review_unknown_models(self, unknown_models: List[str]):
         """Interactively review unknown models."""
@@ -786,10 +830,11 @@ class BenchmarkTableGenerator:
             print(format_cohort_debug_report(cohorts))
 
         unknown_models = [
-            model_key
-            for model_key in cohorts
-            if model_key not in self.model_metadata["models"]
+            self._get_base_model_key(cohort.anchor_run["config"])
+            for cohort in cohorts.values()
+            if self._get_base_model_key(cohort.anchor_run["config"]) not in self.model_metadata["models"]
         ]
+        unknown_models = sorted(set(unknown_models))
         self._review_unknown_models(unknown_models)
 
         run_stats: Dict[str, Dict[str, Any]] = {}
@@ -877,9 +922,7 @@ class BenchmarkTableGenerator:
         for model_key, data in run_stats.items():
             config = data["run_info"]["config"]
             org = config['model']['org']
-            model_name = config['model']['model']
-            if config['model']['variant']:
-                model_name += f"-{config['model']['variant']}"
+            model_name = self._display_model_name(config)
             
             if org not in models_by_org:
                 models_by_org[org] = []
@@ -915,8 +958,9 @@ class BenchmarkTableGenerator:
             
             if row_name == "LLM model size":
                 for model_key, data in ordered_models:
-                    if model_key in self.model_metadata["models"]:
-                        metadata = self.model_metadata["models"][model_key]
+                    base_model_key = self._get_base_model_key(data["run_info"]["config"])
+                    if base_model_key in self.model_metadata["models"]:
+                        metadata = self.model_metadata["models"][base_model_key]
                         row_data.append(metadata.get("model_size", "??"))
                     else:
                         config = data["run_info"]["config"]["model"]
@@ -924,8 +968,9 @@ class BenchmarkTableGenerator:
                         
             elif row_name == "Open-weights":
                 for model_key, data in ordered_models:
-                    if model_key in self.model_metadata["models"]:
-                        metadata = self.model_metadata["models"][model_key]
+                    base_model_key = self._get_base_model_key(data["run_info"]["config"])
+                    if base_model_key in self.model_metadata["models"]:
+                        metadata = self.model_metadata["models"][base_model_key]
                         row_data.append("Yes" if metadata.get("open_weights", False) else "No")
                     else:
                         config = data["run_info"]["config"]["model"]
@@ -1226,9 +1271,7 @@ class BenchmarkTableGenerator:
         for model_key, data in run_stats.items():
             config = data["run_info"]["config"]
             org = config['model']['org']
-            model_name = config['model']['model']
-            if config['model']['variant']:
-                model_name += f"-{config['model']['variant']}"
+            model_name = self._display_model_name(config)
             
             if org not in models_by_org:
                 models_by_org[org] = []
@@ -1245,8 +1288,14 @@ class BenchmarkTableGenerator:
         # Add columns grouped by organization
         for org, models in models_by_org.items():
             for i, (model_key, model_name, data) in enumerate(models):
+                reasoning_label = self._reasoning_label(data["run_info"]["config"])
+                base_model_name = data["run_info"]["config"]["model"]["model"]
+                if data["run_info"]["config"]["model"].get("variant"):
+                    base_model_name += f"-{data['run_info']['config']['model']['variant']}"
                 # Format model name to wrap across lines 2-3 if needed
-                if len(model_name) > 12:  # If model name is long, split it
+                if reasoning_label != "default":
+                    model_display = f"{base_model_name}\nr={reasoning_label}"
+                elif len(model_name) > 12:  # If model name is long, split it
                     # Find a good break point (prefer hyphens)
                     if '-' in model_name and len(model_name) > 15:
                         parts = model_name.split('-')
@@ -1280,8 +1329,9 @@ class BenchmarkTableGenerator:
         
         for model_key, data in ordered_models:
             # Use metadata if available, otherwise fall back to config
-            if model_key in self.model_metadata["models"]:
-                metadata = self.model_metadata["models"][model_key]
+            base_model_key = self._get_base_model_key(data["run_info"]["config"])
+            if base_model_key in self.model_metadata["models"]:
+                metadata = self.model_metadata["models"][base_model_key]
                 model_sizes.append(metadata.get("model_size", "??"))
                 open_weights.append("Yes" if metadata.get("open_weights", False) else "No")
             else:

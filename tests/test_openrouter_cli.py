@@ -150,6 +150,8 @@ class TestOpenRouterCliMain(unittest.TestCase):
             "0.0",
             "--repetition-penalty",
             "1.0",
+            "--reasoning-effort",
+            "xhigh",
         ]
 
         with patch("sys.argv", argv):
@@ -162,6 +164,7 @@ class TestOpenRouterCliMain(unittest.TestCase):
         self.assertEqual(kwargs["min_p"], 0.0)
         self.assertEqual(kwargs["presence_penalty"], 0.0)
         self.assertEqual(kwargs["repetition_penalty"], 1.0)
+        self.assertEqual(kwargs["reasoning_effort"], "xhigh")
 
 
 if __name__ == "__main__":

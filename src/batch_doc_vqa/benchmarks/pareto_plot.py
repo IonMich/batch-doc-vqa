@@ -47,6 +47,39 @@ def get_organization_colors():
     }
 
 
+def _reasoning_label(config: Dict) -> str:
+    additional = config.get("additional", {}) if isinstance(config, dict) else {}
+    generation_params = (
+        additional.get("generation_params_effective", {})
+        if isinstance(additional, dict)
+        else {}
+    )
+    reasoning = generation_params.get("reasoning") if isinstance(generation_params, dict) else None
+    if isinstance(reasoning, dict):
+        effort = reasoning.get("effort")
+        if isinstance(effort, str) and effort.strip():
+            return effort.strip()
+        enabled = reasoning.get("enabled")
+        if enabled is False:
+            return "none"
+        if enabled is True:
+            return "enabled"
+    elif isinstance(reasoning, str) and reasoning.strip():
+        return reasoning.strip()
+    return "default"
+
+
+def _plot_model_label(config: Dict, fallback: str) -> str:
+    model_config = config.get("model", {}) if isinstance(config, dict) else {}
+    model_name = model_config.get("model", fallback)
+    if model_config.get("variant"):
+        model_name += f"-{model_config['variant']}"
+    reasoning = _reasoning_label(config)
+    if reasoning != "default":
+        model_name += f" ({reasoning})"
+    return model_name
+
+
 
 def create_pareto_plot(
     run_stats: Dict,
@@ -107,9 +140,7 @@ def create_pareto_plot(
 
         model_config = config["model"]
         org = model_config.get("org", "other")
-        model_name = model_config.get("model", model_key)
-        if model_config.get("variant"):
-            model_name += f"-{model_config['variant']}"
+        model_name = _plot_model_label(config, model_key)
 
         model_names.append(model_name)
         orgs.append(org)

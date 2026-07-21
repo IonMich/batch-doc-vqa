@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -16,7 +17,7 @@ class LatestCohort:
     anchor_run: Dict[str, Any]
     runs: List[Dict[str, Any]]
     window_hours: float
-    anchor_signature: Optional[Tuple[str, str]]
+    anchor_signature: Optional[Tuple[str, str, str]]
 
 
 def extract_model_key_from_config(config: Dict[str, Any]) -> str:
@@ -56,8 +57,19 @@ def get_run_timestamp(run: Dict[str, Any]) -> Optional[datetime]:
     return None
 
 
-def get_reproducibility_signature(run: Dict[str, Any]) -> Optional[Tuple[str, str]]:
-    """Return (git_commit, prompt_hash) signature when available."""
+def _generation_signature_from_config(config: Dict[str, Any]) -> str:
+    """Return canonical generation params for cohort compatibility checks."""
+    additional = config.get("additional", {})
+    if not isinstance(additional, dict):
+        return "{}"
+    generation_params = additional.get("generation_params_effective")
+    if not isinstance(generation_params, dict):
+        return "{}"
+    return json.dumps(generation_params, sort_keys=True, separators=(",", ":"))
+
+
+def get_reproducibility_signature(run: Dict[str, Any]) -> Optional[Tuple[str, str, str]]:
+    """Return (git_commit, prompt_hash, generation_params) signature when available."""
     config = run.get("config", {})
     run_info = config.get("run_info", {})
     reproducibility = run_info.get("reproducibility", {})
@@ -69,7 +81,7 @@ def get_reproducibility_signature(run: Dict[str, Any]) -> Optional[Tuple[str, st
         return None
     if not isinstance(prompt_hash, str) or not prompt_hash:
         return None
-    return git_commit, prompt_hash
+    return git_commit, prompt_hash, _generation_signature_from_config(config)
 
 
 def _unique_runs_by_name(runs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -97,7 +109,8 @@ def select_latest_cohorts(
     Policy:
     - Anchor = newest run for model key.
     - Cohort members must match anchor's reproducibility signature
-      (git_commit + prompt_hash) and be within `window_hours` before anchor.
+      (git_commit + prompt_hash + effective generation params) and be within
+      `window_hours` before anchor.
     - If anchor signature is missing, fallback to single-run cohort (anchor only).
     """
 
@@ -173,7 +186,8 @@ def format_cohort_debug_report(cohorts: Dict[str, LatestCohort]) -> str:
         else:
             commit_short = sig[0][:8]
             prompt_short = sig[1][:10]
-            sig_text = f"signature=({commit_short}, {prompt_short}...)"
+            generation_short = sig[2][:18]
+            sig_text = f"signature=({commit_short}, {prompt_short}..., {generation_short}...)"
         lines.append(
             f"- {model_key}: n={len(cohort.runs)}, anchor={anchor}, {sig_text}"
         )

@@ -81,6 +81,7 @@ def run_openrouter_inference(model_name: str,
                             min_p: Optional[float] = None,
                             presence_penalty: Optional[float] = None,
                             repetition_penalty: Optional[float] = None,
+                            reasoning_effort: Optional[str] = None,
                             provider_order: Optional[list[str]] = None,
                             provider_allow_fallbacks: Optional[bool] = None,
                             provider_sort: Optional[str] = None,
@@ -992,6 +993,8 @@ def run_openrouter_inference(model_name: str,
 
     if reasoning_override is not None:
         inference_config["reasoning"] = reasoning_override
+    elif reasoning_effort is not None:
+        inference_config["reasoning"] = {"effort": reasoning_effort}
     elif include_reasoning_override is not None:
         # Legacy compatibility shim: normalize deprecated include_reasoning
         # into the current reasoning object and avoid sending legacy keys.

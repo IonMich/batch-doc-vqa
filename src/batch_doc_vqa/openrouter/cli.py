@@ -171,6 +171,14 @@ Examples:
     parser.add_argument("--interactive", "-i", action="store_true", help="Use interactive prompts for missing configuration")
     parser.add_argument("--list-overrides", action="store_true", help="List models with special configurations and exit")
     parser.add_argument("--repetition-penalty", type=float, help="Repetition penalty to apply (higher values discourage loops)")
+    parser.add_argument(
+        "--reasoning-effort",
+        choices=["none", "low", "medium", "high", "xhigh", "max"],
+        help=(
+            "OpenRouter reasoning effort override for reasoning-capable models "
+            "(default: model/provider default)"
+        ),
+    )
     parser.add_argument("--concurrency", type=int, default=1, help="Number of parallel requests (default: 1)")
     parser.add_argument("--rate-limit", type=float, default=None, help="Max requests per second across all threads (optional)")
     parser.add_argument("--retry-max", type=int, default=3, help="Max retries per image for 5xx errors (default: 3)")
@@ -334,6 +342,7 @@ Examples:
         min_p=args.min_p,
         presence_penalty=args.presence_penalty,
         repetition_penalty=args.repetition_penalty,
+        reasoning_effort=args.reasoning_effort,
         model_size=args.model_size,
         open_weights=args.open_weights,
         license_info=args.license_info,
