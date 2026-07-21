@@ -6,7 +6,7 @@ The chart below shows the Pareto frontier of models, highlighting the most cost-
 
 ![Model Performance vs Cost Trade-off](pareto_plot.png)
 
-The filterable version is regenerated as [`docs/pareto.html`](docs/pareto.html). Open it locally, or host the `docs/` directory with GitHub Pages to link it from the wiki.
+Use the [interactive Pareto plot](https://ionmich.github.io/batch-doc-vqa/pareto.html) to filter organizations, isolate the frontier, and inspect models.
 
 ## Benchmarks
 
