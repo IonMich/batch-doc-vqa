@@ -6,6 +6,8 @@ The chart below shows the Pareto frontier of models, highlighting the most cost-
 
 ![Model Performance vs Cost Trade-off](pareto_plot.png)
 
+The filterable version is regenerated as [`docs/pareto.html`](docs/pareto.html). Open it locally, or host the `docs/` directory with GitHub Pages to link it from the wiki.
+
 ## Benchmarks
 
 Our small test dataset (`./imgs/quiz11-presidents.pdf`) consists of 32 documents representing Physics quizzes and the task is to match them to the test students who took the quiz via their 8-digit university ID and, optionally, their names (`./tests/data/test_ids.csv`). We have already saturated our test dataset with 100% statistically confident detections, but more optimizations are explored to decrease inference cost. You can find more details [in this wiki](https://github.com/IonMich/batch-doc-vqa/wiki/Row-of-Digits-OCR:-OpenCV-CNN-versus-LLMs).
@@ -127,7 +129,7 @@ Interactive flow:
 uv run update-benchmarks
 ```
 
-This updates `BENCHMARKS.md`, `pareto_plot.png`, and the benchmark section in `README.md`.
+This updates `BENCHMARKS.md`, `pareto_plot.png`, `docs/pareto.html`, and the benchmark section in `README.md`.
 
 ## Run Benchmark: Synthetic Dataset (default_student, No Code Changes)
 

@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Model performance vs cost</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --background: Canvas;
+      --foreground: CanvasText;
+      --muted: GrayText;
+      --grid: color-mix(in srgb, CanvasText 20%, Canvas);
+      --border: color-mix(in srgb, CanvasText 30%, Canvas);
+      --surface: color-mix(in srgb, Canvas 92%, CanvasText);
+      --frontier: Highlight;
+      --frontier-text: HighlightText;
+      --org-lightness: 40%;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --org-lightness: 68%; }
+    }
+    * { box-sizing: border-box; }
+    body { background: var(--background); color: var(--foreground); font-family: system-ui, sans-serif; margin: 0; }
+    main { margin: 0 auto; max-width: 1120px; padding: 1.5rem; }
+    h1 { font-size: 1.35rem; font-weight: 600; margin: 0 0 0.35rem; }
+    .subtitle { color: var(--muted); margin: 0 0 1rem; }
+    .controls { align-items: center; display: flex; flex-wrap: wrap; gap: 0.75rem 1rem; margin: 0 0 0.75rem; }
+    .organizations { align-items: center; display: flex; flex-wrap: wrap; gap: 0.4rem 0.9rem; margin: 0 0 1rem; }
+    .organizations strong { font-size: 0.9rem; }
+    .organization { align-items: center; display: inline-flex; gap: 0.35rem; }
+    .swatch { background: var(--org-color); border-radius: 999px; display: inline-block; height: 0.65rem; width: 0.65rem; }
+    button, select { background: var(--background); border: 1px solid var(--border); border-radius: 0.35rem; color: var(--foreground); font: inherit; padding: 0.35rem 0.55rem; }
+    button { cursor: pointer; }
+    label { align-items: center; display: inline-flex; gap: 0.4rem; }
+    .chart-wrap { position: relative; }
+    svg { display: block; height: auto; width: 100%; }
+    .axis, .grid { stroke: var(--grid); stroke-width: 1; }
+    .axis { stroke: var(--border); }
+    .tick { fill: var(--muted); font-size: 12px; }
+    .axis-label, .frontier-label { fill: var(--foreground); font-size: 13px; }
+    .frontier-label { font-size: 11px; font-weight: 600; }
+    .frontier-line { fill: none; stroke: var(--frontier); stroke-width: 2; }
+    .point { cursor: pointer; opacity: 0.58; stroke: var(--background); stroke-width: 1.5; }
+    .point.frontier-point { opacity: 1; stroke: var(--foreground); stroke-width: 1.5; }
+    .point.inspected { opacity: 1; stroke: var(--foreground); stroke-width: 3; }
+    .tooltip { background: var(--surface); border: 1px solid var(--border); border-radius: 0.35rem; max-width: 20rem; padding: 0.45rem 0.6rem; pointer-events: none; position: absolute; visibility: hidden; }
+    .status { color: var(--muted); min-height: 1.4em; }
+    .inspectors { align-items: end; display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.75rem; }
+    .inspectors label { align-items: start; flex-direction: column; font-size: 0.9rem; }
+    .detail { margin-top: 0.6rem; min-height: 1.4em; }
+    @media (max-width: 540px) { main { padding: 1rem; } .inspectors label, .inspectors select { width: 100%; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Model performance vs cost</h1>
+    <p class="subtitle">Cost is logarithmic. Point color identifies the model organization.</p>
+    <section class="controls" aria-label="Plot controls">
+      <label><input type="checkbox" id="pareto-only"> Pareto frontier only</label>
+      <label><input type="checkbox" id="frontier-labels"> Label frontier points</label>
+      <button type="button" id="select-all">All organizations</button>
+      <button type="button" id="clear-all">Clear organizations</button>
+    </section>
+    <section class="organizations" id="organizations" aria-label="Organizations"><strong>Organizations</strong></section>
+    <p class="status" id="status" aria-live="polite"></p>
+    <div class="chart-wrap" id="chart-wrap">
+      <svg id="chart" viewBox="0 0 900 500" role="img" aria-labelledby="chart-title chart-description">
+        <title id="chart-title">Cost versus ID accuracy</title>
+        <desc id="chart-description">Interactive scatter plot of benchmark cost and ID accuracy.</desc>
+      </svg>
+      <div id="tooltip" class="tooltip" role="status"></div>
+    </div>
+    <section class="inspectors" aria-label="Inspect a model">
+      <label for="inspect-org">Inspect organization<select id="inspect-org"><option value="">Choose an organization</option></select></label>
+      <label for="inspect-model">Inspect model<select id="inspect-model" disabled><option value="">Choose an organization first</option></select></label>
+    </section>
+    <output id="detail" class="detail" aria-live="polite">Choose an organization and model, or hover a point, to inspect it.</output>
+  </main>
+  <script>
+    const data = [{"organization":"google","model":"gemma-3-4b-it","cost":0.0013368,"accuracy":43.75},{"organization":"google","model":"gemma-3-12b-it","cost":0.0014494800000000002,"accuracy":37.5},{"organization":"microsoft","model":"phi-4-multimodal-instruct","cost":0.0016194999999999998,"accuracy":40.625},{"organization":"google","model":"gemma-3-27b-it","cost":0.0036981199999999996,"accuracy":53.125},{"organization":"google","model":"gemma-4-26b-a4b-it","cost":0.004765280000000001,"accuracy":81.25},{"organization":"google","model":"gemma-4-31b-it","cost":0.005293479999999998,"accuracy":81.25},{"organization":"amazon","model":"nova-lite-v1","cost":0.007327440000000002,"accuracy":84.375},{"organization":"bytedance-seed","model":"seed-1.6-flash","cost":0.012556799999999996,"accuracy":78.125},{"organization":"google","model":"gemini-2.5-flash-lite-preview-09-2025","cost":0.0136416,"accuracy":93.75},{"organization":"google","model":"gemini-2.5-flash-lite","cost":0.013673199999999998,"accuracy":93.75},{"organization":"mistralai","model":"ministral-3b-2512","cost":0.016957399999999997,"accuracy":53.125},{"organization":"qwen","model":"qwen3-vl-8b-instruct","cost":0.01737883,"accuracy":96.875},{"organization":"bytedance","model":"ui-tars-1.5-7b","cost":0.018748799999999996,"accuracy":84.375},{"organization":"bytedance-seed","model":"seed-2.0-mini","cost":0.0192232,"accuracy":93.75},{"organization":"qwen","model":"qwen-vl-plus","cost":0.020064870000000005,"accuracy":75.0},{"organization":"qwen","model":"qwen3.5-9b","cost":0.020442200000000004,"accuracy":87.5},{"organization":"qwen","model":"qwen3.5-flash-02-23","cost":0.021298,"accuracy":96.875},{"organization":"google","model":"gemini-3.1-flash-lite","cost":0.024018999999999995,"accuracy":90.625},{"organization":"google","model":"gemini-3.1-flash-lite-preview","cost":0.0241105,"accuracy":90.625},{"organization":"mistralai","model":"ministral-8b-2512","cost":0.02483970000000001,"accuracy":71.875},{"organization":"mistralai","model":"mistral-small-2603","cost":0.026314799999999992,"accuracy":25.806451612903224},{"organization":"google","model":"gemini-2.5-flash-preview-09-2025","cost":0.026735000000000002,"accuracy":84.375},{"organization":"openai","model":"gpt-5-nano","cost":0.029656799999999994,"accuracy":78.125},{"organization":"google","model":"gemini-3.5-flash-lite","cost":0.031443100000000015,"accuracy":87.5},{"organization":"mistralai","model":"ministral-14b-2512","cost":0.033333400000000006,"accuracy":59.375},{"organization":"meta-llama","model":"llama-4-maverick","cost":0.034488069999999996,"accuracy":56.25},{"organization":"openai","model":"gpt-5.4-nano","cost":0.03649324999999999,"accuracy":34.375},{"organization":"qwen","model":"qwen3-vl-30b-a3b-instruct","cost":0.04480319999999999,"accuracy":93.75},{"organization":"google","model":"gemini-2.5-flash","cost":0.044982400000000006,"accuracy":93.75},{"organization":"baidu","model":"ernie-4.5-vl-424b-a47b","cost":0.045003829999999995,"accuracy":87.5},{"organization":"bytedance-seed","model":"seed-1.6","cost":0.04924800000000001,"accuracy":78.125},{"organization":"qwen","model":"qwen3-vl-235b-a22b-instruct","cost":0.050329700000000005,"accuracy":84.375},{"organization":"amazon","model":"nova-2-lite-v1","cost":0.05828170000000001,"accuracy":78.125},{"organization":"bytedance-seed","model":"seed-2.0-lite","cost":0.058577499999999984,"accuracy":93.75},{"organization":"z-ai","model":"glm-4.6v","cost":0.06424735999999999,"accuracy":81.25},{"organization":"minimax","model":"minimax-m3","cost":0.06528348000000002,"accuracy":84.375},{"organization":"qwen","model":"qwen2.5-vl-72b-instruct","cost":0.06612305,"accuracy":84.375},{"organization":"openai","model":"gpt-5-mini","cost":0.07136400000000001,"accuracy":90.625},{"organization":"qwen","model":"qwen3-vl-32b-instruct","cost":0.07427550000000004,"accuracy":84.375},{"organization":"qwen","model":"qwen3.5-35b-a3b","cost":0.07575199999999999,"accuracy":96.875},{"organization":"openai","model":"gpt-5-chat","cost":0.08065999999999998,"accuracy":62.5},{"organization":"qwen","model":"qwen3-vl-8b-thinking","cost":0.081214614,"accuracy":78.125},{"organization":"qwen","model":"qwen3.6-35b-a3b","cost":0.08204107099999998,"accuracy":100.0},{"organization":"qwen","model":"qwen3-vl-30b-a3b-thinking","cost":0.08390539999999999,"accuracy":81.25},{"organization":"mistralai","model":"mistral-large-2512","cost":0.0854129999999999,"accuracy":37.5},{"organization":"xiaomi","model":"mimo-v2-omni","cost":0.08886968,"accuracy":93.75},{"organization":"qwen","model":"qwen3.6-flash","cost":0.08889350000000001,"accuracy":96.875},{"organization":"qwen","model":"qwen-vl-max","cost":0.0905888,"accuracy":81.25},{"organization":"stepfun","model":"step-3.7-flash","cost":0.09369725,"accuracy":81.25},{"organization":"google","model":"gemini-3-flash-preview","cost":0.10468949999999999,"accuracy":93.75},{"organization":"qwen","model":"qwen3.5-27b","cost":0.11204639999999998,"accuracy":87.5},{"organization":"qwen","model":"qwen3.5-122b-a10b","cost":0.11574079999999999,"accuracy":93.75},{"organization":"openai","model":"gpt-5.1-chat","cost":0.11945,"accuracy":68.75},{"organization":"anthropic","model":"claude-haiku-4.5","cost":0.12046200000000003,"accuracy":21.875},{"organization":"z-ai","model":"glm-4.5v","cost":0.13163080000000005,"accuracy":78.125},{"organization":"openai","model":"gpt-5.4-mini","cost":0.13474650000000002,"accuracy":90.625},{"organization":"xiaomi","model":"mimo-v2.5","cost":0.14650783999999994,"accuracy":87.5},{"organization":"qwen","model":"qwen3-vl-235b-a22b-thinking","cost":0.15205289999999996,"accuracy":78.125},{"organization":"qwen","model":"qwen2.5-vl-32b-instruct","cost":0.16674209999999992,"accuracy":84.375},{"organization":"qwen","model":"qwen3.6-plus","cost":0.16883555,"accuracy":90.625},{"organization":"openai","model":"gpt-5.1","cost":0.18365999999999996,"accuracy":71.875},{"organization":"qwen","model":"qwen3.5-plus-02-15","cost":0.19990400000000003,"accuracy":90.625},{"organization":"qwen","model":"qwen3.7-plus","cost":0.21271231999999995,"accuracy":93.75},{"organization":"mistralai","model":"mistral-medium-3-5","cost":0.26325899999999997,"accuracy":87.5},{"organization":"z-ai","model":"glm-5v-turbo","cost":0.29708335999999985,"accuracy":90.625},{"organization":"moonshotai","model":"kimi-k2.5","cost":0.2994696,"accuracy":100.0},{"organization":"amazon","model":"nova-premier-v1","cost":0.3239300000000002,"accuracy":75.0},{"organization":"openai","model":"gpt-5.2-chat","cost":0.334838,"accuracy":90.625},{"organization":"openai","model":"gpt-5.2","cost":0.3425520000000001,"accuracy":90.625},{"organization":"qwen","model":"qwen3.5-397b-a17b","cost":0.35177295000000003,"accuracy":87.5},{"organization":"anthropic","model":"claude-sonnet-4","cost":0.3563160000000002,"accuracy":37.5},{"organization":"anthropic","model":"claude-sonnet-4.5","cost":0.36135600000000023,"accuracy":40.625},{"organization":"google","model":"gemini-3.6-flash","cost":0.3637230000000001,"accuracy":93.75},{"organization":"openai","model":"gpt-5.4","cost":0.4511999999999999,"accuracy":84.375},{"organization":"google","model":"gemini-2.5-pro","cost":0.45600624999999995,"accuracy":93.75},{"organization":"moonshotai","model":"kimi-k2.6","cost":0.4823318900000001,"accuracy":90.625},{"organization":"google","model":"gemini-3.5-flash","cost":0.575817,"accuracy":96.875},{"organization":"google","model":"gemini-3.1-pro-preview","cost":0.6031040000000001,"accuracy":93.75},{"organization":"google","model":"gemini-3-pro-preview","cost":0.967124,"accuracy":93.75},{"organization":"openai","model":"gpt-5.5","cost":1.2674699999999999,"accuracy":75.0}];
+    const chart = document.getElementById("chart");
+    const chartWrap = document.getElementById("chart-wrap");
+    const organizations = document.getElementById("organizations");
+    const paretoOnly = document.getElementById("pareto-only");
+    const frontierLabels = document.getElementById("frontier-labels");
+    const status = document.getElementById("status");
+    const tooltip = document.getElementById("tooltip");
+    const inspectOrg = document.getElementById("inspect-org");
+    const inspectModel = document.getElementById("inspect-model");
+    const detail = document.getElementById("detail");
+    const dimensions = { width: 900, height: 500, left: 78, right: 28, top: 24, bottom: 62 };
+    const costDomain = { min: 0.001, max: Math.pow(10, Math.ceil(Math.log10(Math.max(...data.map((item) => item.cost))))) };
+    const accuracyDomain = { min: Math.max(0, Math.floor(Math.min(...data.map((item) => item.accuracy)) / 10) * 10 - 5), max: 102 };
+    const orgs = [...new Set(data.map((item) => item.organization))].sort();
+    const selectedOrgs = new Set(orgs);
+    const orgColors = new Map(orgs.map((organization, index) => [organization, `hsl(${(index * 137.508) % 360} 62% var(--org-lightness))`]));
+    let inspectedId = null;
+    const svg = (name, attributes = {}) => {
+      const element = document.createElementNS("http://www.w3.org/2000/svg", name);
+      Object.entries(attributes).forEach(([key, value]) => element.setAttribute(key, value));
+      return element;
+    };
+    const x = (cost) => dimensions.left + ((Math.log10(cost) - Math.log10(costDomain.min)) / (Math.log10(costDomain.max) - Math.log10(costDomain.min))) * (dimensions.width - dimensions.left - dimensions.right);
+    const y = (accuracy) => dimensions.top + (1 - (accuracy - accuracyDomain.min) / (accuracyDomain.max - accuracyDomain.min)) * (dimensions.height - dimensions.top - dimensions.bottom);
+    const formatCost = (cost) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: cost < 0.1 ? 3 : 2 }).format(cost);
+    const frontier = (items) => {
+      let best = -Infinity;
+      return [...items].sort((a, b) => a.cost - b.cost || b.accuracy - a.accuracy).filter((item) => {
+        if (item.accuracy > best) { best = item.accuracy; return true; }
+        return false;
+      });
+    };
+    const setDetail = (item) => {
+      inspectedId = item ? `${item.organization}/${item.model}` : null;
+      detail.textContent = item ? `${item.organization}/${item.model} — ${formatCost(item.cost)} total cost · ${item.accuracy.toFixed(2)}% ID accuracy` : "Choose an organization and model, or hover a point, to inspect it.";
+    };
+    const syncModelSelector = () => {
+      const organization = inspectOrg.value;
+      inspectModel.replaceChildren();
+      if (!organization) {
+        inspectModel.disabled = true;
+        inspectModel.append(new Option("Choose an organization first", ""));
+        return;
+      }
+      inspectModel.disabled = false;
+      inspectModel.append(new Option("Choose a model", ""));
+      data.filter((item) => item.organization === organization).sort((a, b) => a.model.localeCompare(b.model)).forEach((item) => inspectModel.append(new Option(item.model, item.model)));
+    };
+    const selectForInspection = (item) => {
+      inspectOrg.value = item.organization;
+      syncModelSelector();
+      inspectModel.value = item.model;
+      setDetail(item);
+    };
+    const hideTooltip = () => { tooltip.style.visibility = "hidden"; };
+    const showTooltip = (event, item) => {
+      tooltip.textContent = `${item.organization}/${item.model} · ${formatCost(item.cost)} · ${item.accuracy.toFixed(2)}%`;
+      tooltip.style.visibility = "hidden";
+      const bounds = chartWrap.getBoundingClientRect();
+      const pointX = event.clientX - bounds.left;
+      const pointY = event.clientY - bounds.top;
+      tooltip.style.left = `${Math.max(0, Math.min(pointX + 12, bounds.width - tooltip.offsetWidth))}px`;
+      tooltip.style.top = `${Math.max(0, pointY - tooltip.offsetHeight - 12)}px`;
+      tooltip.style.visibility = "visible";
+    };
+    const labelOffset = (index) => [-13, 21, -25, 29, -33, 37, -41][index % 7];
+    const render = () => {
+      const orgFiltered = data.filter((item) => selectedOrgs.has(item.organization));
+      const frontierSource = orgFiltered.length ? orgFiltered : data;
+      const optimal = frontier(frontierSource);
+      const visible = paretoOnly.checked ? optimal : orgFiltered;
+      const optimalIds = new Set(optimal.map((item) => `${item.organization}/${item.model}`));
+      const scopeDescription = orgFiltered.length ? `${orgFiltered.length} model${orgFiltered.length === 1 ? "" : "s"} from selected organizations` : (paretoOnly.checked ? "No organizations selected — showing the all-model Pareto frontier" : "No organizations selected");
+      status.textContent = `${scopeDescription} · ${optimal.length} frontier point${optimal.length === 1 ? "" : "s"}`;
+      chart.replaceChildren();
+      const title = svg("title", { id: "chart-title" }); title.textContent = "Cost versus ID accuracy";
+      const description = svg("desc", { id: "chart-description" }); description.textContent = `${visible.length} visible models; color identifies organization. ${status.textContent}.`;
+      chart.append(title, description);
+      const bottom = dimensions.height - dimensions.bottom;
+      const right = dimensions.width - dimensions.right;
+      const axes = svg("g");
+      [0.001, 0.01, 0.1, 1].filter((tick) => tick <= costDomain.max).forEach((tick) => {
+        const tickX = x(tick); axes.append(svg("line", { class: "grid", x1: tickX, y1: dimensions.top, x2: tickX, y2: bottom }));
+        const label = svg("text", { class: "tick", x: tickX, y: bottom + 22, "text-anchor": "middle" }); label.textContent = formatCost(tick); axes.append(label);
+      });
+      for (let tick = Math.ceil(accuracyDomain.min / 20) * 20; tick <= 100; tick += 20) {
+        const tickY = y(tick); axes.append(svg("line", { class: "grid", x1: dimensions.left, y1: tickY, x2: right, y2: tickY }));
+        const label = svg("text", { class: "tick", x: dimensions.left - 10, y: tickY + 4, "text-anchor": "end" }); label.textContent = `${tick}%`; axes.append(label);
+      }
+      axes.append(svg("line", { class: "axis", x1: dimensions.left, y1: bottom, x2: right, y2: bottom }), svg("line", { class: "axis", x1: dimensions.left, y1: dimensions.top, x2: dimensions.left, y2: bottom }));
+      const xLabel = svg("text", { class: "axis-label", x: (dimensions.left + right) / 2, y: dimensions.height - 16, "text-anchor": "middle" }); xLabel.textContent = "Total cost (log scale)";
+      const yLabel = svg("text", { class: "axis-label", x: 18, y: (dimensions.top + bottom) / 2, transform: `rotate(-90 18 ${(dimensions.top + bottom) / 2})`, "text-anchor": "middle" }); yLabel.textContent = "ID accuracy";
+      axes.append(xLabel, yLabel); chart.append(axes);
+      if (visible.length && optimal.length > 1) chart.append(svg("path", { class: "frontier-line", d: optimal.map((item, index) => `${index ? "L" : "M"}${x(item.cost)},${y(item.accuracy)}`).join(" ") }));
+      const marks = svg("g");
+      visible.forEach((item) => {
+        const id = `${item.organization}/${item.model}`;
+        const point = svg("circle", { class: `point${optimalIds.has(id) ? " frontier-point" : ""}${inspectedId === id ? " inspected" : ""}`, cx: x(item.cost), cy: y(item.accuracy), r: inspectedId === id ? 7 : optimalIds.has(id) ? 5.5 : 4, "aria-label": `${id}, ${formatCost(item.cost)}, ${item.accuracy.toFixed(2)} percent ID accuracy` });
+        point.style.fill = orgColors.get(item.organization);
+        point.addEventListener("mouseenter", (event) => { selectForInspection(item); showTooltip(event, item); });
+        point.addEventListener("mousemove", (event) => showTooltip(event, item));
+        point.addEventListener("mouseleave", hideTooltip);
+        marks.append(point);
+      });
+      chart.append(marks);
+      if (frontierLabels.checked && visible.length) {
+        const labels = svg("g");
+        optimal.forEach((item, index) => {
+          const last = index === optimal.length - 1;
+          const label = svg("text", { class: "frontier-label", x: x(item.cost) + (last ? -8 : 8), y: y(item.accuracy) + labelOffset(index), "text-anchor": last ? "end" : "start" });
+          label.textContent = item.model; labels.append(label);
+        });
+        chart.append(labels);
+      }
+    };
+    orgs.forEach((organization) => {
+      const id = `org-${organization.replace(/[^a-z0-9]+/g, "-")}`;
+      const label = document.createElement("label"); label.className = "organization"; label.style.setProperty("--org-color", orgColors.get(organization));
+      const input = document.createElement("input"); input.id = id; input.type = "checkbox"; input.checked = true;
+      input.addEventListener("change", () => { if (input.checked) selectedOrgs.add(organization); else selectedOrgs.delete(organization); hideTooltip(); render(); });
+      const swatch = document.createElement("span"); swatch.className = "swatch"; swatch.setAttribute("aria-hidden", "true");
+      const text = document.createElement("span"); text.textContent = organization;
+      label.append(input, swatch, text); organizations.append(label);
+      inspectOrg.append(new Option(organization, organization));
+    });
+    document.getElementById("select-all").addEventListener("click", () => { orgs.forEach((organization) => selectedOrgs.add(organization)); organizations.querySelectorAll("input").forEach((input) => { input.checked = true; }); render(); });
+    document.getElementById("clear-all").addEventListener("click", () => { selectedOrgs.clear(); organizations.querySelectorAll("input").forEach((input) => { input.checked = false; }); hideTooltip(); render(); });
+    paretoOnly.addEventListener("change", () => { hideTooltip(); render(); });
+    frontierLabels.addEventListener("change", render);
+    inspectOrg.addEventListener("change", () => { syncModelSelector(); setDetail(null); render(); });
+    inspectModel.addEventListener("change", () => { const item = data.find((candidate) => candidate.organization === inspectOrg.value && candidate.model === inspectModel.value); setDetail(item || null); hideTooltip(); render(); });
+    syncModelSelector();
+    render();
+  </script>
+</body>
+</html>

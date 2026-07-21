@@ -4,6 +4,7 @@ Generate Pareto frontier plot(s) for benchmark metric(s) vs total cost.
 """
 import matplotlib.pyplot as plt
 import argparse
+import textwrap
 from typing import Dict, List, Tuple
 from adjustText import adjust_text
 
@@ -51,8 +52,8 @@ def create_pareto_plot(
     run_stats: Dict,
     output_path: str = "pareto_plot.png",
     title: str = "Model Performance vs Cost Trade-off (quiz-identify-vqa)",
-    show_all_labels: bool = True,
     *,
+    label_mode: str = "frontier",
     y_metric: str = "id_top1",
     y_axis_label: str = "8-digit ID Top-1 Accuracy (%)",
     y_metric_print_label: str = "accuracy",
@@ -62,6 +63,9 @@ def create_pareto_plot(
     invert_y_axis: bool = False,
 ):
     """Create Pareto frontier plot for a chosen y-axis metric vs total cost."""
+
+    if label_mode not in {"all", "frontier", "none"}:
+        raise ValueError(f"Unsupported label mode: {label_mode}")
 
     # Extract data
     model_names = []
@@ -144,7 +148,9 @@ def create_pareto_plot(
     frontier_indices = calculate_pareto_frontier(points, maximize_y=maximize_y)
     frontier_indices.sort(key=lambda i: total_costs[i])  # Sort by cost for line plotting
 
-    # Set up the plot
+    # Keep the chart itself unchanged.  Frontier labels are placed immediately
+    # adjacent to their points, using a fixed, alternating layout rather than
+    # a global repulsion pass that can send labels far across the plot.
     fig, ax = plt.subplots(figsize=(12, 8))
 
     # Color scheme
@@ -187,23 +193,64 @@ def create_pareto_plot(
         frontier_scores = [y_values[i] for i in frontier_indices]
         ax.plot(frontier_costs, frontier_scores, 'k--', alpha=0.7, linewidth=2, zorder=1, label='Pareto Frontier')
 
-    # Collect text annotations for adjustText
+    # Labeling every model makes the dense upper-right cluster unreadable.
+    # For the small frontier set, use deliberately chosen nearby anchors.  The
+    # only long name is wrapped to prevent it from colliding with its neighbour.
     texts = []
 
-    # Add labels for frontier models (black text)
-    for i in frontier_indices:
-        label = model_names[i]
-        if cohort_sizes[i] > 1:
-            label = f"{label} (n={cohort_sizes[i]})"
-        text = ax.annotate(label, 
-                          (total_costs[i], y_values[i]),
-                          fontsize=9, ha='center', va='center',
-                          bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8, edgecolor='black'),
-                          zorder=4)
-        texts.append(text)
+    if label_mode == "frontier":
+        # Ordered from lowest to highest cost.  The fifth and sixth points are
+        # the only close pair in the current frontier, so their labels point in
+        # opposite directions.  The remaining positions keep labels beside,
+        # rather than away from, their data points.
+        frontier_label_positions = (
+            (8, 8, "left", "bottom"),
+            (8, 8, "left", "bottom"),
+            (8, 8, "left", "bottom"),
+            (8, 8, "left", "bottom"),
+            (-8, -8, "right", "top"),
+            (8, 8, "left", "bottom"),
+            (8, -8, "left", "top"),
+        )
+        for position, i in enumerate(frontier_indices):
+            dx, dy, horizontal_alignment, vertical_alignment = frontier_label_positions[
+                min(position, len(frontier_label_positions) - 1)
+            ]
+            label = textwrap.fill(
+                model_names[i], width=25, break_long_words=False, break_on_hyphens=True
+            )
+            if cohort_sizes[i] > 1:
+                label = f"{label} (n={cohort_sizes[i]})"
+            ax.annotate(
+                label,
+                (total_costs[i], y_values[i]),
+                xytext=(dx, dy),
+                textcoords="offset points",
+                fontsize=8,
+                ha=horizontal_alignment,
+                va=vertical_alignment,
+                bbox=dict(boxstyle="round,pad=0.16", facecolor="white", alpha=0.82, edgecolor="none"),
+                zorder=4,
+            )
 
-    # Add labels for non-frontier models (gray text) if show_all_labels is True
-    if show_all_labels:
+    elif label_mode == "all":
+        # Keep the legacy exhaustive mode for investigations and small cohorts.
+        for i in frontier_indices:
+            label = model_names[i]
+            if cohort_sizes[i] > 1:
+                label = f"{label} (n={cohort_sizes[i]})"
+            text = ax.annotate(
+                label,
+                (total_costs[i], y_values[i]),
+                fontsize=9,
+                ha="center",
+                va="center",
+                bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8, edgecolor="black"),
+                zorder=4,
+            )
+            texts.append(text)
+
+    if label_mode == "all":
         for i, (cost, score) in enumerate(zip(total_costs, y_values)):
             if i not in frontier_indices:
                 label = model_names[i]
@@ -249,27 +296,24 @@ def create_pareto_plot(
 
     ax.legend(handles=legend_elements, loc='center left', bbox_to_anchor=(1, 0.5), fontsize=10)
 
-    # Apply adjustText LAST, after all plotting is complete
-    # This is crucial according to the documentation
-    if texts:
-        adjust_text(texts,
-                   ax=ax,
-                   # Slightly increased expansion for better text separation
-                   expand=(1.1, 1.25),
-                   # Prevent axes from expanding beyond reasonable limits
-                   ensure_inside_axes=True,
-                   expand_axes=False,
-                   # Limit horizontal movement, allow more vertical movement
-                   max_move=(30, 100),
-                   # Limit iterations to prevent runaway adjustments
-                   iter_lim=150,
-                   # Bias forces towards vertical movement (x_force, y_force)
-                   force_text=(0.05, 0.6),  # Low horizontal, high vertical repulsion
-                   force_explode=(0.05, 0.8),  # Initial vertical separation preferred
-                   force_static=(0.05, 0.3),  # Reduced horizontal static force
-                   force_pull=(0.01, 0.01),  # Keep pull forces balanced
-                   # Add arrows to connect moved labels to points
-                   arrowprops=dict(arrowstyle='-', color='gray', alpha=0.6, lw=0.5))
+    # The exhaustive mode retains the collision solver for small,
+    # investigative cohorts.  Frontier labels use the compact fixed layout
+    # above, so they remain near their points.
+    if texts and label_mode == "all":
+        adjust_text(
+            texts,
+            ax=ax,
+            expand=(1.1, 1.25),
+            ensure_inside_axes=True,
+            expand_axes=False,
+            max_move=(30, 100),
+            iter_lim=150,
+            force_text=(0.05, 0.6),
+            force_explode=(0.05, 0.8),
+            force_static=(0.05, 0.3),
+            force_pull=(0.01, 0.01),
+            arrowprops=dict(arrowstyle='-', color='gray', alpha=0.6, lw=0.5),
+        )
 
     # Adjust layout and save
     plt.tight_layout()
@@ -309,8 +353,17 @@ def main():
         help="Title for optional ID Avg d_Lev Pareto plot",
     )
     parser.add_argument("--no-interactive", action="store_true", help="Skip interactive model review")
-    parser.add_argument("--hide-non-frontier-labels", action="store_true", 
-                       help="Hide labels for non-frontier models (default: show all labels in gray)")
+    parser.add_argument(
+        "--label-mode",
+        choices=("frontier", "none", "all"),
+        default="frontier",
+        help="Which model names to print: frontier (default), none, or all.",
+    )
+    parser.add_argument(
+        "--hide-non-frontier-labels",
+        action="store_true",
+        help="Deprecated alias for --label-mode frontier.",
+    )
     parser.add_argument("--cohort-window-hours", type=float, default=24.0,
                        help="Window (hours) for grouping latest cohorts by matching prompt hash + git commit")
     parser.add_argument("--debug-cohorts", action="store_true",
@@ -331,14 +384,16 @@ def main():
         print("No runs found matching the criteria")
         return
     
+    label_mode = "frontier" if args.hide_non_frontier_labels else args.label_mode
+
     # Create plot
-    create_pareto_plot(run_stats, args.output, args.title, show_all_labels=not args.hide_non_frontier_labels)
+    create_pareto_plot(run_stats, args.output, args.title, label_mode=label_mode)
     if args.extra_id_lev_pareto:
         create_pareto_plot(
             run_stats,
             args.id_lev_output,
             args.id_lev_title,
-            show_all_labels=not args.hide_non_frontier_labels,
+            label_mode=label_mode,
             y_metric="id_avg_lev",
             y_axis_label="ID Avg d_Lev (lower is better)",
             y_metric_print_label="avg ID d_Lev",

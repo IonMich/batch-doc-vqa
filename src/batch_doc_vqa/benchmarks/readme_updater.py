@@ -9,6 +9,9 @@ from pathlib import Path
 PARETO_BLOCK_PATTERN = (
     r"### Performance vs Cost Trade-off"
     r"[\s\S]*?!\[Model Performance vs Cost Trade-off\]\(pareto_plot\.png\)"
+    r"(?:\n\nThe filterable version is regenerated as \[`docs/pareto\.html`\]"
+    r"\(docs/pareto\.html\)\. Open it locally, or host the `docs/` directory with "
+    r"GitHub Pages to link it from the wiki\.)?"
 )
 BENCHMARKS_BLOCK_PATTERN = r"## Benchmarks[\s\S]*?<!-- BENCHMARK_TABLE_END -->"
 HOW_TO_USE_BLOCK_PATTERN = r"## How to use[\s\S]*?(?=\n## |\Z)"
@@ -155,7 +158,14 @@ def main():
             # Add Pareto plot if it exists
             pareto_plot_path = "pareto_plot.png"
             if Path(pareto_plot_path).exists():
-                new_content = f"{table_content}\n\n### Performance vs Cost Trade-off\n\nThe chart below shows the Pareto frontier of models, highlighting the most cost-efficient options for different performance levels:\n\n![Model Performance vs Cost Trade-off](pareto_plot.png)"
+                new_content = (
+                    f"{table_content}\n\n### Performance vs Cost Trade-off\n\n"
+                    "The chart below shows the Pareto frontier of models, highlighting the most "
+                    "cost-efficient options for different performance levels:\n\n"
+                    "![Model Performance vs Cost Trade-off](pareto_plot.png)\n\n"
+                    "The filterable version is regenerated as [`docs/pareto.html`](docs/pareto.html). "
+                    "Open it locally, or host the `docs/` directory with GitHub Pages to link it from the wiki."
+                )
             else:
                 new_content = table_content
                 
