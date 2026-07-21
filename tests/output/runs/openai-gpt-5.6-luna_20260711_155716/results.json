@@ -1,0 +1,1702 @@
+{
+  "imgs/q11/doc-15-page-1-BLL0F5RP.png": [
+    {
+      "student_full_name": "Andrew Johnson",
+      "section_number": "11850",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 93,
+        "total_tokens": 1134,
+        "actual_cost": 0.001599
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697196+00:00",
+        "finished_at_utc": "2026-07-11T15:57:21.879198+00:00",
+        "elapsed_seconds": 5.182034015655518
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 4346,
+        "created_at": "2026-07-11T15:57:17.298Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-13-page-1-CTHDHMJE.png": [
+    {
+      "student_full_name": "Rutherford B Hayes",
+      "section_number": "11850",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 124,
+        "total_tokens": 1165,
+        "actual_cost": 0.001785
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697105+00:00",
+        "finished_at_utc": "2026-07-11T15:57:21.951400+00:00",
+        "elapsed_seconds": 5.254318952560425
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 4173,
+        "created_at": "2026-07-11T15:57:17.55Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-26-page-1-4BUX7ZB6.png": [
+    {
+      "student_full_name": "John Quincy Adams",
+      "section_number": "11900",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 80,
+        "total_tokens": 1121,
+        "actual_cost": 0.001521
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697687+00:00",
+        "finished_at_utc": "2026-07-11T15:57:21.962247+00:00",
+        "elapsed_seconds": 5.264579772949219
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 4014,
+        "created_at": "2026-07-11T15:57:17.701Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-0-page-1-REB9GWUL.png": [
+    {
+      "student_full_name": "Harry S. Truman",
+      "section_number": "11900",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 75,
+        "total_tokens": 1116,
+        "actual_cost": 0.001491
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.694827+00:00",
+        "finished_at_utc": "2026-07-11T15:57:22.031202+00:00",
+        "elapsed_seconds": 5.336414098739624
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 4852,
+        "created_at": "2026-07-11T15:57:16.759Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-18-page-1-8FFCWR5Q.png": [
+    {
+      "student_full_name": "F Pierce",
+      "section_number": "11950",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 127,
+        "total_tokens": 1168,
+        "actual_cost": 0.001803
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697339+00:00",
+        "finished_at_utc": "2026-07-11T15:57:22.081010+00:00",
+        "elapsed_seconds": 5.383691787719727
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 4473,
+        "created_at": "2026-07-11T15:57:17.361Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-3-page-1-KI4M12OV.png": [
+    {
+      "student_full_name": "Calvin Coolidge",
+      "section_number": "11900",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 77,
+        "total_tokens": 1118,
+        "actual_cost": 0.001503
+      },
+      "_repetition_detected": true,
+      "_repetition_score": 0.408,
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.695157+00:00",
+        "finished_at_utc": "2026-07-11T15:57:22.394335+00:00",
+        "elapsed_seconds": 5.699198961257935
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 4392,
+        "created_at": "2026-07-11T15:57:16.882Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-6-page-1-OCAJYDW4.png": [
+    {
+      "student_full_name": "W H Taft",
+      "section_number": "11900",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 88,
+        "total_tokens": 1129,
+        "actual_cost": 0.001569
+      },
+      "_repetition_detected": true,
+      "_repetition_score": 0.429,
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.696683+00:00",
+        "finished_at_utc": "2026-07-11T15:57:22.461261+00:00",
+        "elapsed_seconds": 5.764601230621338
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 4674,
+        "created_at": "2026-07-11T15:57:16.981Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-31-page-3-KFH6V073.png": [
+    {
+      "student_full_name": "George Washington",
+      "section_number": "11900",
+      "university_id": "79396380",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 119,
+        "total_tokens": 1160,
+        "actual_cost": 0.001755
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697996+00:00",
+        "finished_at_utc": "2026-07-11T15:57:22.500528+00:00",
+        "elapsed_seconds": 5.802552938461304
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 4368,
+        "created_at": "2026-07-11T15:57:17.898Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-11-page-1-NF8EQTSS.png": [
+    {
+      "student_full_name": "Chester Alan Arthur",
+      "section_number": "11950",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 97,
+        "total_tokens": 1138,
+        "actual_cost": 0.001623
+      },
+      "_repetition_detected": true,
+      "_repetition_score": 0.53,
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697006+00:00",
+        "finished_at_utc": "2026-07-11T15:57:22.716778+00:00",
+        "elapsed_seconds": 6.019783020019531
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 4468,
+        "created_at": "2026-07-11T15:57:17.248Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-3-page-3-KI4M12OV.png": [
+    {
+      "student_full_name": "C Coolidge",
+      "section_number": "11300",
+      "university_id": "68909302",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 256,
+        "total_tokens": 1297,
+        "actual_cost": 0.002577
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.695581+00:00",
+        "finished_at_utc": "2026-07-11T15:57:23.006376+00:00",
+        "elapsed_seconds": 6.310830116271973
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 5843,
+        "created_at": "2026-07-11T15:57:16.9Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-9-page-1-EK7H8VVR.png": [
+    {
+      "student_full_name": "Ben Harrison",
+      "section_number": "11950",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 81,
+        "total_tokens": 1122,
+        "actual_cost": 0.001527
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.696858+00:00",
+        "finished_at_utc": "2026-07-11T15:57:23.165439+00:00",
+        "elapsed_seconds": 6.468597650527954
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 5743,
+        "created_at": "2026-07-11T15:57:17.167Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-18-page-3-8FFCWR5Q.png": [
+    {
+      "student_full_name": "Frank Pierce",
+      "section_number": "",
+      "university_id": "45997483",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 110,
+        "total_tokens": 1151,
+        "actual_cost": 0.001701
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697360+00:00",
+        "finished_at_utc": "2026-07-11T15:57:23.212820+00:00",
+        "elapsed_seconds": 6.515488386154175
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 5601,
+        "created_at": "2026-07-11T15:57:17.382Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-2-page-1-V9MCUTZO.png": [
+    {
+      "student_full_name": "Herbert Hoover",
+      "section_number": "11900",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 81,
+        "total_tokens": 1122,
+        "actual_cost": 0.001527
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.695034+00:00",
+        "finished_at_utc": "2026-07-11T15:57:23.222080+00:00",
+        "elapsed_seconds": 6.5270819664001465
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 6175,
+        "created_at": "2026-07-11T15:57:16.846Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-10-page-1-6X3X84WA.png": [
+    {
+      "student_full_name": "Grover Cleveland",
+      "section_number": "11850",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 98,
+        "total_tokens": 1139,
+        "actual_cost": 0.001629
+      },
+      "_repetition_detected": true,
+      "_repetition_score": 0.431,
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.696950+00:00",
+        "finished_at_utc": "2026-07-11T15:57:23.268845+00:00",
+        "elapsed_seconds": 6.571919202804565
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 5049,
+        "created_at": "2026-07-11T15:57:17.215Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-31-page-1-KFH6V073.png": [
+    {
+      "student_full_name": "George Washington",
+      "section_number": "11800",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 72,
+        "total_tokens": 1113,
+        "actual_cost": 0.001473
+      },
+      "_repetition_detected": true,
+      "_repetition_score": 0.383,
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697975+00:00",
+        "finished_at_utc": "2026-07-11T15:57:23.323669+00:00",
+        "elapsed_seconds": 6.62571382522583
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 4666,
+        "created_at": "2026-07-11T15:57:17.829Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-29-page-1-Z2IAW56C.png": [
+    {
+      "student_full_name": "Thomas Jefferson",
+      "section_number": "11800",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 94,
+        "total_tokens": 1135,
+        "actual_cost": 0.001605
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697874+00:00",
+        "finished_at_utc": "2026-07-11T15:57:23.442896+00:00",
+        "elapsed_seconds": 6.745053291320801
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 5271,
+        "created_at": "2026-07-11T15:57:17.825Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-25-page-3-TI97UHD6.png": [
+    {
+      "student_full_name": "A. Jackson",
+      "section_number": "11800",
+      "university_id": "29959773",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 201,
+        "total_tokens": 1242,
+        "actual_cost": 0.002247
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697667+00:00",
+        "finished_at_utc": "2026-07-11T15:57:23.550415+00:00",
+        "elapsed_seconds": 6.8527679443359375
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 5608,
+        "created_at": "2026-07-11T15:57:17.694Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-8-page-3-MBJVBYXB.png": [
+    {
+      "student_full_name": "W. McKinley",
+      "section_number": "11850",
+      "university_id": "62740578",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 132,
+        "total_tokens": 1173,
+        "actual_cost": 0.001833
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.696836+00:00",
+        "finished_at_utc": "2026-07-11T15:57:23.569229+00:00",
+        "elapsed_seconds": 6.872415065765381
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 6153,
+        "created_at": "2026-07-11T15:57:17.161Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-30-page-1-QKHYAJ2L.png": [
+    {
+      "student_full_name": "John Adams",
+      "section_number": "11800",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 81,
+        "total_tokens": 1122,
+        "actual_cost": 0.001527
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697926+00:00",
+        "finished_at_utc": "2026-07-11T15:57:23.759608+00:00",
+        "elapsed_seconds": 7.061737298965454
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 5643,
+        "created_at": "2026-07-11T15:57:17.82Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-22-page-1-9RD8HHD0.png": [
+    {
+      "student_full_name": "J. Tyler",
+      "section_number": "11800",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 118,
+        "total_tokens": 1159,
+        "actual_cost": 0.001749
+      },
+      "_repetition_detected": true,
+      "_repetition_score": 0.45,
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697501+00:00",
+        "finished_at_utc": "2026-07-11T15:57:23.969905+00:00",
+        "elapsed_seconds": 7.272425889968872
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 5344,
+        "created_at": "2026-07-11T15:57:17.467Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-23-page-1-WHINXJSY.png": [
+    {
+      "student_full_name": "W. H. Harrison",
+      "section_number": "11800",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 86,
+        "total_tokens": 1127,
+        "actual_cost": 0.001557
+      },
+      "_repetition_detected": true,
+      "_repetition_score": 0.435,
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697560+00:00",
+        "finished_at_utc": "2026-07-11T15:57:23.971488+00:00",
+        "elapsed_seconds": 7.2739410400390625
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 5443,
+        "created_at": "2026-07-11T15:57:17.494Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-21-page-3-HSBS0HAA.png": [
+    {
+      "student_full_name": "James Knox Polk",
+      "section_number": "11800",
+      "university_id": "99802193",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 154,
+        "total_tokens": 1195,
+        "actual_cost": 0.001965
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697481+00:00",
+        "finished_at_utc": "2026-07-11T15:57:24.016159+00:00",
+        "elapsed_seconds": 7.318700075149536
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 6302,
+        "created_at": "2026-07-11T15:57:17.45Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-20-page-1-X49IGKV8.png": [
+    {
+      "student_full_name": "Jack Taylor",
+      "section_number": "11900",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 93,
+        "total_tokens": 1134,
+        "actual_cost": 0.001599
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697420+00:00",
+        "finished_at_utc": "2026-07-11T15:57:24.054791+00:00",
+        "elapsed_seconds": 7.357393741607666
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 6330,
+        "created_at": "2026-07-11T15:57:17.435Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-26-page-3-4BUX7ZB6.png": [
+    {
+      "student_full_name": "John Quincy Adams",
+      "section_number": "11800",
+      "university_id": "39268415",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 148,
+        "total_tokens": 1189,
+        "actual_cost": 0.001929
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697706+00:00",
+        "finished_at_utc": "2026-07-11T15:57:24.069489+00:00",
+        "elapsed_seconds": 7.371806859970093
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 6112,
+        "created_at": "2026-07-11T15:57:17.72Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-1-page-3-7OQA651Y.png": [
+    {
+      "student_full_name": "F D Roosevelt",
+      "section_number": "11900",
+      "university_id": "89797090",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 175,
+        "total_tokens": 1216,
+        "actual_cost": 0.002091
+      },
+      "_repetition_detected": true,
+      "_repetition_score": 0.507,
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.694995+00:00",
+        "finished_at_utc": "2026-07-11T15:57:24.349741+00:00",
+        "elapsed_seconds": 7.654766082763672
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 5885,
+        "created_at": "2026-07-11T15:57:16.83Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-5-page-1-C969O9IF.png": [
+    {
+      "student_full_name": "Woodrow Wilson",
+      "section_number": "11900",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 104,
+        "total_tokens": 1145,
+        "actual_cost": 0.001665
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.696462+00:00",
+        "finished_at_utc": "2026-07-11T15:57:24.367995+00:00",
+        "elapsed_seconds": 7.671552896499634
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 7154,
+        "created_at": "2026-07-11T15:57:16.944Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-22-page-3-9RD8HHD0.png": [
+    {
+      "student_full_name": "J. Tyler",
+      "section_number": "11890",
+      "university_id": "77089861",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 121,
+        "total_tokens": 1162,
+        "actual_cost": 0.001767
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697536+00:00",
+        "finished_at_utc": "2026-07-11T15:57:24.490349+00:00",
+        "elapsed_seconds": 7.7928361892700195
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 6684,
+        "created_at": "2026-07-11T15:57:17.49Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-27-page-1-G9QSV3HS.png": [
+    {
+      "student_full_name": "James Monroe",
+      "section_number": "11800",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 89,
+        "total_tokens": 1130,
+        "actual_cost": 0.001575
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697728+00:00",
+        "finished_at_utc": "2026-07-11T15:57:24.597348+00:00",
+        "elapsed_seconds": 7.8996429443359375
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 6530,
+        "created_at": "2026-07-11T15:57:17.811Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-7-page-1-OPA4DCU0.png": [
+    {
+      "student_full_name": "Theo Roosevelt",
+      "section_number": "11900",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 167,
+        "total_tokens": 1208,
+        "actual_cost": 0.002043
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.696730+00:00",
+        "finished_at_utc": "2026-07-11T15:57:24.667354+00:00",
+        "elapsed_seconds": 7.970643997192383
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 7279,
+        "created_at": "2026-07-11T15:57:17.015Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-8-page-1-MBJVBYXB.png": [
+    {
+      "student_full_name": "William McKinley",
+      "section_number": "17850",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 103,
+        "total_tokens": 1144,
+        "actual_cost": 0.001659
+      },
+      "_repetition_detected": true,
+      "_repetition_score": 0.42,
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.696806+00:00",
+        "finished_at_utc": "2026-07-11T15:57:24.757094+00:00",
+        "elapsed_seconds": 8.060306072235107
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 4767,
+        "created_at": "2026-07-11T15:57:17.044Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-13-page-3-CTHDHMJE.png": [
+    {
+      "student_full_name": "R B Hayes",
+      "section_number": "11880",
+      "university_id": "91320573",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 166,
+        "total_tokens": 1207,
+        "actual_cost": 0.002037
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697130+00:00",
+        "finished_at_utc": "2026-07-11T15:57:25.016630+00:00",
+        "elapsed_seconds": 8.319522142410278
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 7109,
+        "created_at": "2026-07-11T15:57:17.56Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-11-page-3-NF8EQTSS.png": [
+    {
+      "student_full_name": "Chester Arthur",
+      "section_number": "11850",
+      "university_id": "81016302",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 183,
+        "total_tokens": 1224,
+        "actual_cost": 0.002139
+      },
+      "_repetition_detected": true,
+      "_repetition_score": 0.517,
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697029+00:00",
+        "finished_at_utc": "2026-07-11T15:57:25.017527+00:00",
+        "elapsed_seconds": 8.32050895690918
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 6474,
+        "created_at": "2026-07-11T15:57:17.301Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-0-page-3-REB9GWUL.png": [
+    {
+      "student_full_name": "Harry S. Truman",
+      "section_number": "14500",
+      "university_id": "37206068",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 140,
+        "total_tokens": 1181,
+        "actual_cost": 0.001881
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.694901+00:00",
+        "finished_at_utc": "2026-07-11T15:57:25.026390+00:00",
+        "elapsed_seconds": 8.331508874893188
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 7922,
+        "created_at": "2026-07-11T15:57:16.781Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-19-page-1-GZRPBRUJ.png": [
+    {
+      "student_full_name": "M. Fillmore",
+      "section_number": "11950",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 91,
+        "total_tokens": 1132,
+        "actual_cost": 0.001587
+      },
+      "_repetition_detected": true,
+      "_repetition_score": 0.406,
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697381+00:00",
+        "finished_at_utc": "2026-07-11T15:57:25.265009+00:00",
+        "elapsed_seconds": 8.567645072937012
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 6891,
+        "created_at": "2026-07-11T15:57:17.379Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-27-page-3-G9QSV3HS.png": [
+    {
+      "student_full_name": "James Munro",
+      "section_number": "11800",
+      "university_id": "74349699",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 144,
+        "total_tokens": 1185,
+        "actual_cost": 0.001905
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697749+00:00",
+        "finished_at_utc": "2026-07-11T15:57:25.632704+00:00",
+        "elapsed_seconds": 8.934973001480103
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 7266,
+        "created_at": "2026-07-11T15:57:17.811Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-21-page-1-HSBS0HAA.png": [
+    {
+      "student_full_name": "James Knox Polk",
+      "section_number": "11800",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 131,
+        "total_tokens": 1172,
+        "actual_cost": 0.001827
+      },
+      "_repetition_detected": true,
+      "_repetition_score": 0.563,
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697459+00:00",
+        "finished_at_utc": "2026-07-11T15:57:26.175014+00:00",
+        "elapsed_seconds": 9.477577924728394
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 7641,
+        "created_at": "2026-07-11T15:57:17.439Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-12-page-1-PKJB75JX.png": [
+    {
+      "student_full_name": "James Garfield",
+      "section_number": "11950",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 114,
+        "total_tokens": 1155,
+        "actual_cost": 0.001725
+      },
+      "_repetition_detected": true,
+      "_repetition_score": 0.429,
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697054+00:00",
+        "finished_at_utc": "2026-07-11T15:57:26.214015+00:00",
+        "elapsed_seconds": 9.516976118087769
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 8133,
+        "created_at": "2026-07-11T15:57:17.295Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-24-page-3-YRH8SK3I.png": [
+    {
+      "student_full_name": "M. V. Bucey",
+      "section_number": "11800",
+      "university_id": "68686518",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 558,
+        "total_tokens": 1599,
+        "actual_cost": 0.004389
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697621+00:00",
+        "finished_at_utc": "2026-07-11T15:57:26.313063+00:00",
+        "elapsed_seconds": 9.615463972091675
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 8413,
+        "created_at": "2026-07-11T15:57:17.554Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-1-page-1-7OQA651Y.png": [
+    {
+      "student_full_name": "F. D. R.",
+      "section_number": "11900",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 97,
+        "total_tokens": 1138,
+        "actual_cost": 0.001623
+      },
+      "_repetition_detected": true,
+      "_repetition_score": 0.458,
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.694958+00:00",
+        "finished_at_utc": "2026-07-11T15:57:26.435484+00:00",
+        "elapsed_seconds": 9.740547895431519
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 8483,
+        "created_at": "2026-07-11T15:57:16.799Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-30-page-3-QKHYAJ2L.png": [
+    {
+      "student_full_name": "John Adams",
+      "section_number": "11800",
+      "university_id": "36839182",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 136,
+        "total_tokens": 1177,
+        "actual_cost": 0.001857
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697946+00:00",
+        "finished_at_utc": "2026-07-11T15:57:26.488104+00:00",
+        "elapsed_seconds": 9.790180921554565
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 8403,
+        "created_at": "2026-07-11T15:57:17.844Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-24-page-1-YRH8SK3I.png": [
+    {
+      "student_full_name": "Martin V. Brien",
+      "section_number": "11800",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 305,
+        "total_tokens": 1346,
+        "actual_cost": 0.002871
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697602+00:00",
+        "finished_at_utc": "2026-07-11T15:57:27.184149+00:00",
+        "elapsed_seconds": 10.486572980880737
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 9432,
+        "created_at": "2026-07-11T15:57:17.527Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-5-page-3-C969O9IF.png": [
+    {
+      "student_full_name": "W. Wilson",
+      "section_number": "",
+      "university_id": "14062129",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 205,
+        "total_tokens": 1246,
+        "actual_cost": 0.002271
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.696494+00:00",
+        "finished_at_utc": "2026-07-11T15:57:27.431687+00:00",
+        "elapsed_seconds": 10.735211849212646
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 10230,
+        "created_at": "2026-07-11T15:57:16.971Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-19-page-3-GZRPBRUJ.png": [
+    {
+      "student_full_name": "M Filmore",
+      "section_number": "11950",
+      "university_id": "45997483",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 177,
+        "total_tokens": 1218,
+        "actual_cost": 0.002103
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697399+00:00",
+        "finished_at_utc": "2026-07-11T15:57:27.532034+00:00",
+        "elapsed_seconds": 10.8346529006958
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 9860,
+        "created_at": "2026-07-11T15:57:17.413Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-9-page-3-EK7H8VVR.png": [
+    {
+      "student_full_name": "Breyannaula Harrison",
+      "section_number": "11850",
+      "university_id": "20530463",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 463,
+        "total_tokens": 1504,
+        "actual_cost": 0.003819
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.696891+00:00",
+        "finished_at_utc": "2026-07-11T15:57:27.657381+00:00",
+        "elapsed_seconds": 10.960520029067993
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 10119,
+        "created_at": "2026-07-11T15:57:17.204Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-10-page-3-6X3X84WA.png": [
+    {
+      "student_full_name": "Grover Cleverland",
+      "section_number": "11850",
+      "university_id": "79159560",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 246,
+        "total_tokens": 1287,
+        "actual_cost": 0.002517
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.696977+00:00",
+        "finished_at_utc": "2026-07-11T15:57:27.859470+00:00",
+        "elapsed_seconds": 11.162522077560425
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 10377,
+        "created_at": "2026-07-11T15:57:17.255Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-17-page-3-IMRWK3VW.png": [
+    {
+      "student_full_name": "J Budnower",
+      "section_number": "11950",
+      "university_id": "14640759",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 555,
+        "total_tokens": 1596,
+        "actual_cost": 0.004371
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697316+00:00",
+        "finished_at_utc": "2026-07-11T15:57:27.975158+00:00",
+        "elapsed_seconds": 11.27787184715271
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 9752,
+        "created_at": "2026-07-11T15:57:17.828Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-20-page-3-X49IGKV8.png": [
+    {
+      "student_full_name": "Z. Taylor",
+      "section_number": "11890",
+      "university_id": "23938442",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 360,
+        "total_tokens": 1401,
+        "actual_cost": 0.003201
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697439+00:00",
+        "finished_at_utc": "2026-07-11T15:57:28.279598+00:00",
+        "elapsed_seconds": 11.58218002319336
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 10574,
+        "created_at": "2026-07-11T15:57:17.437Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-28-page-1-6XZWUINF.png": [
+    {
+      "student_full_name": "James Madigan",
+      "section_number": "11800",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 163,
+        "total_tokens": 1204,
+        "actual_cost": 0.002019
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697801+00:00",
+        "finished_at_utc": "2026-07-11T15:57:28.373810+00:00",
+        "elapsed_seconds": 11.676031112670898
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 10306,
+        "created_at": "2026-07-11T15:57:17.819Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-4-page-1-GEA0TCGV.png": [
+    {
+      "student_full_name": "Warren G. Harding",
+      "section_number": "11900",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 207,
+        "total_tokens": 1248,
+        "actual_cost": 0.002283
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.696350+00:00",
+        "finished_at_utc": "2026-07-11T15:57:28.466595+00:00",
+        "elapsed_seconds": 11.770267248153687
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 11103,
+        "created_at": "2026-07-11T15:57:16.91Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-17-page-1-IMRWK3VW.png": [
+    {
+      "student_full_name": "James Buchanan",
+      "section_number": "11950",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 924,
+        "total_tokens": 1965,
+        "actual_cost": 0.006585
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697297+00:00",
+        "finished_at_utc": "2026-07-11T15:57:28.967340+00:00",
+        "elapsed_seconds": 12.270065307617188
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 11350,
+        "created_at": "2026-07-11T15:57:17.344Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-25-page-1-TI97UHD6.png": [
+    {
+      "student_full_name": "Andrew Jackson",
+      "section_number": "11890",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 110,
+        "total_tokens": 1151,
+        "actual_cost": 0.001701
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697647+00:00",
+        "finished_at_utc": "2026-07-11T15:57:29.071456+00:00",
+        "elapsed_seconds": 12.37383508682251
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 9275,
+        "created_at": "2026-07-11T15:57:19.336Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-14-page-1-FZHPMQE8.png": [
+    {
+      "student_full_name": "Ulysses S. Grant",
+      "section_number": "11850",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 95,
+        "total_tokens": 1136,
+        "actual_cost": 0.001611
+      },
+      "_repetition_detected": true,
+      "_repetition_score": 0.487,
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697153+00:00",
+        "finished_at_utc": "2026-07-11T15:57:29.362991+00:00",
+        "elapsed_seconds": 12.665868043899536
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 7417,
+        "created_at": "2026-07-11T15:57:17.275Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-6-page-3-OCAJYDW4.png": [
+    {
+      "student_full_name": "W H Taft",
+      "section_number": "11900",
+      "university_id": "70951486",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 555,
+        "total_tokens": 1596,
+        "actual_cost": 0.004371
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.696708+00:00",
+        "finished_at_utc": "2026-07-11T15:57:29.429632+00:00",
+        "elapsed_seconds": 12.732940673828125
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 12150,
+        "created_at": "2026-07-11T15:57:17.001Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-16-page-1-LWW673E9.png": [
+    {
+      "student_full_name": "Abraham Lincoln",
+      "section_number": "12850",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 123,
+        "total_tokens": 1164,
+        "actual_cost": 0.001779
+      },
+      "_repetition_detected": true,
+      "_repetition_score": 0.443,
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697242+00:00",
+        "finished_at_utc": "2026-07-11T15:57:29.782510+00:00",
+        "elapsed_seconds": 13.085285902023315
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 10607,
+        "created_at": "2026-07-11T15:57:17.828Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-29-page-3-Z2IAW56C.png": [
+    {
+      "student_full_name": "Thomas Jefferson",
+      "section_number": "11820",
+      "university_id": "02021201",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 687,
+        "total_tokens": 1728,
+        "actual_cost": 0.005163
+      },
+      "_repetition_detected": true,
+      "_repetition_score": 0.411,
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697900+00:00",
+        "finished_at_utc": "2026-07-11T15:57:30.136126+00:00",
+        "elapsed_seconds": 13.438246965408325
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 11015,
+        "created_at": "2026-07-11T15:57:17.842Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-14-page-3-FZHPMQE8.png": [
+    {
+      "student_full_name": "Ulysses Grant",
+      "section_number": "19350",
+      "university_id": "61366505",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 696,
+        "total_tokens": 1737,
+        "actual_cost": 0.005217
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697172+00:00",
+        "finished_at_utc": "2026-07-11T15:57:30.645106+00:00",
+        "elapsed_seconds": 13.947963237762451
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 13033,
+        "created_at": "2026-07-11T15:57:17.305Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-15-page-3-BLL0F5RP.png": [
+    {
+      "student_full_name": "A Johmer",
+      "section_number": "11850",
+      "university_id": "40683129",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 554,
+        "total_tokens": 1595,
+        "actual_cost": 0.004365
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697221+00:00",
+        "finished_at_utc": "2026-07-11T15:57:31.097675+00:00",
+        "elapsed_seconds": 14.400469779968262
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 13536,
+        "created_at": "2026-07-11T15:57:17.329Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-16-page-3-LWW673E9.png": [
+    {
+      "student_full_name": "A Lincoln",
+      "section_number": "11830",
+      "university_id": "53750498",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 425,
+        "total_tokens": 1466,
+        "actual_cost": 0.003591
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697275+00:00",
+        "finished_at_utc": "2026-07-11T15:57:31.308625+00:00",
+        "elapsed_seconds": 14.611372947692871
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 13418,
+        "created_at": "2026-07-11T15:57:17.568Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-2-page-3-V9MCUTZO.png": [
+    {
+      "student_full_name": "Herbert Hoover",
+      "section_number": "11940",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 523,
+        "total_tokens": 1564,
+        "actual_cost": 0.004179
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.695102+00:00",
+        "finished_at_utc": "2026-07-11T15:57:34.601421+00:00",
+        "elapsed_seconds": 17.906354188919067
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 17318,
+        "created_at": "2026-07-11T15:57:16.873Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-7-page-3-OPA4DCU0.png": [
+    {
+      "student_full_name": "Theo Roosevelt",
+      "section_number": "11900",
+      "university_id": "92703221",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 198,
+        "total_tokens": 1239,
+        "actual_cost": 0.002229
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.696775+00:00",
+        "finished_at_utc": "2026-07-11T15:57:35.894258+00:00",
+        "elapsed_seconds": 19.197511196136475
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 18633,
+        "created_at": "2026-07-11T15:57:17.037Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-23-page-3-WHINXJSY.png": [
+    {
+      "student_full_name": "William Herrison",
+      "section_number": "11800",
+      "university_id": "24687731",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 241,
+        "total_tokens": 1282,
+        "actual_cost": 0.002487
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697579+00:00",
+        "finished_at_utc": "2026-07-11T15:57:37.497434+00:00",
+        "elapsed_seconds": 20.799877166748047
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 19712,
+        "created_at": "2026-07-11T15:57:17.527Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-28-page-3-6XZWUINF.png": [
+    {
+      "student_full_name": "James McAlhour",
+      "section_number": "11890",
+      "university_id": "52373168",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 555,
+        "total_tokens": 1596,
+        "actual_cost": 0.004371
+      },
+      "_repetition_detected": true,
+      "_repetition_score": 0.357,
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697846+00:00",
+        "finished_at_utc": "2026-07-11T15:57:39.049823+00:00",
+        "elapsed_seconds": 22.351991176605225
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 20367,
+        "created_at": "2026-07-11T15:57:17.818Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-12-page-3-PKJB75JX.png": [
+    {
+      "student_full_name": "James Bartfeld",
+      "section_number": "11850",
+      "university_id": "",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 550,
+        "total_tokens": 1591,
+        "actual_cost": 0.004341
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.697077+00:00",
+        "finished_at_utc": "2026-07-11T15:57:41.531445+00:00",
+        "elapsed_seconds": 24.834390878677368
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 23938,
+        "created_at": "2026-07-11T15:57:17.301Z"
+      }
+    }
+  ],
+  "imgs/q11/doc-4-page-3-GEA0TCGV.png": [
+    {
+      "student_full_name": "W G Hsolik",
+      "section_number": "11900",
+      "university_id": "32372816",
+      "_token_usage": {
+        "prompt_tokens": 1041,
+        "completion_tokens": 556,
+        "total_tokens": 1597,
+        "actual_cost": 0.004377
+      },
+      "_timing": {
+        "started_at_utc": "2026-07-11T15:57:16.696427+00:00",
+        "finished_at_utc": "2026-07-11T15:57:41.666416+00:00",
+        "elapsed_seconds": 24.97001004219055
+      },
+      "_generation_meta": {
+        "model": "openai/gpt-5.6-luna-20260709",
+        "finish_reason": "stop",
+        "native_finish_reason": "completed",
+        "service_tier": "default",
+        "latency": 24295,
+        "created_at": "2026-07-11T15:57:16.935Z"
+      }
+    }
+  ]
+}

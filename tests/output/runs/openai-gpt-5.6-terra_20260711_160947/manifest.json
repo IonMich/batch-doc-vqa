@@ -1,0 +1,65 @@
+{
+  "api": {
+    "max_tokens": 4096,
+    "min_p": null,
+    "presence_penalty": null,
+    "provider": "OpenRouter (Router)",
+    "repetition_penalty": null,
+    "temperature": 1.0,
+    "top_k": null,
+    "top_p": 1.0
+  },
+  "artifacts": {
+    "config": "config.yaml",
+    "results": "results.json",
+    "table_results": "table_results.json"
+  },
+  "manifest_version": "1",
+  "model": {
+    "license_info": "Varies by provider",
+    "model": "gpt-5.6-terra",
+    "model_size": "Unknown",
+    "open_weights": false,
+    "org": "openai",
+    "variant": null
+  },
+  "reproducibility": {
+    "git_commit": "003bb7631b4e94e728df7158d66b02aa68fa6d2b",
+    "git_dirty": true,
+    "git_dirty_raw": true,
+    "git_dirty_raw_count": 7,
+    "git_dirty_relevant": true,
+    "git_dirty_relevant_count": 5,
+    "git_dirty_relevant_paths_sample": [
+      "src/batch_doc_vqa/benchmarks/cohorts.py",
+      "src/batch_doc_vqa/benchmarks/pareto_plot.py",
+      "src/batch_doc_vqa/benchmarks/table_generator.py",
+      "src/batch_doc_vqa/openrouter/cli.py",
+      "src/batch_doc_vqa/openrouter/inference.py"
+    ],
+    "inference_settings_hash": "65f1661862134e148c054327a718e1d43ee2cfacd3c960690e7e28929ac12b20",
+    "manifest_version": "1",
+    "parser_version": "v1",
+    "prompt_hash": "e03faa5c5a9f725c6307141a047b98bdcd6bda3d851ed2ff3d9784a311fa97ec",
+    "provider_routing_config": {
+      "actual_model_providers": [
+        "Azure"
+      ],
+      "provider_routing_effective": {
+        "data_collection": "deny",
+        "zdr": true
+      },
+      "provider_routing_requested": {
+        "allow_fallbacks": null,
+        "data_collection": "deny",
+        "order": [],
+        "sort": null,
+        "zdr": true
+      }
+    },
+    "schema_version": "v1"
+  },
+  "run_name": "openai-gpt-5.6-terra_20260711_160947",
+  "timestamp": "20260711_160947",
+  "timestamp_iso": "2026-07-11T16:09:47.784002"
+}
