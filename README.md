@@ -126,19 +126,22 @@ Interactive flow:
 ### 5. Publish benchmark evidence and regenerate artifacts
 
 ```bash
-uv run publish-benchmark-runs --finalize
+uv run publish-benchmark-runs --patterns '<new-run-name-regex>' --finalize
 uv run update-benchmarks --source published --no-interactive
 uv run update-benchmarks --source published --no-interactive --check
 ```
 
-The publish step exports sanitized, per-request operational evidence into the
-tracked archive. It excludes raw predictions, identifiers, prompts, local paths,
-and provider request IDs. The update step regenerates `BENCHMARKS.md`,
+Publication is strict by default: every selected run must exactly cover all
+documents on its recorded pages and pass the archive invariants. The publish
+step exports only sanitized aggregate operational evidence into the tracked
+archive. It excludes raw predictions, identifiers, prompts, local paths,
+per-document references, and provider request IDs. The update step regenerates `BENCHMARKS.md`,
 `pareto_plot.png`, `docs/pareto.html`, and the benchmark section in `README.md`.
 The final check verifies that the committed generated files are current.
 Keep the ignored raw run directory in private storage when arbitrary future
 rescoring of extracted text is required; the public archive cannot reconstruct
-those deliberately omitted values.
+those deliberately omitted values. Published-only regeneration uses the
+finalized archive and does not require `doc_info.csv`, image files, or raw runs.
 
 ## Run Benchmark: Synthetic Dataset (default_student, No Code Changes)
 

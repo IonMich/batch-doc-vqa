@@ -24,9 +24,11 @@ from .cohorts import (
     format_cohort_debug_report,
 )
 from .published_runs import (
+    DEFAULT_DATASET_SOURCE,
     DEFAULT_PUBLISHED_RUNS_DIR,
     build_dataset_provenance,
     is_complete_published_archive,
+    load_complete_archive_manifest,
     load_published_summaries,
     summary_to_run_info,
 )
@@ -73,6 +75,7 @@ class BenchmarkTableGenerator:
 
     DEFAULT_DOC_INFO_FILE = "imgs/q11/doc_info.csv"
     DEFAULT_TEST_IDS_FILE = "tests/data/test_ids.csv"
+    DEFAULT_DATASET_SOURCE_FILE = str(DEFAULT_DATASET_SOURCE)
     SCORING_VERSION = "relaxed-surname-v1"
     COSTING_VERSION = "cost-provenance-v2"
     DATASET_FINGERPRINT_VERSION = "sha256-v1"
@@ -345,42 +348,109 @@ class BenchmarkTableGenerator:
             and self._requested_test_ids_norm(test_ids_file) == default_test_ids
         )
 
+    def _build_requested_dataset_provenance(
+        self,
+        doc_info_file: str,
+        test_ids_file: str,
+    ) -> Dict[str, Any]:
+        source_file: Optional[str] = None
+        if self._is_default_dataset_request(doc_info_file, test_ids_file):
+            candidate = Path(self.DEFAULT_DATASET_SOURCE_FILE)
+            if candidate.exists():
+                source_file = str(candidate)
+        return build_dataset_provenance(
+            doc_info_file,
+            test_ids_file,
+            dataset_source_file=source_file,
+        )
+
+    def _result_manifest_scope(
+        self,
+        run_info: Dict[str, Any],
+        *,
+        doc_info_file: str,
+    ) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+        """Verify raw response keys and return their complete page scope.
+
+        A config path alone is not a dataset identity: generated image names can
+        change while keeping the same directory.  Publishing such a run against
+        a different manifest would silently turn a valid score into nonsense.
+        """
+        published_summary = run_info.get("published_summary")
+        if isinstance(published_summary, dict):
+            scope = published_summary.get("request_scope")
+            return (dict(scope), None) if isinstance(scope, dict) else (None, "missing published request scope")
+        try:
+            results = self.run_manager.load_results(run_info["run_name"])
+            manifest = pd.read_csv(doc_info_file)
+        except Exception as exc:
+            return None, f"unable to verify result paths ({type(exc).__name__})"
+        if not isinstance(results, dict) or not results or "filename" not in manifest.columns:
+            return None, "unable to verify result paths"
+        if "page" not in manifest.columns:
+            return None, "document manifest does not contain page values"
+
+        manifest = manifest.copy()
+        try:
+            manifest["_page"] = manifest["page"].map(lambda page: int(str(page)))
+        except (TypeError, ValueError):
+            return None, "document manifest contains invalid page values"
+        manifest["_filename"] = manifest["filename"].map(lambda name: Path(str(name)).name)
+        if manifest["_filename"].duplicated().any():
+            return None, "document manifest contains duplicate filenames"
+
+        result_name_list = [Path(str(path)).name for path in results]
+        result_names = set(result_name_list)
+        if len(result_names) != len(result_name_list):
+            return None, "result keys collapse to duplicate filenames"
+
+        all_manifest_names = set(manifest["_filename"])
+        unexpected = result_names - all_manifest_names
+        if unexpected:
+            return None, f"result keys contain {len(unexpected)} filename(s) outside the document manifest"
+
+        config = run_info.get("config", {})
+        additional = config.get("additional", {}) if isinstance(config, dict) else {}
+        configured_pages = additional.get("pages") if isinstance(additional, dict) else None
+        if isinstance(configured_pages, list) and configured_pages:
+            try:
+                request_pages = sorted({int(page) for page in configured_pages})
+            except (TypeError, ValueError):
+                return None, "run configuration contains invalid page values"
+        else:
+            request_pages = sorted(
+                set(manifest.loc[manifest["_filename"].isin(result_names), "_page"])
+            )
+        if not request_pages:
+            return None, "unable to determine result page scope"
+
+        expected_names = set(
+            manifest.loc[manifest["_page"].isin(request_pages), "_filename"]
+        )
+        missing = expected_names - result_names
+        unexpected_in_scope = result_names - expected_names
+        if missing or unexpected_in_scope:
+            return None, (
+                "result keys do not exactly cover requested manifest pages "
+                f"(expected={len(expected_names)}, observed={len(result_names)}, "
+                f"missing={len(missing)}, unexpected={len(unexpected_in_scope)})"
+            )
+        return {
+            "pages": request_pages,
+            "expected_requests": len(expected_names),
+            "observed_requests": len(result_names),
+        }, None
+
     def _result_paths_match_document_manifest(
         self,
         run_info: Dict[str, Any],
         *,
         doc_info_file: str,
     ) -> Tuple[bool, Optional[str]]:
-        """Verify raw response keys against the exact scoring manifest.
-
-        A config path alone is not a dataset identity: generated image names can
-        change while keeping the same directory.  Publishing such a run against
-        a different manifest would silently turn a valid score into nonsense.
-        """
-        if isinstance(run_info.get("published_summary"), dict):
-            return True, None
-        try:
-            results = self.run_manager.load_results(run_info["run_name"])
-            manifest = pd.read_csv(doc_info_file)
-        except Exception as exc:
-            return False, f"unable to verify result paths ({type(exc).__name__})"
-        if not isinstance(results, dict) or not results or "filename" not in manifest.columns:
-            return False, "unable to verify result paths"
-
-        config = run_info.get("config", {})
-        additional = config.get("additional", {}) if isinstance(config, dict) else {}
-        configured_pages = additional.get("pages") if isinstance(additional, dict) else None
-        if isinstance(configured_pages, list) and configured_pages and "page" in manifest.columns:
-            requested_pages = {str(page) for page in configured_pages}
-            manifest = manifest[manifest["page"].astype(str).isin(requested_pages)]
-
-        expected_names = {str(name) for name in manifest["filename"].dropna()}
-        result_names = {Path(str(path)).name for path in results}
-        matched = len(expected_names & result_names)
-        if not result_names:
-            return False, "empty results payload"
-        if matched != len(result_names):
-            return False, f"result keys do not match requested document manifest ({matched}/{len(result_names)} matched)"
+        scope, reason = self._result_manifest_scope(run_info, doc_info_file=doc_info_file)
+        if scope is None:
+            return False, reason
+        run_info["_request_scope"] = scope
         return True, None
 
     def _matches_requested_dataset(
@@ -395,11 +465,15 @@ class BenchmarkTableGenerator:
         """Return whether run dataset metadata matches requested scoring dataset."""
         published_dataset_hash = run_info.get("dataset_content_hash")
         if isinstance(published_dataset_hash, str):
-            requested_provenance = dataset_provenance or build_dataset_provenance(
-                doc_info_file,
-                test_ids_file,
+            requested_provenance = dataset_provenance or self._build_requested_dataset_provenance(
+                doc_info_file, test_ids_file
             )
             if published_dataset_hash == requested_provenance["content_hash"]:
+                published_summary = run_info.get("published_summary")
+                if isinstance(published_summary, dict):
+                    scope = published_summary.get("request_scope")
+                    if isinstance(scope, dict):
+                        run_info["_request_scope"] = dict(scope)
                 return True, None
             return False, "dataset content hash mismatch"
 
@@ -436,6 +510,12 @@ class BenchmarkTableGenerator:
         return False, "dataset mismatch (legacy run without dataset metadata)"
 
     def _get_expected_docs_count(self, test_ids_file: str) -> int:
+        if self._active_source() == "published":
+            manifest = load_complete_archive_manifest(
+                self.published_runs_dir,
+                self.published_runs_dir.parent / "archive.json",
+            )
+            return max(1, int(manifest["dataset"]["expected_docs"]))
         normalized = self._requested_test_ids_norm(test_ids_file)
         cached = self._expected_docs_cache.get(normalized)
         if cached is not None:
@@ -469,7 +549,9 @@ class BenchmarkTableGenerator:
             return dict(stats) if isinstance(stats, dict) else None
 
         run_name = run_info["run_name"]
-        dataset_provenance = dataset_provenance or build_dataset_provenance(doc_info_file, test_ids_file)
+        dataset_provenance = dataset_provenance or self._build_requested_dataset_provenance(
+            doc_info_file, test_ids_file
+        )
         dataset_content_hash = dataset_provenance["content_hash"]
         dataset_fingerprint = self._dataset_fingerprint(doc_info_file, test_ids_file)
         
@@ -1014,7 +1096,16 @@ class BenchmarkTableGenerator:
         debug_cohorts: bool = False,
     ) -> Dict[str, Dict[str, Any]]:
         """Build aggregated run stats grouped by latest cohort per model."""
-        dataset_provenance = build_dataset_provenance(doc_info_file, test_ids_file)
+        if self._active_source() == "published":
+            archive = load_complete_archive_manifest(
+                self.published_runs_dir,
+                self.published_runs_dir.parent / "archive.json",
+            )
+            dataset_provenance = dict(archive["dataset"])
+        else:
+            dataset_provenance = self._build_requested_dataset_provenance(
+                doc_info_file, test_ids_file
+            )
         discovered_runs = self._collect_matching_runs(run_patterns)
         if not discovered_runs:
             return {}

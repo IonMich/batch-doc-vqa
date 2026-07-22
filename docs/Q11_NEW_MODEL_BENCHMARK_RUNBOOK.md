@@ -104,15 +104,22 @@ After successful inference runs, publish the sanitized benchmark evidence before
 regenerating public artifacts:
 
 ```bash
-uv run publish-benchmark-runs --finalize
+uv run publish-benchmark-runs --patterns '<new-run-name-regex>' --finalize
 uv run update-benchmarks --source published --no-interactive
 uv run update-benchmarks --source published --no-interactive --check
 ```
 
 Raw `tests/output/runs/` artifacts remain ignored and machine-local. The
 published archive retains run configuration, aggregation provenance, aggregate
-scores, and per-request timing/token/cost/failure evidence—never raw names,
-IDs, prompts, paths, or provider request identifiers.
+scores, exact request scope, and aggregate timing/token/cost/failure
+evidence—never raw names, IDs, prompts, paths, per-document references, or
+provider request identifiers. Publication is strict by default: every selected
+run must exactly cover the recorded pages and pass all archive invariants.
+
+Dataset identity uses the canonical document/page structure, test targets, and
+source PDF hash, so harmless randomized image filename suffixes do not split one
+logical dataset across machines. Published-only regeneration reads that identity
+from the finalized archive and does not require local scoring inputs or raw runs.
 
 Keep raw runs in private storage if future work needs to rescore the extracted
 text itself. The public archive intentionally cannot reconstruct those values.

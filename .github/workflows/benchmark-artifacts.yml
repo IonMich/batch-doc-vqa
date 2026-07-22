@@ -8,8 +8,10 @@ on:
       - "README.md"
       - "pareto_plot.png"
       - "docs/pareto.html"
+      - "model_metadata.json"
       - "src/batch_doc_vqa/benchmarks/**"
       - "src/batch_doc_vqa/update_benchmarks.py"
+      - "tests/**"
       - "pyproject.toml"
       - "uv.lock"
   push:
@@ -20,17 +22,15 @@ on:
       - "README.md"
       - "pareto_plot.png"
       - "docs/pareto.html"
+      - "model_metadata.json"
       - "src/batch_doc_vqa/benchmarks/**"
       - "src/batch_doc_vqa/update_benchmarks.py"
+      - "tests/**"
       - "pyproject.toml"
       - "uv.lock"
 
 jobs:
   check:
-    # The repository is transitioning from local raw runs.  Once a finalized
-    # archive is committed, this check makes all generated public artifacts
-    # deterministic and rejects stale Markdown, PNG, or HTML.
-    if: ${{ hashFiles('benchmarks/published/q11/archive.json') != '' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,4 +38,5 @@ jobs:
         with:
           version: "latest"
       - run: uv sync --locked
+      - run: uv run python -m unittest discover -s tests
       - run: uv run update-benchmarks --source published --no-interactive --check

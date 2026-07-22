@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Iterable, List
 
+from .pareto_plot import _plot_model_label
 from .published_runs import DEFAULT_PUBLISHED_RUNS_DIR
 from .table_generator import BenchmarkTableGenerator
 
@@ -24,7 +25,9 @@ def _extract_points(run_stats: Dict[str, Any], y_metric: str) -> List[Dict[str, 
         if not isinstance(run_info, dict) or not isinstance(stats, dict):
             continue
         config = run_info.get("config")
-        model_config = config.get("model") if isinstance(config, dict) else None
+        if not isinstance(config, dict):
+            continue
+        model_config = config.get("model")
         if not isinstance(model_config, dict):
             continue
         # Backwards-compatible for direct callers; stored run stats are
@@ -32,8 +35,11 @@ def _extract_points(run_stats: Dict[str, Any], y_metric: str) -> List[Dict[str, 
         cost_status = str(stats.get("cost_status") or "precise")
         if cost_status not in {"precise", "estimated"}:
             continue
+        total_cost_value = stats.get("total_cost")
+        if not isinstance(total_cost_value, (int, float)) or isinstance(total_cost_value, bool):
+            continue
         try:
-            total_cost = float(stats.get("total_cost"))
+            total_cost = float(total_cost_value)
             accuracy = float(stats.get(y_metric, 0) or 0)
         except (TypeError, ValueError):
             continue
@@ -42,10 +48,7 @@ def _extract_points(run_stats: Dict[str, Any], y_metric: str) -> List[Dict[str, 
             # matches the established static Pareto plot behaviour.
             continue
 
-        model_name = str(model_config.get("model") or model_key)
-        variant = model_config.get("variant")
-        if variant:
-            model_name = f"{model_name}-{variant}"
+        model_name = _plot_model_label(config, str(model_key))
         points.append(
             {
                 "organization": str(model_config.get("org") or "other"),

@@ -85,7 +85,12 @@ def get_reproducibility_signature(
     if isinstance(existing, str) and existing:
         return existing
     dataset = dataset_provenance or {"content_hash": "legacy-unverified", "pages": []}
-    return build_aggregation_fingerprint(config, dataset)
+    request_scope = run.get("_request_scope") or run.get("request_scope")
+    return build_aggregation_fingerprint(
+        config,
+        dataset,
+        request_scope=request_scope if isinstance(request_scope, dict) else None,
+    )
 
 
 def _unique_runs_by_name(runs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

@@ -30,6 +30,15 @@ class TestInteractivePareto(unittest.TestCase):
                 "run_info": {"config": {"model": {"org": "qwen", "model": "example", "variant": None}}},
                 "stats": {"total_cost": 0.02, "id_top1": 95.0},
             },
+            "openai/example [r=xhigh]": {
+                "run_info": {
+                    "config": {
+                        "model": {"org": "openai", "model": "example", "variant": None},
+                        "additional": {"generation_params_effective": {"reasoning": {"effort": "xhigh"}}},
+                    }
+                },
+                "stats": {"total_cost": 0.03, "id_top1": 92.0},
+            },
         }
         with tempfile.TemporaryDirectory() as temporary_directory:
             output_path = Path(temporary_directory) / "pareto.html"
@@ -39,6 +48,7 @@ class TestInteractivePareto(unittest.TestCase):
         self.assertIn('id="inspect-model" disabled', html)
         self.assertIn("No organizations selected — showing the all-model Pareto frontier", html)
         self.assertIn("orgColors", html)
+        self.assertIn('"model":"example (xhigh)"', html)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 {
-  "aggregation_fingerprint": "dd5d51e6378a2b158e4c7c6439ac8692f10c3cfdac2ab570b5a2ee19b8cb5fe2",
+  "aggregation_fingerprint": "2f4ea655e4ca8bf8fd202e9367be300c326401df01831881fce27a6674a0d55c",
   "aggregation_inputs": {
     "api": {
       "max_tokens": 4096,
@@ -30,7 +30,9 @@
       "max_tokens": 4096,
       "min_p": null,
       "presence_penalty": null,
-      "reasoning": null,
+      "reasoning": {
+        "effort": "xhigh"
+      },
       "repetition_penalty": null,
       "temperature": 1.0,
       "top_k": null,
@@ -38,15 +40,15 @@
     },
     "model": {
       "license_info": "Varies by provider",
-      "model": "mistral-small-2603",
+      "model": "gpt-5.6-sol",
       "model_size": "Unknown",
       "open_weights": false,
-      "org": "mistralai",
+      "org": "openai",
       "variant": null
     },
     "reproducibility": {
-      "git_commit": "54d630156a4a5cde90b659ac1c2084ec1e6e9ddc",
-      "inference_settings_hash": "062b89707d228b95989a9bc786eff4f12deeb94d20452f89fee2d16048e1c4dc",
+      "git_commit": "003bb7631b4e94e728df7158d66b02aa68fa6d2b",
+      "inference_settings_hash": "df28d2fb14c0950eeba5bd86cbcdf69d8e73f9cb060cb1ea61babff6ffed5b1c",
       "parser_version": "v1",
       "prompt_hash": "e03faa5c5a9f725c6307141a047b98bdcd6bda3d851ed2ff3d9784a311fa97ec",
       "schema_version": "v1"
@@ -58,18 +60,18 @@
     "response_format": "json",
     "routing": {
       "actual_model_providers": [
-        "Mistral"
+        "Azure"
       ],
       "effective": {
         "data_collection": "deny",
-        "zdr": false
+        "zdr": true
       },
       "requested": {
         "allow_fallbacks": null,
         "data_collection": "deny",
         "order": [],
         "sort": null,
-        "zdr": false
+        "zdr": true
       }
     },
     "runtime_settings": {
@@ -86,7 +88,7 @@
   "config": {
     "additional": {
       "actual_model_providers": [
-        "Mistral"
+        "Azure"
       ],
       "concurrency": 64,
       "cost_fetch_max_workers": 64,
@@ -105,17 +107,22 @@
         "max_tokens": 4096,
         "min_p": null,
         "presence_penalty": null,
-        "reasoning": null,
+        "reasoning": {
+          "effort": "xhigh"
+        },
         "repetition_penalty": null,
         "temperature": 1.0,
         "top_k": null,
         "top_p": 1.0
       },
-      "model_context_length": 262144,
-      "model_name": "mistralai/mistral-small-2603",
+      "model_context_length": 1050000,
+      "model_name": "openai/gpt-5.6-sol",
       "model_pricing": {
-        "completion": "0.0000006",
-        "prompt": "0.00000015"
+        "completion": "0.00003",
+        "input_cache_read": "0.0000005",
+        "input_cache_write": "0.00000625",
+        "prompt": "0.000005",
+        "web_search": "0.01"
       },
       "pages": [
         1,
@@ -124,14 +131,14 @@
       "preset_id": "default_student",
       "provider_routing_effective": {
         "data_collection": "deny",
-        "zdr": false
+        "zdr": true
       },
       "provider_routing_requested": {
         "allow_fallbacks": null,
         "data_collection": "deny",
         "order": [],
         "sort": null,
-        "zdr": false
+        "zdr": true
       },
       "rate_limit": 64.0,
       "response_format": "json",
@@ -153,7 +160,7 @@
       "top_p": 1.0
     },
     "environment": {
-      "runtime": "44 seconds"
+      "runtime": "1.4 minutes"
     },
     "features": {
       "regex_patterns": false,
@@ -161,24 +168,24 @@
     },
     "model": {
       "license_info": "Varies by provider",
-      "model": "mistral-small-2603",
+      "model": "gpt-5.6-sol",
       "model_size": "Unknown",
       "open_weights": false,
-      "org": "mistralai",
+      "org": "openai",
       "variant": null
     },
     "run_info": {
       "reproducibility": {
-        "git_commit": "54d630156a4a5cde90b659ac1c2084ec1e6e9ddc",
-        "inference_settings_hash": "062b89707d228b95989a9bc786eff4f12deeb94d20452f89fee2d16048e1c4dc",
+        "git_commit": "003bb7631b4e94e728df7158d66b02aa68fa6d2b",
+        "inference_settings_hash": "df28d2fb14c0950eeba5bd86cbcdf69d8e73f9cb060cb1ea61babff6ffed5b1c",
         "manifest_version": "1",
         "parser_version": "v1",
         "prompt_hash": "e03faa5c5a9f725c6307141a047b98bdcd6bda3d851ed2ff3d9784a311fa97ec",
         "schema_version": "v1"
       },
-      "run_name": "mistralai-mistral-small-2603_20260317_171029",
-      "timestamp": "20260317_171029",
-      "timestamp_iso": "2026-03-17T17:10:29.565693"
+      "run_name": "openai-gpt-5.6-sol_20260711_160947",
+      "timestamp": "20260711_160947",
+      "timestamp_iso": "2026-07-11T16:09:47.784000"
     }
   },
   "dataset": {
@@ -205,7 +212,7 @@
   },
   "request_evidence": {
     "cost": {
-      "observed_precise_cost_total": 0.0263148,
+      "observed_precise_cost_total": 0.8248500000000004,
       "precise_requests": 64,
       "zero_cost_precise_requests": 0
     },
@@ -214,21 +221,21 @@
     "invalid_entries": 0,
     "request_count": 64,
     "response_field_presence": {
-      "section_number": 58,
+      "section_number": 62,
       "student_full_name": 64,
       "ufid": 0,
-      "university_id": 38
+      "university_id": 32
     },
     "schema_version": 2,
     "timing": {
-      "max_elapsed_seconds": 44.13922882080078,
+      "max_elapsed_seconds": 85.0831880569458,
       "timed_requests": 64
     },
     "token_usage": {
       "complete_requests": 64,
-      "completion_tokens_total": 2345,
-      "prompt_tokens_total": 166052,
-      "total_tokens_total": 168397
+      "completion_tokens_total": 16391,
+      "prompt_tokens_total": 66624,
+      "total_tokens_total": 83015
     }
   },
   "request_scope": {
@@ -239,29 +246,29 @@
       3
     ]
   },
-  "run_name": "mistralai-mistral-small-2603_20260317_171029",
+  "run_name": "openai-gpt-5.6-sol_20260711_160947",
   "schema_version": 2,
   "stats": {
     "cost_complete": true,
-    "cost_per_image": 0.0004111687499999999,
+    "cost_per_image": 0.012888281250000001,
     "cost_status": "precise",
     "costed_requests": 64,
-    "digit_top1": 76.61290322580645,
-    "docs_detected": 96.875,
-    "docs_detected_count": 31,
+    "digit_top1": 94.140625,
+    "docs_detected": 100.0,
+    "docs_detected_count": 32,
     "estimated_cost_requests": 0,
     "expected_docs_count": 32,
     "fully_parallelizable_runtime_available": true,
-    "fully_parallelizable_runtime_seconds": 44.13922882080078,
-    "id_avg_lev": 1.7741935483870968,
-    "id_top1": 25.806451612903224,
-    "lastname_avg_lev": 0.5483870967741935,
-    "lastname_top1": 87.09677419354838,
+    "fully_parallelizable_runtime_seconds": 85.0831880569458,
+    "id_avg_lev": 0.46875,
+    "id_top1": 62.5,
+    "lastname_avg_lev": 0.0,
+    "lastname_top1": 100.0,
     "missing_cost_requests": 0,
-    "observed_total_cost": 0.026314799999999992,
+    "observed_total_cost": 0.8248500000000001,
     "precise_cost_requests": 64,
     "timed_images": 64,
-    "total_cost": 0.026314799999999992,
+    "total_cost": 0.8248500000000001,
     "total_images": 64,
     "total_requests": 64,
     "zero_cost_precise_requests": 0

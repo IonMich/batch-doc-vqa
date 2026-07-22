@@ -105,6 +105,40 @@ class DatasetScopingTests(unittest.TestCase):
             )
             self.assertNotEqual(first_fingerprint, changed_fingerprint)
 
+    def test_result_manifest_scope_requires_every_request_on_selected_pages(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            doc_info = Path(tmp_dir) / "doc_info.csv"
+            doc_info.write_text(
+                "doc,page,filename\n0,1,a.png\n0,3,b.png\n1,1,c.png\n1,3,d.png\n",
+                encoding="utf-8",
+            )
+            run_info = _make_run_info()
+            self.generator.run_manager.load_results = lambda _name: {
+                "images/a.png": [{}],
+                "images/b.png": [{}],
+                "images/c.png": [{}],
+                "images/d.png": [{}],
+            }
+
+            scope, reason = self.generator._result_manifest_scope(
+                run_info,
+                doc_info_file=str(doc_info),
+            )
+
+            self.assertIsNone(reason)
+            self.assertEqual(
+                scope,
+                {"pages": [1, 3], "expected_requests": 4, "observed_requests": 4},
+            )
+
+            self.generator.run_manager.load_results = lambda _name: {"images/a.png": [{}]}
+            scope, reason = self.generator._result_manifest_scope(
+                run_info,
+                doc_info_file=str(doc_info),
+            )
+            self.assertIsNone(scope)
+            self.assertIn("exactly cover", str(reason))
+
     def test_non_default_dataset_table_hides_opencv_baseline_column(self) -> None:
         run_stats = {
             "google/gemma-3-27b-it": {
