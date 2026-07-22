@@ -483,6 +483,7 @@ def publish_local_runs(
     patterns: Optional[Sequence[str]] = None,
     check: bool = False,
     finalize: bool = False,
+    strict: bool = False,
 ) -> List[Path]:
     """Validate local raw runs and export their sanitized public summaries."""
     # Imported lazily to avoid an import cycle: table_generator also consumes
@@ -499,6 +500,7 @@ def publish_local_runs(
     dataset = build_dataset_provenance(doc_info_file, test_ids_file, dataset_id=dataset_id)
     output_paths: List[Path] = []
     summaries: List[Dict[str, Any]] = []
+    skipped: List[str] = []
     failures: List[str] = []
     for run_info in _matching_runs(generator, patterns):
         dataset_ok, reason = generator._matches_requested_dataset(
@@ -509,11 +511,11 @@ def publish_local_runs(
             validate_result_paths=True,
         )
         if not dataset_ok:
-            failures.append(f"{run_info.get('run_name', 'unknown')}: {reason or 'dataset mismatch'}")
+            skipped.append(f"{run_info.get('run_name', 'unknown')}: {reason or 'dataset mismatch'}")
             continue
         eligible, reason = generator._is_run_eligible_for_cohort(run_info)
         if not eligible:
-            failures.append(f"{run_info.get('run_name', 'unknown')}: {reason or 'ineligible'}")
+            skipped.append(f"{run_info.get('run_name', 'unknown')}: {reason or 'ineligible'}")
             continue
         stats = generator.compute_run_stats(run_info, str(doc_info_file), str(test_ids_file), dataset_provenance=dataset)
         if not stats:
@@ -536,10 +538,18 @@ def publish_local_runs(
         output_paths.append(destination)
         summaries.append(summary)
 
+    if strict and skipped:
+        failures.extend(skipped)
     if failures:
         raise RuntimeError("Publish validation failed:\n" + "\n".join(failures))
     if not summaries:
-        raise RuntimeError("No eligible runs were available to publish")
+        details = "\n".join(skipped)
+        raise RuntimeError(f"No eligible runs were available to publish{(':\n' + details) if details else ''}")
+
+    if skipped:
+        print(f"Skipped {len(skipped)} run(s) that did not meet publication validation.")
+        for detail in skipped:
+            print(f"  - {detail}")
 
     if finalize:
         all_summaries = load_published_summaries(published_runs_dir)
@@ -566,6 +576,7 @@ def main() -> None:
     parser.add_argument("--patterns", nargs="*", help="Optional run-name regex filters")
     parser.add_argument("--check", action="store_true", help="Validate that the published archive is current without writing")
     parser.add_argument("--finalize", action="store_true", help="Write or verify the complete archive manifest")
+    parser.add_argument("--strict", action="store_true", help="Fail when any discovered run is excluded from publication")
     args = parser.parse_args()
     paths = publish_local_runs(
         runs_dir=args.runs_dir,
@@ -576,6 +587,7 @@ def main() -> None:
         patterns=args.patterns,
         check=args.check,
         finalize=args.finalize,
+        strict=args.strict,
     )
     mode = "Validated" if args.check else "Published"
     print(f"{mode} {len(paths)} artifact(s).")
