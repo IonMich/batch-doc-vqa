@@ -1,8 +1,10 @@
 name: Verify published benchmark artifacts
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
+      - ".github/workflows/benchmark-artifacts.yml"
       - "benchmarks/published/**"
       - "BENCHMARKS.md"
       - "README.md"
@@ -17,6 +19,7 @@ on:
   push:
     branches: [main]
     paths:
+      - ".github/workflows/benchmark-artifacts.yml"
       - "benchmarks/published/**"
       - "BENCHMARKS.md"
       - "README.md"
