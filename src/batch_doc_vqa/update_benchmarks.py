@@ -6,9 +6,34 @@ import subprocess
 import sys
 import argparse
 import filecmp
+import os
 import shutil
 import tempfile
 from pathlib import Path
+
+from PIL import Image
+
+from batch_doc_vqa.benchmarks.pareto_plot import PARETO_FINGERPRINT_KEY
+
+
+def _artifacts_match(generated: Path, committed: Path) -> bool:
+    """Compare text exactly and PNG plots by their platform-neutral data fingerprint."""
+    if not committed.exists():
+        return False
+    if generated.suffix.lower() != ".png" or committed.suffix.lower() != ".png":
+        return filecmp.cmp(generated, committed, shallow=False)
+    try:
+        with Image.open(generated) as generated_image, Image.open(committed) as committed_image:
+            generated_fingerprint = generated_image.info.get(PARETO_FINGERPRINT_KEY)
+            committed_fingerprint = committed_image.info.get(PARETO_FINGERPRINT_KEY)
+            return (
+                isinstance(generated_fingerprint, str)
+                and generated_fingerprint == committed_fingerprint
+                and generated_image.size == committed_image.size
+                and generated_image.mode == committed_image.mode
+            )
+    except (OSError, ValueError):
+        return False
 
 def run_command(command, description, interactive=False):
     """Run a command and handle errors."""
@@ -181,12 +206,18 @@ def main():
             expected_outputs.append((Path(interactive_output), Path(args.interactive_pareto_output)))
         if args.extra_id_lev_pareto:
             expected_outputs.append((Path(id_lev_output), Path(args.id_lev_output)))
-        stale = [str(committed) for generated, committed in expected_outputs if not committed.exists() or not filecmp.cmp(generated, committed, shallow=False)]
+        stale = [
+            str(committed)
+            for generated, committed in expected_outputs
+            if not _artifacts_match(generated, committed)
+        ]
         shutil.rmtree(check_dir, ignore_errors=True)
         if stale:
             print("Generated benchmark artifacts are stale:")
             for path in stale:
                 print(f"  - {path}")
+            if os.environ.get("GITHUB_ACTIONS") == "true":
+                print(f"::error title=Stale benchmark artifacts::{', '.join(stale)}")
             sys.exit(1)
         print("✅ Generated benchmark artifacts are current.")
         return

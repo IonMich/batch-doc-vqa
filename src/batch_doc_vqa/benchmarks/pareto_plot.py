@@ -2,14 +2,22 @@
 """
 Generate Pareto frontier plot(s) for benchmark metric(s) vs total cost.
 """
-import matplotlib.pyplot as plt
 import argparse
+import hashlib
+import json
 import textwrap
+from pathlib import Path
 from typing import Dict, List, Tuple
+
+import matplotlib.pyplot as plt
 from adjustText import adjust_text
 
 from .table_generator import BenchmarkTableGenerator
 from .published_runs import DEFAULT_PUBLISHED_RUNS_DIR
+
+
+PARETO_FINGERPRINT_KEY = "Benchmark-Data-SHA256"
+PARETO_RENDER_SCHEMA_VERSION = 1
 
 
 def calculate_pareto_frontier(points: List[Tuple[float, float]], maximize_y: bool = True) -> List[int]:
@@ -200,6 +208,36 @@ def create_pareto_plot(
     frontier_indices = calculate_pareto_frontier(points, maximize_y=maximize_y)
     frontier_indices.sort(key=lambda i: total_costs[i])  # Sort by cost for line plotting
 
+    fingerprint_payload = {
+        "version": PARETO_RENDER_SCHEMA_VERSION,
+        "title": title,
+        "label_mode": label_mode,
+        "y_metric": y_metric,
+        "y_axis_label": y_axis_label,
+        "maximize_y": maximize_y,
+        "invert_y_axis": invert_y_axis,
+        "points": [
+            {
+                "model": model_names[index],
+                "organization": orgs[index],
+                "score": y_values[index],
+                "total_cost": total_costs[index],
+                "cohort_size": cohort_sizes[index],
+                "score_ci": [y_ci_lows[index], y_ci_highs[index]],
+                "total_cost_ci": [total_cost_ci_lows[index], total_cost_ci_highs[index]],
+            }
+            for index in range(len(model_names))
+        ],
+    }
+    plot_fingerprint = hashlib.sha256(
+        json.dumps(
+            fingerprint_payload,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
+    ).hexdigest()
+
     # Keep the chart itself unchanged.  Frontier labels are placed immediately
     # adjacent to their points, using a fixed, alternating layout rather than
     # a global repulsion pass that can send labels far across the plot.
@@ -369,7 +407,10 @@ def create_pareto_plot(
 
     # Adjust layout and save
     plt.tight_layout()
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    save_options = {}
+    if Path(output_path).suffix.lower() == ".png":
+        save_options["metadata"] = {PARETO_FINGERPRINT_KEY: plot_fingerprint}
+    plt.savefig(output_path, dpi=300, bbox_inches='tight', **save_options)
     print(f"Pareto plot saved to {output_path}")
     
     # Print frontier models
