@@ -1,0 +1,2927 @@
+{
+  "aggregation_fingerprint": "98d0919f5823958e19013e9609636f6bfd39d228ec20efa2c5e2d0583947ffff",
+  "aggregation_inputs": {
+    "api": {
+      "max_tokens": 4096,
+      "min_p": null,
+      "presence_penalty": null,
+      "provider": "OpenRouter (Router)",
+      "repetition_penalty": null,
+      "temperature": 1.0,
+      "top_k": null,
+      "top_p": 1.0
+    },
+    "dataset_content_hash": "51185fcde83137c3e44dc5471b6f32d3a76e28a1165ea86258f3c5b27985ebf8",
+    "dataset_pages": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "extraction_mode": "default_student",
+    "features": {
+      "regex_patterns": false,
+      "structured_output": true
+    },
+    "generation_param_sources": {
+      "max_tokens": "global_default",
+      "min_p": "global_default",
+      "presence_penalty": "global_default",
+      "repetition_penalty": "global_default",
+      "temperature": "global_default",
+      "top_k": "global_default",
+      "top_p": "global_default"
+    },
+    "generation_params": {
+      "max_tokens": 4096,
+      "min_p": null,
+      "presence_penalty": null,
+      "reasoning": null,
+      "repetition_penalty": null,
+      "temperature": 1.0,
+      "top_k": null,
+      "top_p": 1.0
+    },
+    "model": {
+      "license_info": "Varies by provider",
+      "model": "qwen3.6-35b-a3b",
+      "model_size": "Unknown",
+      "open_weights": false,
+      "org": "qwen",
+      "variant": null
+    },
+    "reproducibility": {
+      "git_commit": "87a44a0b46286deee08714fdb2f8f71921b64462",
+      "inference_settings_hash": "98950ef947b10e07a59427a8f08c781832936634fb458abc9209b3e3f04728ee",
+      "parser_version": "v1",
+      "prompt_hash": "e03faa5c5a9f725c6307141a047b98bdcd6bda3d851ed2ff3d9784a311fa97ec",
+      "schema_version": "v1"
+    },
+    "response_format": "json",
+    "routing": {
+      "actual_model_providers": [
+        "AkashML",
+        "AtlasCloud",
+        "Parasail"
+      ],
+      "effective": {
+        "data_collection": "deny",
+        "zdr": true
+      },
+      "requested": {
+        "allow_fallbacks": null,
+        "data_collection": "deny",
+        "order": [],
+        "sort": null,
+        "zdr": true
+      }
+    },
+    "run_manifest_sha256": null,
+    "runtime_settings": {
+      "concurrency": 64,
+      "rate_limit": 64.0,
+      "retry_base_delay": 2.0,
+      "retry_max": 3,
+      "schema_retry_max": 2
+    },
+    "schema_hash": "06c021eff47d03c0c9c562a58afa0c2dd0c2b53ed3173987789c405c0dfdf0af",
+    "strict_schema": false,
+    "version": 1
+  },
+  "config": {
+    "additional": {
+      "actual_model_providers": [
+        "AkashML",
+        "AtlasCloud",
+        "Parasail"
+      ],
+      "concurrency": 64,
+      "cost_fetch_max_workers": 64,
+      "endpoint_type": "chat_completions",
+      "extraction_mode": "default_student",
+      "generation_param_sources": {
+        "max_tokens": "global_default",
+        "min_p": "global_default",
+        "presence_penalty": "global_default",
+        "repetition_penalty": "global_default",
+        "temperature": "global_default",
+        "top_k": "global_default",
+        "top_p": "global_default"
+      },
+      "generation_params_effective": {
+        "max_tokens": 4096,
+        "min_p": null,
+        "presence_penalty": null,
+        "reasoning": null,
+        "repetition_penalty": null,
+        "temperature": 1.0,
+        "top_k": null,
+        "top_p": 1.0
+      },
+      "model_context_length": 262144,
+      "model_name": "qwen/qwen3.6-35b-a3b",
+      "model_pricing": {
+        "completion": "0.00000096525",
+        "input_cache_read": "0.0000001612",
+        "prompt": "0.0000001612"
+      },
+      "pages": [
+        1,
+        3
+      ],
+      "preset_id": "default_student",
+      "provider_routing_effective": {
+        "data_collection": "deny",
+        "zdr": true
+      },
+      "provider_routing_requested": {
+        "allow_fallbacks": null,
+        "data_collection": "deny",
+        "order": [],
+        "sort": null,
+        "zdr": true
+      },
+      "rate_limit": 64.0,
+      "response_format": "json",
+      "retry_base_delay": 2.0,
+      "retry_max": 3,
+      "schema_hash": "06c021eff47d03c0c9c562a58afa0c2dd0c2b53ed3173987789c405c0dfdf0af",
+      "schema_retry_max": 2,
+      "strict_schema": false,
+      "token_escalation_repetition_threshold": 0.85
+    },
+    "api": {
+      "max_tokens": 4096,
+      "min_p": null,
+      "presence_penalty": null,
+      "provider": "OpenRouter (Router)",
+      "repetition_penalty": null,
+      "temperature": 1.0,
+      "top_k": null,
+      "top_p": 1.0
+    },
+    "environment": {
+      "runtime": "45 seconds"
+    },
+    "features": {
+      "regex_patterns": false,
+      "structured_output": true
+    },
+    "model": {
+      "license_info": "Varies by provider",
+      "model": "qwen3.6-35b-a3b",
+      "model_size": "Unknown",
+      "open_weights": false,
+      "org": "qwen",
+      "variant": null
+    },
+    "run_info": {
+      "reproducibility": {
+        "git_commit": "87a44a0b46286deee08714fdb2f8f71921b64462",
+        "inference_settings_hash": "98950ef947b10e07a59427a8f08c781832936634fb458abc9209b3e3f04728ee",
+        "manifest_version": "1",
+        "parser_version": "v1",
+        "prompt_hash": "e03faa5c5a9f725c6307141a047b98bdcd6bda3d851ed2ff3d9784a311fa97ec",
+        "schema_version": "v1"
+      },
+      "run_name": "qwen-qwen3.6-35b-a3b_20260428_173830",
+      "timestamp": "20260428_173830",
+      "timestamp_iso": "2026-04-28T17:38:30.211021"
+    }
+  },
+  "dataset": {
+    "content_hash": "51185fcde83137c3e44dc5471b6f32d3a76e28a1165ea86258f3c5b27985ebf8",
+    "dataset_id": "q11",
+    "doc_info_sha256": "fe264218b6dc292315fc0f4b8b1f9fc36107175f673dcc09d6e29d29fb6e05b1",
+    "expected_docs": 32,
+    "manifest_rows": 128,
+    "pages": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "test_ids_sha256": "2108dda819e7ae85e2f6ef0af40003bb09df5b81f153ecd5ed6666405c5e8766"
+  },
+  "request_evidence": {
+    "records": [
+      {
+        "cost": {
+          "actual_cost": 0.000740909,
+          "provenance": "precise"
+        },
+        "document_ref": "ea191efc408402eaa781cc44e3078ee24511b3d4d4de154246bf6c352f32d16c",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2646,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 0,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 15,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 4.967138767242432
+        },
+        "token_usage": {
+          "completion_tokens": 396,
+          "prompt_tokens": 2225,
+          "total_tokens": 2621
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000812337,
+          "provenance": "precise"
+        },
+        "document_ref": "13e94da334cb97a1eb1c57c214d0d2ad7cdfa0889cc2be0b363cb330e229cd48",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2411,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 1,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 15,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 4.80117392539978
+        },
+        "token_usage": {
+          "completion_tokens": 470,
+          "prompt_tokens": 2225,
+          "total_tokens": 2695
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000682994,
+          "provenance": "precise"
+        },
+        "document_ref": "42e74a8ce93eab173c74beb92a95cd478b50f8c87e59efdadf89c65c04e65624",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 3227,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 2,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 8,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 5.562363147735596
+        },
+        "token_usage": {
+          "completion_tokens": 336,
+          "prompt_tokens": 2225,
+          "total_tokens": 2561
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.002338397,
+          "provenance": "precise"
+        },
+        "document_ref": "5626538f6fadf2d1d42c6efd3a976fe221ba20390237d959fa78178517999f8d",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2650,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 3,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 12,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 11.105455875396729
+        },
+        "token_usage": {
+          "completion_tokens": 2051,
+          "prompt_tokens": 2225,
+          "total_tokens": 4276
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00150378,
+          "provenance": "precise"
+        },
+        "document_ref": "95b9d32280dab6eab6af4e8664d023ebafb19721ffe746f1876f4c56b0a9d50d",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1767,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 4,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 16,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 14.998804807662964
+        },
+        "token_usage": {
+          "completion_tokens": 551,
+          "prompt_tokens": 2226,
+          "total_tokens": 2777
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00076697,
+          "provenance": "precise"
+        },
+        "document_ref": "6f706b735c1bc395c5b4bf308cff43d5d5a6b0e3ae26344c0f4fdda486f6b89d",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2431,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 5,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 15,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 44.38475322723389
+        },
+        "token_usage": {
+          "completion_tokens": 423,
+          "prompt_tokens": 2225,
+          "total_tokens": 2648
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00202938,
+          "provenance": "precise"
+        },
+        "document_ref": "1f95461826f20538e8dc7ea8a54511cb1f319367f296d99c867c5226d684a848",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2958,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 6,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 19,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 16.03162407875061
+        },
+        "token_usage": {
+          "completion_tokens": 843,
+          "prompt_tokens": 2226,
+          "total_tokens": 3069
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0014771,
+          "provenance": "precise"
+        },
+        "document_ref": "46c2d331504bdf137402b2f712fc33607e6de672a9370d6230ccc74c03fe616e",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2622,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 7,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 14.977290868759155
+        },
+        "token_usage": {
+          "completion_tokens": 349,
+          "prompt_tokens": 2226,
+          "total_tokens": 2575
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0012471,
+          "provenance": "precise"
+        },
+        "document_ref": "6eee71c8a71fce4f5bf28dab37974c37f80497046d5e14123b4b3015c8a5e424",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2909,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 8,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 14.606251001358032
+        },
+        "token_usage": {
+          "completion_tokens": 234,
+          "prompt_tokens": 2226,
+          "total_tokens": 2460
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00116178,
+          "provenance": "precise"
+        },
+        "document_ref": "4418abf6718252392436096e2889629c169dbbf6dcab3449af6583a9ed3f9748",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1694,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 9,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 11.506783962249756
+        },
+        "token_usage": {
+          "completion_tokens": 361,
+          "prompt_tokens": 2226,
+          "total_tokens": 2587
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000572955,
+          "provenance": "precise"
+        },
+        "document_ref": "0fb008880e9e443517e789b1050f02c2f635285cd07f3a8348a15f56a9ebeefe",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2281,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 10,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 19,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 10.484795093536377
+        },
+        "token_usage": {
+          "completion_tokens": 222,
+          "prompt_tokens": 2225,
+          "total_tokens": 2447
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00053338,
+          "provenance": "precise"
+        },
+        "document_ref": "344310773b6b5d508a705a08542cdb438337591a3139822c0e24946f8f2680ed",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2281,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 11,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 9,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 5.583990097045898
+        },
+        "token_usage": {
+          "completion_tokens": 181,
+          "prompt_tokens": 2225,
+          "total_tokens": 2406
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000620252,
+          "provenance": "precise"
+        },
+        "document_ref": "d5162201738bbe97f3ef1cfe17ff1c14e4acb116121c43a6bbea41a46bd76025",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 3520,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 12,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 16,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 11.9079749584198
+        },
+        "token_usage": {
+          "completion_tokens": 271,
+          "prompt_tokens": 2225,
+          "total_tokens": 2496
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00083418,
+          "provenance": "precise"
+        },
+        "document_ref": "5f1c99ab7856d7cf142653b1c1c9f9c3063a0bd7b35a861af83e7012adbd2e7f",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2094,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 13,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 13,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 6.834032773971558
+        },
+        "token_usage": {
+          "completion_tokens": 179,
+          "prompt_tokens": 2226,
+          "total_tokens": 2405
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00092778,
+          "provenance": "precise"
+        },
+        "document_ref": "bc6fc9a3dc3d85441e0ed6e3ab7fec01b3696d69d2e17d344113b8db6a15bce1",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2017,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 14,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 11.699413061141968
+        },
+        "token_usage": {
+          "completion_tokens": 231,
+          "prompt_tokens": 2226,
+          "total_tokens": 2457
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000679133,
+          "provenance": "precise"
+        },
+        "document_ref": "b90782fa7429cc4f9e46863b80e5e7e91fa14b3177231fe00e00bffd807df906",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 3205,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 15,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 9,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 10.40193510055542
+        },
+        "token_usage": {
+          "completion_tokens": 332,
+          "prompt_tokens": 2225,
+          "total_tokens": 2557
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000613496,
+          "provenance": "precise"
+        },
+        "document_ref": "e07f8b20b03f53b528747d83252fa49f2a6ebb9b74a625275cdb159f7f6cc130",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2610,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 16,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 15,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 11.313727140426636
+        },
+        "token_usage": {
+          "completion_tokens": 264,
+          "prompt_tokens": 2225,
+          "total_tokens": 2489
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000681063,
+          "provenance": "precise"
+        },
+        "document_ref": "0218a96e3f0ff344a72e7191ac2ff1a8389123eb8f5e19ca9c7e763ff4b3790f",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2820,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 17,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 10,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 11.60184621810913
+        },
+        "token_usage": {
+          "completion_tokens": 334,
+          "prompt_tokens": 2225,
+          "total_tokens": 2559
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000536276,
+          "provenance": "precise"
+        },
+        "document_ref": "c683214474a38bb78dcdeaf9c7fa7b384711aa98ad2829aa256c572c0f987b3b",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 3549,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 18,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 11.625334024429321
+        },
+        "token_usage": {
+          "completion_tokens": 184,
+          "prompt_tokens": 2225,
+          "total_tokens": 2409
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000548824,
+          "provenance": "precise"
+        },
+        "document_ref": "2cb62345283acba6590c1f72049d8a5bf869e487c7744217821118340a5c052c",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 3362,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 19,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 10,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 10.823725938796997
+        },
+        "token_usage": {
+          "completion_tokens": 197,
+          "prompt_tokens": 2225,
+          "total_tokens": 2422
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000646314,
+          "provenance": "precise"
+        },
+        "document_ref": "f14d25d4757bad3bac7a9050fe868d7bd69ea0758e7504d470d2ae0196b65a5a",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2391,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 20,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 8,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 11.45496916770935
+        },
+        "token_usage": {
+          "completion_tokens": 298,
+          "prompt_tokens": 2225,
+          "total_tokens": 2523
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000516005,
+          "provenance": "precise"
+        },
+        "document_ref": "2cec088b7dd31b4db44851491f61143a38e9a72a72038a1410d9f0b1da2a3653",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2644,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 21,
+        "response_fields": {
+          "section_number": {
+            "character_count": 0,
+            "present": false
+          },
+          "student_full_name": {
+            "character_count": 12,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 11.038412094116211
+        },
+        "token_usage": {
+          "completion_tokens": 163,
+          "prompt_tokens": 2225,
+          "total_tokens": 2388
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000532415,
+          "provenance": "precise"
+        },
+        "document_ref": "55b16f23b1463fc2a265b035991e7da1cc3acbcd3034e8fb703b8e1b572c859e",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2711,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 22,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 11,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 10.909267902374268
+        },
+        "token_usage": {
+          "completion_tokens": 180,
+          "prompt_tokens": 2225,
+          "total_tokens": 2405
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000568129,
+          "provenance": "precise"
+        },
+        "document_ref": "7d93274e105bd3d0753cd56696a0677af9b1c7e8c7a6dccaac80460359af4b3f",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2271,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 23,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 10,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 9.169997692108154
+        },
+        "token_usage": {
+          "completion_tokens": 217,
+          "prompt_tokens": 2225,
+          "total_tokens": 2442
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000876044,
+          "provenance": "precise"
+        },
+        "document_ref": "01575b94b95cfbd0f93746b6da5b999f8973d49b0012588ae79a3d4f9d344ce4",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 3434,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 24,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 6.785053968429565
+        },
+        "token_usage": {
+          "completion_tokens": 536,
+          "prompt_tokens": 2225,
+          "total_tokens": 2761
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.008776615,
+          "provenance": "precise"
+        },
+        "document_ref": "5742b225b0069637b134d76f7259e5e010a0ee8879083207600a1cb2fa40d183",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2821,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 25,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 38.533015727996826
+        },
+        "token_usage": {
+          "completion_tokens": 8721,
+          "prompt_tokens": 2225,
+          "total_tokens": 10946
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00128958,
+          "provenance": "precise"
+        },
+        "document_ref": "9381dd1788306f236e02cc6fa1de74a556d649d8d8ce3454d763ae152e65a5f4",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1794,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 26,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 11,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 13.128493070602417
+        },
+        "token_usage": {
+          "completion_tokens": 432,
+          "prompt_tokens": 2226,
+          "total_tokens": 2658
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000589364,
+          "provenance": "precise"
+        },
+        "document_ref": "013cdfa99f91113d47e51845b705c635b48430c179b6fb970365ea3c147fb730",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2329,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 27,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 9,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 8.21008014678955
+        },
+        "token_usage": {
+          "completion_tokens": 239,
+          "prompt_tokens": 2225,
+          "total_tokens": 2464
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00180438,
+          "provenance": "precise"
+        },
+        "document_ref": "965013854eb56e6b1ef0ced4f42ec2f21a280e711312dd582be546b2d2b704e3",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1713,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 28,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 15,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 14.466431856155396
+        },
+        "token_usage": {
+          "completion_tokens": 718,
+          "prompt_tokens": 2226,
+          "total_tokens": 2944
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0014271,
+          "provenance": "precise"
+        },
+        "document_ref": "e08b84c7cdc6b0967751aa88de6adf06601a35d52daf89d644d1d7349c4a3d69",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2428,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 29,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 15,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 14.470733880996704
+        },
+        "token_usage": {
+          "completion_tokens": 324,
+          "prompt_tokens": 2226,
+          "total_tokens": 2550
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000812337,
+          "provenance": "precise"
+        },
+        "document_ref": "3a89ac1939efa8baadfe308c53530c60000854e4d31458b499ebfff7a51c03f9",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2255,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 30,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 8,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 8.469458818435669
+        },
+        "token_usage": {
+          "completion_tokens": 470,
+          "prompt_tokens": 2225,
+          "total_tokens": 2695
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00441465,
+          "provenance": "precise"
+        },
+        "document_ref": "ab1d8a212ba0f20ea7d3f7dee1ad723b96cd53d3c4ccf59852ff339fb00e3b88",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1928,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 31,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 8,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 20.2206449508667
+        },
+        "token_usage": {
+          "completion_tokens": 4202,
+          "prompt_tokens": 2225,
+          "total_tokens": 6427
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00111318,
+          "provenance": "precise"
+        },
+        "document_ref": "627366f431e20fd36d6bcb015e85c2ba1aa6715e5db130b86e076d8993e4df6c",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1696,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 32,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 11.312483072280884
+        },
+        "token_usage": {
+          "completion_tokens": 334,
+          "prompt_tokens": 2226,
+          "total_tokens": 2560
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00126258,
+          "provenance": "precise"
+        },
+        "document_ref": "e046b73792ae1016a8d4e6b4e5cbc36e903f0593f58ee8f9c47461301c4dd009",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1408,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 33,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 16,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 11.006078958511353
+        },
+        "token_usage": {
+          "completion_tokens": 417,
+          "prompt_tokens": 2226,
+          "total_tokens": 2643
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0014171,
+          "provenance": "precise"
+        },
+        "document_ref": "fda526aebca14cf5e67bc2810b90e4af0b6330cad076a85e8229f958234e4f84",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2735,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 34,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 15,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 15.839144945144653
+        },
+        "token_usage": {
+          "completion_tokens": 319,
+          "prompt_tokens": 2226,
+          "total_tokens": 2545
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000507318,
+          "provenance": "precise"
+        },
+        "document_ref": "0d042b0f505b1d2a8f3da3f0fbff47fe6b8a8d9a28330145e5d7843f51621f40",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2695,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 35,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 10,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 10.795049905776978
+        },
+        "token_usage": {
+          "completion_tokens": 154,
+          "prompt_tokens": 2225,
+          "total_tokens": 2379
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00092958,
+          "provenance": "precise"
+        },
+        "document_ref": "4c4d300da2f560a7b75fa3ddee7abd93a4113d46a19abd6f9697011648cc6341",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1647,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 36,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 10.378464937210083
+        },
+        "token_usage": {
+          "completion_tokens": 232,
+          "prompt_tokens": 2226,
+          "total_tokens": 2458
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.003072953,
+          "provenance": "precise"
+        },
+        "document_ref": "1e44e6953c7733b033a6e2b7e3a95da6494a154227eea4062f2541a1307ac4a4",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2480,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 37,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 10,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 18.781757354736328
+        },
+        "token_usage": {
+          "completion_tokens": 2812,
+          "prompt_tokens": 2225,
+          "total_tokens": 5037
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000782414,
+          "provenance": "precise"
+        },
+        "document_ref": "7b72f690a62dccf9c9f895b8e77ae5253bb60e890ffe0b943cb0f22bec4cf3be",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 3089,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 38,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 17,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 5,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 11.13267207145691
+        },
+        "token_usage": {
+          "completion_tokens": 439,
+          "prompt_tokens": 2225,
+          "total_tokens": 2664
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00124458,
+          "provenance": "precise"
+        },
+        "document_ref": "c5150fa35bcd2792fab4066b6ed1f02f6f311daca1539112ad3535b9b660d906",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1621,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 39,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 17,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 11.126575708389282
+        },
+        "token_usage": {
+          "completion_tokens": 407,
+          "prompt_tokens": 2226,
+          "total_tokens": 2633
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000638592,
+          "provenance": "precise"
+        },
+        "document_ref": "72b25d268e967f74858c459285347c45a925397920c86ff8cadb79ae62ceb470",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2867,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 40,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 12,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 8.590371131896973
+        },
+        "token_usage": {
+          "completion_tokens": 290,
+          "prompt_tokens": 2225,
+          "total_tokens": 2515
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.003605771,
+          "provenance": "precise"
+        },
+        "document_ref": "3cd684ef9a19787c3bf17e0e62de2c6566554ace5a651a4c0555ef5479bbe4bd",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1741,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 41,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 11,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 20.21751618385315
+        },
+        "token_usage": {
+          "completion_tokens": 3364,
+          "prompt_tokens": 2225,
+          "total_tokens": 5589
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000576816,
+          "provenance": "precise"
+        },
+        "document_ref": "c60ca8005c2c92e81b8744bc0339f700b7de3d2fe47cfb4b3139438208bd75a7",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2637,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 42,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 13,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 10.875500679016113
+        },
+        "token_usage": {
+          "completion_tokens": 226,
+          "prompt_tokens": 2225,
+          "total_tokens": 2451
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0011511,
+          "provenance": "precise"
+        },
+        "document_ref": "552a6c1864512f344f0356c6f7ca416f2b5c45421d5a2b0b0c566de2f04c0920",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2707,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 43,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 12,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 12.075474977493286
+        },
+        "token_usage": {
+          "completion_tokens": 186,
+          "prompt_tokens": 2226,
+          "total_tokens": 2412
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00122658,
+          "provenance": "precise"
+        },
+        "document_ref": "1c6d7abd88b356b7cc9f9c52c4016f7f0344719618640e63d00648aaa13b0601",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2409,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 44,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 16,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 13.011003017425537
+        },
+        "token_usage": {
+          "completion_tokens": 397,
+          "prompt_tokens": 2226,
+          "total_tokens": 2623
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0024371,
+          "provenance": "precise"
+        },
+        "document_ref": "f525b7ef4fd44daa3ef3e1793840ee9605038485309fb06d222cac2a5f049ffa",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2634,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 45,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 16,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 23.38566303253174
+        },
+        "token_usage": {
+          "completion_tokens": 829,
+          "prompt_tokens": 2226,
+          "total_tokens": 3055
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000668515,
+          "provenance": "precise"
+        },
+        "document_ref": "691e77bf025ede589ab7cb8ce6bd184547c7c72554f50379711b7a8eb2c19c37",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2720,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 46,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 15,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 6.949384927749634
+        },
+        "token_usage": {
+          "completion_tokens": 321,
+          "prompt_tokens": 2225,
+          "total_tokens": 2546
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00086298,
+          "provenance": "precise"
+        },
+        "document_ref": "fd94e71dfe8b938aeb9259e5943d72946cadbaf22d84be0dba13a406b0f3565e",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1859,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 47,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 10,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 5.4591453075408936
+        },
+        "token_usage": {
+          "completion_tokens": 195,
+          "prompt_tokens": 2226,
+          "total_tokens": 2421
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00101958,
+          "provenance": "precise"
+        },
+        "document_ref": "81366d6f7775aa07b4f515b1ed5d84f139fa70b283ae6cd040a0adba690253c0",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1492,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 48,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 10,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 11.37211799621582
+        },
+        "token_usage": {
+          "completion_tokens": 282,
+          "prompt_tokens": 2226,
+          "total_tokens": 2508
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000832607,
+          "provenance": "precise"
+        },
+        "document_ref": "5d9a36ecbd290641ced797d3bc07bacccbf38decf03432a78fad760d042a42f9",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2738,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 49,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 10,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 8.246979236602783
+        },
+        "token_usage": {
+          "completion_tokens": 491,
+          "prompt_tokens": 2225,
+          "total_tokens": 2716
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000682028,
+          "provenance": "precise"
+        },
+        "document_ref": "df9ec83ce6eea7d039961b0c08af2a03da00897ee3da122a8d5318a12d41bb88",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2877,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 50,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 17,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 9.987805128097534
+        },
+        "token_usage": {
+          "completion_tokens": 335,
+          "prompt_tokens": 2225,
+          "total_tokens": 2560
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00138678,
+          "provenance": "precise"
+        },
+        "document_ref": "c0ce9e6fd9cc09f50984b4644cd386d031ef69a8f1c82cb8a96016ff95e234a7",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1757,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 51,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 17,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 11.76346492767334
+        },
+        "token_usage": {
+          "completion_tokens": 486,
+          "prompt_tokens": 2226,
+          "total_tokens": 2712
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000544963,
+          "provenance": "precise"
+        },
+        "document_ref": "2bf038f752f85cf75ca40d7b5d511e6cd90088c09dc31d42e815803797baf7d4",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2521,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 52,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 16,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 6.0540711879730225
+        },
+        "token_usage": {
+          "completion_tokens": 193,
+          "prompt_tokens": 2225,
+          "total_tokens": 2418
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000552685,
+          "provenance": "precise"
+        },
+        "document_ref": "f6598bbb9ed0ecc4a01c7439a5a591244756491e334d1c09f971b464a9441f08",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2199,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 53,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 10,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 4.539665937423706
+        },
+        "token_usage": {
+          "completion_tokens": 201,
+          "prompt_tokens": 2225,
+          "total_tokens": 2426
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000540137,
+          "provenance": "precise"
+        },
+        "document_ref": "6172fd72818d6a61910bd77f1b90f2d6af9323e23cf86be06019cdefe062ff73",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2471,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 54,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 8.241377115249634
+        },
+        "token_usage": {
+          "completion_tokens": 188,
+          "prompt_tokens": 2225,
+          "total_tokens": 2413
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000840329,
+          "provenance": "precise"
+        },
+        "document_ref": "ce57efabe80f604138d8dfb4e52f79766bd97f70e354f4e7292464a09b290583",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2725,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 55,
+        "response_fields": {
+          "section_number": {
+            "character_count": 0,
+            "present": false
+          },
+          "student_full_name": {
+            "character_count": 9,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 42.02839493751526
+        },
+        "token_usage": {
+          "completion_tokens": 499,
+          "prompt_tokens": 2225,
+          "total_tokens": 2724
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00095809,
+          "provenance": "precise"
+        },
+        "document_ref": "a9afce19e7612e631fb7674f1ca998631d4059be07cb29bc20af50ae3ce086c5",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2826,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 56,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 9,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 8.293626070022583
+        },
+        "token_usage": {
+          "completion_tokens": 621,
+          "prompt_tokens": 2225,
+          "total_tokens": 2846
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00118158,
+          "provenance": "precise"
+        },
+        "document_ref": "91d0976b7b38e0870217b9c316261e8d875867ac8f6d84003b1b7957a2869821",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1572,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 57,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 8,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 9.028099060058594
+        },
+        "token_usage": {
+          "completion_tokens": 372,
+          "prompt_tokens": 2226,
+          "total_tokens": 2598
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0026551,
+          "provenance": "precise"
+        },
+        "document_ref": "b88f98206e1723bbe1c3fe4731b3743d58e50371db21a854765944a6934dc617",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2589,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 58,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 25.795854091644287
+        },
+        "token_usage": {
+          "completion_tokens": 938,
+          "prompt_tokens": 2226,
+          "total_tokens": 3164
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000550754,
+          "provenance": "precise"
+        },
+        "document_ref": "dec398b5a5660c06069bcc5752234bbfa37bd52c7a8388737dea5b55e9bf0ddc",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2594,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 59,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 9.91636610031128
+        },
+        "token_usage": {
+          "completion_tokens": 199,
+          "prompt_tokens": 2225,
+          "total_tokens": 2424
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000873148,
+          "provenance": "precise"
+        },
+        "document_ref": "4a32d5a3addc6936e8a764bd3a55292faf0b34f2a973d98f20bacd72accd4337",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2478,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 60,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 16,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 9.819345951080322
+        },
+        "token_usage": {
+          "completion_tokens": 533,
+          "prompt_tokens": 2225,
+          "total_tokens": 2758
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000867356,
+          "provenance": "precise"
+        },
+        "document_ref": "adec18350c9eebe34267fce6efbf63da1fbce1a103b0be376cd4cbd162380c97",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2290,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 61,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 11,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 10.415194034576416
+        },
+        "token_usage": {
+          "completion_tokens": 527,
+          "prompt_tokens": 2225,
+          "total_tokens": 2752
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00057199,
+          "provenance": "precise"
+        },
+        "document_ref": "ef3b17e9edf2fda30f4804ac7081b0f3b696683dfc7efa54e44d3a0638c8e433",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2166,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 62,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 12,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 5.673553943634033
+        },
+        "token_usage": {
+          "completion_tokens": 221,
+          "prompt_tokens": 2225,
+          "total_tokens": 2446
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.000784345,
+          "provenance": "precise"
+        },
+        "document_ref": "9448053c87845599fa652c8d813334acf475af88561aa8e2e23a942fc2133539",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2242,
+          "model": "qwen/qwen3.6-35b-a3b-20260415",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 63,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 17,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 7.355817079544067
+        },
+        "token_usage": {
+          "completion_tokens": 441,
+          "prompt_tokens": 2225,
+          "total_tokens": 2666
+        }
+      }
+    ],
+    "request_count": 64,
+    "schema_version": 1
+  },
+  "run_name": "qwen-qwen3.6-35b-a3b_20260428_173830",
+  "schema_version": 1,
+  "stats": {
+    "cost_complete": true,
+    "cost_per_image": 0.0012171820312500002,
+    "cost_status": "precise",
+    "costed_requests": 64,
+    "digit_top1": 99.609375,
+    "docs_detected": 100.0,
+    "docs_detected_count": 32,
+    "estimated_cost_requests": 0,
+    "expected_docs_count": 32,
+    "fully_parallelizable_runtime_available": true,
+    "fully_parallelizable_runtime_seconds": 44.38475322723389,
+    "id_avg_lev": 0.03125,
+    "id_top1": 96.875,
+    "lastname_avg_lev": 0.0,
+    "lastname_top1": 100.0,
+    "missing_cost_requests": 0,
+    "observed_total_cost": 0.07789965000000001,
+    "precise_cost_requests": 64,
+    "timed_images": 64,
+    "total_cost": 0.07789965000000001,
+    "total_images": 64,
+    "total_requests": 64,
+    "zero_cost_precise_requests": 0
+  }
+}

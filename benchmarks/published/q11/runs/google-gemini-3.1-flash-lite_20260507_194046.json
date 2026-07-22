@@ -1,0 +1,2928 @@
+{
+  "aggregation_fingerprint": "6ef88434b5453cb220ba579ae0af6e319244b2c9b13634685450c57479fec8c4",
+  "aggregation_inputs": {
+    "api": {
+      "max_tokens": 4096,
+      "min_p": null,
+      "presence_penalty": null,
+      "provider": "OpenRouter (Router)",
+      "repetition_penalty": null,
+      "temperature": 1.0,
+      "top_k": null,
+      "top_p": 1.0
+    },
+    "dataset_content_hash": "51185fcde83137c3e44dc5471b6f32d3a76e28a1165ea86258f3c5b27985ebf8",
+    "dataset_pages": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "extraction_mode": "default_student",
+    "features": {
+      "regex_patterns": false,
+      "structured_output": true
+    },
+    "generation_param_sources": {
+      "max_tokens": "global_default",
+      "min_p": "global_default",
+      "presence_penalty": "global_default",
+      "repetition_penalty": "global_default",
+      "temperature": "global_default",
+      "top_k": "global_default",
+      "top_p": "global_default"
+    },
+    "generation_params": {
+      "max_tokens": 4096,
+      "min_p": null,
+      "presence_penalty": null,
+      "reasoning": null,
+      "repetition_penalty": null,
+      "temperature": 1.0,
+      "top_k": null,
+      "top_p": 1.0
+    },
+    "model": {
+      "license_info": "Varies by provider",
+      "model": "gemini-3.1-flash-lite",
+      "model_size": "Unknown",
+      "open_weights": false,
+      "org": "google",
+      "variant": null
+    },
+    "reproducibility": {
+      "git_commit": "c18b87d07132abc9d9bafee3144efd48023f3454",
+      "inference_settings_hash": "6074ce7401ee10df26f0f243fdbea85e28b18ec200495f71e56b2bacd4821bb0",
+      "parser_version": "v1",
+      "prompt_hash": "e03faa5c5a9f725c6307141a047b98bdcd6bda3d851ed2ff3d9784a311fa97ec",
+      "schema_version": "v1"
+    },
+    "response_format": "json",
+    "routing": {
+      "actual_model_providers": [
+        "Google"
+      ],
+      "effective": {
+        "data_collection": "deny",
+        "zdr": true
+      },
+      "requested": {
+        "allow_fallbacks": null,
+        "data_collection": "deny",
+        "order": [],
+        "sort": null,
+        "zdr": true
+      }
+    },
+    "run_manifest_sha256": null,
+    "runtime_settings": {
+      "concurrency": 64,
+      "rate_limit": 64.0,
+      "retry_base_delay": 2.0,
+      "retry_max": 3,
+      "schema_retry_max": 2
+    },
+    "schema_hash": "06c021eff47d03c0c9c562a58afa0c2dd0c2b53ed3173987789c405c0dfdf0af",
+    "strict_schema": false,
+    "version": 1
+  },
+  "config": {
+    "additional": {
+      "actual_model_providers": [
+        "Google"
+      ],
+      "concurrency": 64,
+      "cost_fetch_max_workers": 64,
+      "endpoint_type": "chat_completions",
+      "extraction_mode": "default_student",
+      "generation_param_sources": {
+        "max_tokens": "global_default",
+        "min_p": "global_default",
+        "presence_penalty": "global_default",
+        "repetition_penalty": "global_default",
+        "temperature": "global_default",
+        "top_k": "global_default",
+        "top_p": "global_default"
+      },
+      "generation_params_effective": {
+        "max_tokens": 4096,
+        "min_p": null,
+        "presence_penalty": null,
+        "reasoning": null,
+        "repetition_penalty": null,
+        "temperature": 1.0,
+        "top_k": null,
+        "top_p": 1.0
+      },
+      "model_context_length": 1048576,
+      "model_name": "google/gemini-3.1-flash-lite",
+      "model_pricing": {
+        "audio": "0.0000005",
+        "completion": "0.0000015",
+        "image": "0.00000025",
+        "input_cache_read": "0.000000025",
+        "input_cache_write": "0.00000008333333333333334",
+        "internal_reasoning": "0.0000015",
+        "prompt": "0.00000025",
+        "web_search": "0.014"
+      },
+      "pages": [
+        1,
+        3
+      ],
+      "preset_id": "default_student",
+      "provider_routing_effective": {
+        "data_collection": "deny",
+        "zdr": true
+      },
+      "provider_routing_requested": {
+        "allow_fallbacks": null,
+        "data_collection": "deny",
+        "order": [],
+        "sort": null,
+        "zdr": true
+      },
+      "rate_limit": 64.0,
+      "response_format": "json",
+      "retry_base_delay": 2.0,
+      "retry_max": 3,
+      "schema_hash": "06c021eff47d03c0c9c562a58afa0c2dd0c2b53ed3173987789c405c0dfdf0af",
+      "schema_retry_max": 2,
+      "strict_schema": false,
+      "token_escalation_repetition_threshold": 0.85
+    },
+    "api": {
+      "max_tokens": 4096,
+      "min_p": null,
+      "presence_penalty": null,
+      "provider": "OpenRouter (Router)",
+      "repetition_penalty": null,
+      "temperature": 1.0,
+      "top_k": null,
+      "top_p": 1.0
+    },
+    "environment": {
+      "runtime": "14 seconds"
+    },
+    "features": {
+      "regex_patterns": false,
+      "structured_output": true
+    },
+    "model": {
+      "license_info": "Varies by provider",
+      "model": "gemini-3.1-flash-lite",
+      "model_size": "Unknown",
+      "open_weights": false,
+      "org": "google",
+      "variant": null
+    },
+    "run_info": {
+      "reproducibility": {
+        "git_commit": "c18b87d07132abc9d9bafee3144efd48023f3454",
+        "inference_settings_hash": "6074ce7401ee10df26f0f243fdbea85e28b18ec200495f71e56b2bacd4821bb0",
+        "manifest_version": "1",
+        "parser_version": "v1",
+        "prompt_hash": "e03faa5c5a9f725c6307141a047b98bdcd6bda3d851ed2ff3d9784a311fa97ec",
+        "schema_version": "v1"
+      },
+      "run_name": "google-gemini-3.1-flash-lite_20260507_194046",
+      "timestamp": "20260507_194046",
+      "timestamp_iso": "2026-05-07T19:40:46.928679"
+    }
+  },
+  "dataset": {
+    "content_hash": "51185fcde83137c3e44dc5471b6f32d3a76e28a1165ea86258f3c5b27985ebf8",
+    "dataset_id": "q11",
+    "doc_info_sha256": "fe264218b6dc292315fc0f4b8b1f9fc36107175f673dcc09d6e29d29fb6e05b1",
+    "expected_docs": 32,
+    "manifest_rows": 128,
+    "pages": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "test_ids_sha256": "2108dda819e7ae85e2f6ef0af40003bb09df5b81f153ecd5ed6666405c5e8766"
+  },
+  "request_evidence": {
+    "records": [
+      {
+        "cost": {
+          "actual_cost": 0.00036925,
+          "provenance": "precise"
+        },
+        "document_ref": "ea191efc408402eaa781cc44e3078ee24511b3d4d4de154246bf6c352f32d16c",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2380,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 0,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 15,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 3.2172658443450928
+        },
+        "token_usage": {
+          "completion_tokens": 39,
+          "prompt_tokens": 1243,
+          "total_tokens": 1282
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00038275,
+          "provenance": "precise"
+        },
+        "document_ref": "13e94da334cb97a1eb1c57c214d0d2ad7cdfa0889cc2be0b363cb330e229cd48",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2452,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 1,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 15,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 3.3549680709838867
+        },
+        "token_usage": {
+          "completion_tokens": 48,
+          "prompt_tokens": 1243,
+          "total_tokens": 1291
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00037075,
+          "provenance": "precise"
+        },
+        "document_ref": "42e74a8ce93eab173c74beb92a95cd478b50f8c87e59efdadf89c65c04e65624",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2540,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 2,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 8,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 3.5998928546905518
+        },
+        "token_usage": {
+          "completion_tokens": 40,
+          "prompt_tokens": 1243,
+          "total_tokens": 1283
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00038125,
+          "provenance": "precise"
+        },
+        "document_ref": "5626538f6fadf2d1d42c6efd3a976fe221ba20390237d959fa78178517999f8d",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2690,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 3,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 13,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 3.9399750232696533
+        },
+        "token_usage": {
+          "completion_tokens": 47,
+          "prompt_tokens": 1243,
+          "total_tokens": 1290
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00036775,
+          "provenance": "precise"
+        },
+        "document_ref": "95b9d32280dab6eab6af4e8664d023ebafb19721ffe746f1876f4c56b0a9d50d",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2486,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 4,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 16,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 10.412153720855713
+        },
+        "token_usage": {
+          "completion_tokens": 38,
+          "prompt_tokens": 1243,
+          "total_tokens": 1281
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00038275,
+          "provenance": "precise"
+        },
+        "document_ref": "6f706b735c1bc395c5b4bf308cff43d5d5a6b0e3ae26344c0f4fdda486f6b89d",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1951,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 5,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 17,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 9.009893894195557
+        },
+        "token_usage": {
+          "completion_tokens": 48,
+          "prompt_tokens": 1243,
+          "total_tokens": 1291
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00036925,
+          "provenance": "precise"
+        },
+        "document_ref": "1f95461826f20538e8dc7ea8a54511cb1f319367f296d99c867c5226d684a848",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 3559,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 6,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 19,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 11.2537841796875
+        },
+        "token_usage": {
+          "completion_tokens": 39,
+          "prompt_tokens": 1243,
+          "total_tokens": 1282
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00038875,
+          "provenance": "precise"
+        },
+        "document_ref": "46c2d331504bdf137402b2f712fc33607e6de672a9370d6230ccc74c03fe616e",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2141,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 7,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 8.74064588546753
+        },
+        "token_usage": {
+          "completion_tokens": 52,
+          "prompt_tokens": 1243,
+          "total_tokens": 1295
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00036625,
+          "provenance": "precise"
+        },
+        "document_ref": "6eee71c8a71fce4f5bf28dab37974c37f80497046d5e14123b4b3015c8a5e424",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2654,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 8,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 7.340863943099976
+        },
+        "token_usage": {
+          "completion_tokens": 37,
+          "prompt_tokens": 1243,
+          "total_tokens": 1280
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00038725,
+          "provenance": "precise"
+        },
+        "document_ref": "4418abf6718252392436096e2889629c169dbbf6dcab3449af6583a9ed3f9748",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2920,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 9,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 7.266242027282715
+        },
+        "token_usage": {
+          "completion_tokens": 51,
+          "prompt_tokens": 1243,
+          "total_tokens": 1294
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00037075,
+          "provenance": "precise"
+        },
+        "document_ref": "0fb008880e9e443517e789b1050f02c2f635285cd07f3a8348a15f56a9ebeefe",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2357,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 10,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 19,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 6.655225038528442
+        },
+        "token_usage": {
+          "completion_tokens": 40,
+          "prompt_tokens": 1243,
+          "total_tokens": 1283
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00038125,
+          "provenance": "precise"
+        },
+        "document_ref": "344310773b6b5d508a705a08542cdb438337591a3139822c0e24946f8f2680ed",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2675,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 11,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 9,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 9.936331033706665
+        },
+        "token_usage": {
+          "completion_tokens": 47,
+          "prompt_tokens": 1243,
+          "total_tokens": 1290
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00037225,
+          "provenance": "precise"
+        },
+        "document_ref": "d5162201738bbe97f3ef1cfe17ff1c14e4acb116121c43a6bbea41a46bd76025",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2983,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 12,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 16,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 11.173850059509277
+        },
+        "token_usage": {
+          "completion_tokens": 41,
+          "prompt_tokens": 1243,
+          "total_tokens": 1284
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00038425,
+          "provenance": "precise"
+        },
+        "document_ref": "5f1c99ab7856d7cf142653b1c1c9f9c3063a0bd7b35a861af83e7012adbd2e7f",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 3200,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 13,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 6.646500110626221
+        },
+        "token_usage": {
+          "completion_tokens": 49,
+          "prompt_tokens": 1243,
+          "total_tokens": 1292
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00036625,
+          "provenance": "precise"
+        },
+        "document_ref": "bc6fc9a3dc3d85441e0ed6e3ab7fec01b3696d69d2e17d344113b8db6a15bce1",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2469,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 14,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 10.477621078491211
+        },
+        "token_usage": {
+          "completion_tokens": 37,
+          "prompt_tokens": 1243,
+          "total_tokens": 1280
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00037975,
+          "provenance": "precise"
+        },
+        "document_ref": "b90782fa7429cc4f9e46863b80e5e7e91fa14b3177231fe00e00bffd807df906",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2710,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 15,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 9,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 6.8468310832977295
+        },
+        "token_usage": {
+          "completion_tokens": 46,
+          "prompt_tokens": 1243,
+          "total_tokens": 1289
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00037375,
+          "provenance": "precise"
+        },
+        "document_ref": "e07f8b20b03f53b528747d83252fa49f2a6ebb9b74a625275cdb159f7f6cc130",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2250,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 16,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 15,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 8.405900955200195
+        },
+        "token_usage": {
+          "completion_tokens": 42,
+          "prompt_tokens": 1243,
+          "total_tokens": 1285
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00038125,
+          "provenance": "precise"
+        },
+        "document_ref": "0218a96e3f0ff344a72e7191ac2ff1a8389123eb8f5e19ca9c7e763ff4b3790f",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2647,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 17,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 10,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 6.75172233581543
+        },
+        "token_usage": {
+          "completion_tokens": 47,
+          "prompt_tokens": 1243,
+          "total_tokens": 1290
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00036625,
+          "provenance": "precise"
+        },
+        "document_ref": "c683214474a38bb78dcdeaf9c7fa7b384711aa98ad2829aa256c572c0f987b3b",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2079,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 18,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 8.191272258758545
+        },
+        "token_usage": {
+          "completion_tokens": 37,
+          "prompt_tokens": 1243,
+          "total_tokens": 1280
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00038125,
+          "provenance": "precise"
+        },
+        "document_ref": "2cb62345283acba6590c1f72049d8a5bf869e487c7744217821118340a5c052c",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 3273,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 19,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 11,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 10.240532159805298
+        },
+        "token_usage": {
+          "completion_tokens": 47,
+          "prompt_tokens": 1243,
+          "total_tokens": 1290
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00036625,
+          "provenance": "precise"
+        },
+        "document_ref": "f14d25d4757bad3bac7a9050fe868d7bd69ea0758e7504d470d2ae0196b65a5a",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2621,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 20,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 8,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 10.646580219268799
+        },
+        "token_usage": {
+          "completion_tokens": 37,
+          "prompt_tokens": 1243,
+          "total_tokens": 1280
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00037075,
+          "provenance": "precise"
+        },
+        "document_ref": "2cec088b7dd31b4db44851491f61143a38e9a72a72038a1410d9f0b1da2a3653",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2350,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 21,
+        "response_fields": {
+          "section_number": {
+            "character_count": 0,
+            "present": false
+          },
+          "student_full_name": {
+            "character_count": 12,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 8.914988994598389
+        },
+        "token_usage": {
+          "completion_tokens": 40,
+          "prompt_tokens": 1243,
+          "total_tokens": 1283
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00036925,
+          "provenance": "precise"
+        },
+        "document_ref": "55b16f23b1463fc2a265b035991e7da1cc3acbcd3034e8fb703b8e1b572c859e",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2364,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 22,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 11,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 8.5597403049469
+        },
+        "token_usage": {
+          "completion_tokens": 39,
+          "prompt_tokens": 1243,
+          "total_tokens": 1282
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00038125,
+          "provenance": "precise"
+        },
+        "document_ref": "7d93274e105bd3d0753cd56696a0677af9b1c7e8c7a6dccaac80460359af4b3f",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2468,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 23,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 10,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 7.82249116897583
+        },
+        "token_usage": {
+          "completion_tokens": 47,
+          "prompt_tokens": 1243,
+          "total_tokens": 1290
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00036625,
+          "provenance": "precise"
+        },
+        "document_ref": "01575b94b95cfbd0f93746b6da5b999f8973d49b0012588ae79a3d4f9d344ce4",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 3173,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 24,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 7.658277988433838
+        },
+        "token_usage": {
+          "completion_tokens": 37,
+          "prompt_tokens": 1243,
+          "total_tokens": 1280
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00038125,
+          "provenance": "precise"
+        },
+        "document_ref": "5742b225b0069637b134d76f7259e5e010a0ee8879083207600a1cb2fa40d183",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2010,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 25,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 15,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 5.31105899810791
+        },
+        "token_usage": {
+          "completion_tokens": 47,
+          "prompt_tokens": 1243,
+          "total_tokens": 1290
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00036625,
+          "provenance": "precise"
+        },
+        "document_ref": "9381dd1788306f236e02cc6fa1de74a556d649d8d8ce3454d763ae152e65a5f4",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 3175,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 26,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 11,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 9.279883861541748
+        },
+        "token_usage": {
+          "completion_tokens": 37,
+          "prompt_tokens": 1243,
+          "total_tokens": 1280
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00038125,
+          "provenance": "precise"
+        },
+        "document_ref": "013cdfa99f91113d47e51845b705c635b48430c179b6fb970365ea3c147fb730",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2615,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 27,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 9,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 6.6107399463653564
+        },
+        "token_usage": {
+          "completion_tokens": 47,
+          "prompt_tokens": 1243,
+          "total_tokens": 1290
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00036775,
+          "provenance": "precise"
+        },
+        "document_ref": "965013854eb56e6b1ef0ced4f42ec2f21a280e711312dd582be546b2d2b704e3",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2467,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 28,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 15,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 9.923454999923706
+        },
+        "token_usage": {
+          "completion_tokens": 38,
+          "prompt_tokens": 1243,
+          "total_tokens": 1281
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00038125,
+          "provenance": "precise"
+        },
+        "document_ref": "e08b84c7cdc6b0967751aa88de6adf06601a35d52daf89d644d1d7349c4a3d69",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2343,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 29,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 15,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 8.754334211349487
+        },
+        "token_usage": {
+          "completion_tokens": 47,
+          "prompt_tokens": 1243,
+          "total_tokens": 1290
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00036775,
+          "provenance": "precise"
+        },
+        "document_ref": "3a89ac1939efa8baadfe308c53530c60000854e4d31458b499ebfff7a51c03f9",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2557,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 30,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 8,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 9.802172899246216
+        },
+        "token_usage": {
+          "completion_tokens": 38,
+          "prompt_tokens": 1243,
+          "total_tokens": 1281
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00038125,
+          "provenance": "precise"
+        },
+        "document_ref": "ab1d8a212ba0f20ea7d3f7dee1ad723b96cd53d3c4ccf59852ff339fb00e3b88",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 3164,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 31,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 8,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 8.578130960464478
+        },
+        "token_usage": {
+          "completion_tokens": 47,
+          "prompt_tokens": 1243,
+          "total_tokens": 1290
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00037075,
+          "provenance": "precise"
+        },
+        "document_ref": "627366f431e20fd36d6bcb015e85c2ba1aa6715e5db130b86e076d8993e4df6c",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2115,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 32,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 9.749454021453857
+        },
+        "token_usage": {
+          "completion_tokens": 40,
+          "prompt_tokens": 1243,
+          "total_tokens": 1283
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00037975,
+          "provenance": "precise"
+        },
+        "document_ref": "e046b73792ae1016a8d4e6b4e5cbc36e903f0593f58ee8f9c47461301c4dd009",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2706,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 33,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 16,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 7.745970964431763
+        },
+        "token_usage": {
+          "completion_tokens": 46,
+          "prompt_tokens": 1243,
+          "total_tokens": 1289
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00036925,
+          "provenance": "precise"
+        },
+        "document_ref": "fda526aebca14cf5e67bc2810b90e4af0b6330cad076a85e8229f958234e4f84",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 3264,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 34,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 15,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 9.8632071018219
+        },
+        "token_usage": {
+          "completion_tokens": 39,
+          "prompt_tokens": 1243,
+          "total_tokens": 1282
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00038275,
+          "provenance": "precise"
+        },
+        "document_ref": "0d042b0f505b1d2a8f3da3f0fbff47fe6b8a8d9a28330145e5d7843f51621f40",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2171,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 35,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 10,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 7,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 6.754476070404053
+        },
+        "token_usage": {
+          "completion_tokens": 48,
+          "prompt_tokens": 1243,
+          "total_tokens": 1291
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00036625,
+          "provenance": "precise"
+        },
+        "document_ref": "4c4d300da2f560a7b75fa3ddee7abd93a4113d46a19abd6f9697011648cc6341",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 3368,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 36,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 11.145080089569092
+        },
+        "token_usage": {
+          "completion_tokens": 37,
+          "prompt_tokens": 1243,
+          "total_tokens": 1280
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00038725,
+          "provenance": "precise"
+        },
+        "document_ref": "1e44e6953c7733b033a6e2b7e3a95da6494a154227eea4062f2541a1307ac4a4",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2309,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 37,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 10,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 7,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 9.121299982070923
+        },
+        "token_usage": {
+          "completion_tokens": 51,
+          "prompt_tokens": 1243,
+          "total_tokens": 1294
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00037225,
+          "provenance": "precise"
+        },
+        "document_ref": "7b72f690a62dccf9c9f895b8e77ae5253bb60e890ffe0b943cb0f22bec4cf3be",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2513,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 38,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 17,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 10.385634183883667
+        },
+        "token_usage": {
+          "completion_tokens": 41,
+          "prompt_tokens": 1243,
+          "total_tokens": 1284
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00038125,
+          "provenance": "precise"
+        },
+        "document_ref": "c5150fa35bcd2792fab4066b6ed1f02f6f311daca1539112ad3535b9b660d906",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1957,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 39,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 17,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 9.39870309829712
+        },
+        "token_usage": {
+          "completion_tokens": 47,
+          "prompt_tokens": 1243,
+          "total_tokens": 1290
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00036625,
+          "provenance": "precise"
+        },
+        "document_ref": "72b25d268e967f74858c459285347c45a925397920c86ff8cadb79ae62ceb470",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2210,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 40,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 12,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 9.980501174926758
+        },
+        "token_usage": {
+          "completion_tokens": 37,
+          "prompt_tokens": 1243,
+          "total_tokens": 1280
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00037975,
+          "provenance": "precise"
+        },
+        "document_ref": "3cd684ef9a19787c3bf17e0e62de2c6566554ace5a651a4c0555ef5479bbe4bd",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2749,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 41,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 12,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 10.038534879684448
+        },
+        "token_usage": {
+          "completion_tokens": 46,
+          "prompt_tokens": 1243,
+          "total_tokens": 1289
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00036625,
+          "provenance": "precise"
+        },
+        "document_ref": "c60ca8005c2c92e81b8744bc0339f700b7de3d2fe47cfb4b3139438208bd75a7",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2800,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 42,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 13,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 10.220393896102905
+        },
+        "token_usage": {
+          "completion_tokens": 37,
+          "prompt_tokens": 1243,
+          "total_tokens": 1280
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00037975,
+          "provenance": "precise"
+        },
+        "document_ref": "552a6c1864512f344f0356c6f7ca416f2b5c45421d5a2b0b0c566de2f04c0920",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 5786,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 43,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 13,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 14.069426774978638
+        },
+        "token_usage": {
+          "completion_tokens": 46,
+          "prompt_tokens": 1243,
+          "total_tokens": 1289
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00037375,
+          "provenance": "precise"
+        },
+        "document_ref": "1c6d7abd88b356b7cc9f9c52c4016f7f0344719618640e63d00648aaa13b0601",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2216,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 44,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 16,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 10.200785875320435
+        },
+        "token_usage": {
+          "completion_tokens": 42,
+          "prompt_tokens": 1243,
+          "total_tokens": 1285
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00037975,
+          "provenance": "precise"
+        },
+        "document_ref": "f525b7ef4fd44daa3ef3e1793840ee9605038485309fb06d222cac2a5f049ffa",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 5085,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 45,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 16,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 11.658992767333984
+        },
+        "token_usage": {
+          "completion_tokens": 46,
+          "prompt_tokens": 1243,
+          "total_tokens": 1289
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00036775,
+          "provenance": "precise"
+        },
+        "document_ref": "691e77bf025ede589ab7cb8ce6bd184547c7c72554f50379711b7a8eb2c19c37",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2439,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 46,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 15,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 6.863370895385742
+        },
+        "token_usage": {
+          "completion_tokens": 38,
+          "prompt_tokens": 1243,
+          "total_tokens": 1281
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00037975,
+          "provenance": "precise"
+        },
+        "document_ref": "fd94e71dfe8b938aeb9259e5943d72946cadbaf22d84be0dba13a406b0f3565e",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2283,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 47,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 10,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 3.8643481731414795
+        },
+        "token_usage": {
+          "completion_tokens": 46,
+          "prompt_tokens": 1243,
+          "total_tokens": 1289
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00036625,
+          "provenance": "precise"
+        },
+        "document_ref": "81366d6f7775aa07b4f515b1ed5d84f139fa70b283ae6cd040a0adba690253c0",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 4913,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 48,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 10,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 12.709090948104858
+        },
+        "token_usage": {
+          "completion_tokens": 37,
+          "prompt_tokens": 1243,
+          "total_tokens": 1280
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00037975,
+          "provenance": "precise"
+        },
+        "document_ref": "5d9a36ecbd290641ced797d3bc07bacccbf38decf03432a78fad760d042a42f9",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2249,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 49,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 10,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 6.790112018585205
+        },
+        "token_usage": {
+          "completion_tokens": 46,
+          "prompt_tokens": 1243,
+          "total_tokens": 1289
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00036625,
+          "provenance": "precise"
+        },
+        "document_ref": "df9ec83ce6eea7d039961b0c08af2a03da00897ee3da122a8d5318a12d41bb88",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1818,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 50,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 17,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 9.433927059173584
+        },
+        "token_usage": {
+          "completion_tokens": 37,
+          "prompt_tokens": 1243,
+          "total_tokens": 1280
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00038725,
+          "provenance": "precise"
+        },
+        "document_ref": "c0ce9e6fd9cc09f50984b4644cd386d031ef69a8f1c82cb8a96016ff95e234a7",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2696,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 51,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 17,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 10.35884690284729
+        },
+        "token_usage": {
+          "completion_tokens": 51,
+          "prompt_tokens": 1243,
+          "total_tokens": 1294
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00037675,
+          "provenance": "precise"
+        },
+        "document_ref": "2bf038f752f85cf75ca40d7b5d511e6cd90088c09dc31d42e815803797baf7d4",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2753,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 52,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 17,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 8.350283145904541
+        },
+        "token_usage": {
+          "completion_tokens": 44,
+          "prompt_tokens": 1243,
+          "total_tokens": 1287
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00038275,
+          "provenance": "precise"
+        },
+        "document_ref": "f6598bbb9ed0ecc4a01c7439a5a591244756491e334d1c09f971b464a9441f08",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2343,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 53,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 11,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 5.781520843505859
+        },
+        "token_usage": {
+          "completion_tokens": 48,
+          "prompt_tokens": 1243,
+          "total_tokens": 1291
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00036775,
+          "provenance": "precise"
+        },
+        "document_ref": "6172fd72818d6a61910bd77f1b90f2d6af9323e23cf86be06019cdefe062ff73",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 3172,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 54,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 7.3586037158966064
+        },
+        "token_usage": {
+          "completion_tokens": 38,
+          "prompt_tokens": 1243,
+          "total_tokens": 1281
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00037225,
+          "provenance": "precise"
+        },
+        "document_ref": "ce57efabe80f604138d8dfb4e52f79766bd97f70e354f4e7292464a09b290583",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2238,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 55,
+        "response_fields": {
+          "section_number": {
+            "character_count": 0,
+            "present": false
+          },
+          "student_full_name": {
+            "character_count": 9,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 5.64452600479126
+        },
+        "token_usage": {
+          "completion_tokens": 41,
+          "prompt_tokens": 1243,
+          "total_tokens": 1284
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00036775,
+          "provenance": "precise"
+        },
+        "document_ref": "a9afce19e7612e631fb7674f1ca998631d4059be07cb29bc20af50ae3ce086c5",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2829,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 56,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 8,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 6.665161371231079
+        },
+        "token_usage": {
+          "completion_tokens": 38,
+          "prompt_tokens": 1243,
+          "total_tokens": 1281
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00038125,
+          "provenance": "precise"
+        },
+        "document_ref": "91d0976b7b38e0870217b9c316261e8d875867ac8f6d84003b1b7957a2869821",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2266,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 57,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 8,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 6.380806922912598
+        },
+        "token_usage": {
+          "completion_tokens": 47,
+          "prompt_tokens": 1243,
+          "total_tokens": 1290
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00036625,
+          "provenance": "precise"
+        },
+        "document_ref": "b88f98206e1723bbe1c3fe4731b3743d58e50371db21a854765944a6934dc617",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2601,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 58,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 10.565523862838745
+        },
+        "token_usage": {
+          "completion_tokens": 37,
+          "prompt_tokens": 1243,
+          "total_tokens": 1280
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00038125,
+          "provenance": "precise"
+        },
+        "document_ref": "dec398b5a5660c06069bcc5752234bbfa37bd52c7a8388737dea5b55e9bf0ddc",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 3400,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 59,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 13,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 10.01999306678772
+        },
+        "token_usage": {
+          "completion_tokens": 47,
+          "prompt_tokens": 1243,
+          "total_tokens": 1290
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00037075,
+          "provenance": "precise"
+        },
+        "document_ref": "4a32d5a3addc6936e8a764bd3a55292faf0b34f2a973d98f20bacd72accd4337",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2759,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 60,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 16,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 6.608870029449463
+        },
+        "token_usage": {
+          "completion_tokens": 40,
+          "prompt_tokens": 1243,
+          "total_tokens": 1283
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00039325,
+          "provenance": "precise"
+        },
+        "document_ref": "adec18350c9eebe34267fce6efbf63da1fbce1a103b0be376cd4cbd162380c97",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 3376,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 61,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 11,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 7.970951080322266
+        },
+        "token_usage": {
+          "completion_tokens": 55,
+          "prompt_tokens": 1243,
+          "total_tokens": 1298
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00036625,
+          "provenance": "precise"
+        },
+        "document_ref": "ef3b17e9edf2fda30f4804ac7081b0f3b696683dfc7efa54e44d3a0638c8e433",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2973,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 62,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 12,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 10.13998293876648
+        },
+        "token_usage": {
+          "completion_tokens": 37,
+          "prompt_tokens": 1243,
+          "total_tokens": 1280
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.00038725,
+          "provenance": "precise"
+        },
+        "document_ref": "9448053c87845599fa652c8d813334acf475af88561aa8e2e23a942fc2133539",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2876,
+          "model": "google/gemini-3.1-flash-lite-20260507",
+          "native_finish_reason": "STOP",
+          "service_tier": null
+        },
+        "request_index": 63,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 17,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 5.779806852340698
+        },
+        "token_usage": {
+          "completion_tokens": 51,
+          "prompt_tokens": 1243,
+          "total_tokens": 1294
+        }
+      }
+    ],
+    "request_count": 64,
+    "schema_version": 1
+  },
+  "run_name": "google-gemini-3.1-flash-lite_20260507_194046",
+  "schema_version": 1,
+  "stats": {
+    "cost_complete": true,
+    "cost_per_image": 0.0003752968749999999,
+    "cost_status": "precise",
+    "costed_requests": 64,
+    "digit_top1": 97.265625,
+    "docs_detected": 100.0,
+    "docs_detected_count": 32,
+    "estimated_cost_requests": 0,
+    "expected_docs_count": 32,
+    "fully_parallelizable_runtime_available": true,
+    "fully_parallelizable_runtime_seconds": 14.069426774978638,
+    "id_avg_lev": 0.09375,
+    "id_top1": 90.625,
+    "lastname_avg_lev": 0.0,
+    "lastname_top1": 100.0,
+    "missing_cost_requests": 0,
+    "observed_total_cost": 0.024018999999999995,
+    "precise_cost_requests": 64,
+    "timed_images": 64,
+    "total_cost": 0.024018999999999995,
+    "total_images": 64,
+    "total_requests": 64,
+    "zero_cost_precise_requests": 0
+  }
+}

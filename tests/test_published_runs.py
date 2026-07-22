@@ -42,6 +42,7 @@ class PublishedRunTests(unittest.TestCase):
             "additional": {
                 "prompt_template": "Sensitive raw prompt text",
                 "doc_info_file": "/Users/example/doc_info.csv",
+                "images_dir": "/Users/example/private-images",
                 "generation_params_effective": {"temperature": 0.0},
                 "strict_schema": True,
                 "pages": [1, 3],
@@ -82,6 +83,7 @@ class PublishedRunTests(unittest.TestCase):
             self.assertNotIn("must-not-publish", serialized)
             self.assertNotIn("Sensitive raw prompt text", serialized)
             self.assertNotIn("/Users/example", serialized)
+            self.assertNotIn("images_dir", serialized)
             self.assertIn("aggregation_fingerprint", summary)
 
             runs_dir = root / "published" / "runs"

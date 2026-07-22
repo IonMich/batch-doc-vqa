@@ -59,7 +59,6 @@ _SAFE_ADDITIONAL_KEYS = (
     "extraction_mode",
     "generation_param_sources",
     "generation_params_effective",
-    "images_dir",
     "model_context_length",
     "model_name",
     "model_pricing",
@@ -517,9 +516,18 @@ def publish_local_runs(
         if not eligible:
             skipped.append(f"{run_info.get('run_name', 'unknown')}: {reason or 'ineligible'}")
             continue
-        stats = generator.compute_run_stats(run_info, str(doc_info_file), str(test_ids_file), dataset_provenance=dataset)
+        try:
+            stats = generator.compute_run_stats(
+                run_info,
+                str(doc_info_file),
+                str(test_ids_file),
+                dataset_provenance=dataset,
+            )
+        except Exception as exc:
+            skipped.append(f"{run_info.get('run_name', 'unknown')}: unable to compute stats ({exc})")
+            continue
         if not stats:
-            failures.append(f"{run_info.get('run_name', 'unknown')}: unable to compute stats")
+            skipped.append(f"{run_info.get('run_name', 'unknown')}: unable to compute stats")
             continue
         raw_results = generator.run_manager.load_results(run_info["run_name"])
         summary = make_published_run_summary(

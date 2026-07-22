@@ -1,0 +1,2922 @@
+{
+  "aggregation_fingerprint": "7d3133c2c316c9066f6265007b53587b0fc56edd79c1c9b55e481b163f2c3042",
+  "aggregation_inputs": {
+    "api": {
+      "max_tokens": 4096,
+      "min_p": null,
+      "presence_penalty": null,
+      "provider": "OpenRouter (Router)",
+      "repetition_penalty": null,
+      "temperature": 1.0,
+      "top_k": null,
+      "top_p": 1.0
+    },
+    "dataset_content_hash": "51185fcde83137c3e44dc5471b6f32d3a76e28a1165ea86258f3c5b27985ebf8",
+    "dataset_pages": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "extraction_mode": "default_student",
+    "features": {
+      "regex_patterns": false,
+      "structured_output": true
+    },
+    "generation_param_sources": {
+      "max_tokens": "global_default",
+      "min_p": "global_default",
+      "presence_penalty": "global_default",
+      "repetition_penalty": "global_default",
+      "temperature": "global_default",
+      "top_k": "global_default",
+      "top_p": "global_default"
+    },
+    "generation_params": {
+      "max_tokens": 4096,
+      "min_p": null,
+      "presence_penalty": null,
+      "reasoning": null,
+      "repetition_penalty": null,
+      "temperature": 1.0,
+      "top_k": null,
+      "top_p": 1.0
+    },
+    "model": {
+      "license_info": "Varies by provider",
+      "model": "seed-2.0-lite",
+      "model_size": "Unknown",
+      "open_weights": false,
+      "org": "bytedance-seed",
+      "variant": null
+    },
+    "reproducibility": {
+      "git_commit": "c18b87d07132abc9d9bafee3144efd48023f3454",
+      "inference_settings_hash": "e94d937c7bb9b34bdc32b0a112b7ee0414dc0fb0b25885d996344fab0fd0bc45",
+      "parser_version": "v1",
+      "prompt_hash": "e03faa5c5a9f725c6307141a047b98bdcd6bda3d851ed2ff3d9784a311fa97ec",
+      "schema_version": "v1"
+    },
+    "response_format": "json",
+    "routing": {
+      "actual_model_providers": [
+        "Seed"
+      ],
+      "effective": {
+        "data_collection": "deny",
+        "zdr": true
+      },
+      "requested": {
+        "allow_fallbacks": null,
+        "data_collection": "deny",
+        "order": [],
+        "sort": null,
+        "zdr": true
+      }
+    },
+    "run_manifest_sha256": null,
+    "runtime_settings": {
+      "concurrency": 64,
+      "rate_limit": 64.0,
+      "retry_base_delay": 2.0,
+      "retry_max": 3,
+      "schema_retry_max": 2
+    },
+    "schema_hash": "06c021eff47d03c0c9c562a58afa0c2dd0c2b53ed3173987789c405c0dfdf0af",
+    "strict_schema": false,
+    "version": 1
+  },
+  "config": {
+    "additional": {
+      "actual_model_providers": [
+        "Seed"
+      ],
+      "concurrency": 64,
+      "cost_fetch_max_workers": 64,
+      "endpoint_type": "chat_completions",
+      "extraction_mode": "default_student",
+      "generation_param_sources": {
+        "max_tokens": "global_default",
+        "min_p": "global_default",
+        "presence_penalty": "global_default",
+        "repetition_penalty": "global_default",
+        "temperature": "global_default",
+        "top_k": "global_default",
+        "top_p": "global_default"
+      },
+      "generation_params_effective": {
+        "max_tokens": 4096,
+        "min_p": null,
+        "presence_penalty": null,
+        "reasoning": null,
+        "repetition_penalty": null,
+        "temperature": 1.0,
+        "top_k": null,
+        "top_p": 1.0
+      },
+      "model_context_length": 262144,
+      "model_name": "bytedance-seed/seed-2.0-lite",
+      "model_pricing": {
+        "completion": "0.000002",
+        "prompt": "0.00000025"
+      },
+      "pages": [
+        1,
+        3
+      ],
+      "preset_id": "default_student",
+      "provider_routing_effective": {
+        "data_collection": "deny",
+        "zdr": true
+      },
+      "provider_routing_requested": {
+        "allow_fallbacks": null,
+        "data_collection": "deny",
+        "order": [],
+        "sort": null,
+        "zdr": true
+      },
+      "rate_limit": 64.0,
+      "response_format": "json",
+      "retry_base_delay": 2.0,
+      "retry_max": 3,
+      "schema_hash": "06c021eff47d03c0c9c562a58afa0c2dd0c2b53ed3173987789c405c0dfdf0af",
+      "schema_retry_max": 2,
+      "strict_schema": false,
+      "token_escalation_repetition_threshold": 0.85
+    },
+    "api": {
+      "max_tokens": 4096,
+      "min_p": null,
+      "presence_penalty": null,
+      "provider": "OpenRouter (Router)",
+      "repetition_penalty": null,
+      "temperature": 1.0,
+      "top_k": null,
+      "top_p": 1.0
+    },
+    "environment": {
+      "runtime": "37 seconds"
+    },
+    "features": {
+      "regex_patterns": false,
+      "structured_output": true
+    },
+    "model": {
+      "license_info": "Varies by provider",
+      "model": "seed-2.0-lite",
+      "model_size": "Unknown",
+      "open_weights": false,
+      "org": "bytedance-seed",
+      "variant": null
+    },
+    "run_info": {
+      "reproducibility": {
+        "git_commit": "c18b87d07132abc9d9bafee3144efd48023f3454",
+        "inference_settings_hash": "e94d937c7bb9b34bdc32b0a112b7ee0414dc0fb0b25885d996344fab0fd0bc45",
+        "manifest_version": "1",
+        "parser_version": "v1",
+        "prompt_hash": "e03faa5c5a9f725c6307141a047b98bdcd6bda3d851ed2ff3d9784a311fa97ec",
+        "schema_version": "v1"
+      },
+      "run_name": "bytedance-seed-seed-2.0-lite_20260428_185811",
+      "timestamp": "20260428_185811",
+      "timestamp_iso": "2026-04-28T18:58:11.700361"
+    }
+  },
+  "dataset": {
+    "content_hash": "51185fcde83137c3e44dc5471b6f32d3a76e28a1165ea86258f3c5b27985ebf8",
+    "dataset_id": "q11",
+    "doc_info_sha256": "fe264218b6dc292315fc0f4b8b1f9fc36107175f673dcc09d6e29d29fb6e05b1",
+    "expected_docs": 32,
+    "manifest_rows": 128,
+    "pages": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "test_ids_sha256": "2108dda819e7ae85e2f6ef0af40003bb09df5b81f153ecd5ed6666405c5e8766"
+  },
+  "request_evidence": {
+    "records": [
+      {
+        "cost": {
+          "actual_cost": 0.0006895,
+          "provenance": "precise"
+        },
+        "document_ref": "ea191efc408402eaa781cc44e3078ee24511b3d4d4de154246bf6c352f32d16c",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1938,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 0,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 15,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 6.7659382820129395
+        },
+        "token_usage": {
+          "completion_tokens": 163,
+          "prompt_tokens": 1454,
+          "total_tokens": 1617
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0006675,
+          "provenance": "precise"
+        },
+        "document_ref": "13e94da334cb97a1eb1c57c214d0d2ad7cdfa0889cc2be0b363cb330e229cd48",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1970,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 1,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 15,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 7.417274236679077
+        },
+        "token_usage": {
+          "completion_tokens": 152,
+          "prompt_tokens": 1454,
+          "total_tokens": 1606
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0007855,
+          "provenance": "precise"
+        },
+        "document_ref": "42e74a8ce93eab173c74beb92a95cd478b50f8c87e59efdadf89c65c04e65624",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2982,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 2,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 8,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 10.037616968154907
+        },
+        "token_usage": {
+          "completion_tokens": 211,
+          "prompt_tokens": 1454,
+          "total_tokens": 1665
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0011255,
+          "provenance": "precise"
+        },
+        "document_ref": "5626538f6fadf2d1d42c6efd3a976fe221ba20390237d959fa78178517999f8d",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1612,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 3,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 12,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 14.486507892608643
+        },
+        "token_usage": {
+          "completion_tokens": 381,
+          "prompt_tokens": 1454,
+          "total_tokens": 1835
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0006715,
+          "provenance": "precise"
+        },
+        "document_ref": "95b9d32280dab6eab6af4e8664d023ebafb19721ffe746f1876f4c56b0a9d50d",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1711,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 4,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 16,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 12.289618253707886
+        },
+        "token_usage": {
+          "completion_tokens": 154,
+          "prompt_tokens": 1454,
+          "total_tokens": 1608
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0007255,
+          "provenance": "precise"
+        },
+        "document_ref": "6f706b735c1bc395c5b4bf308cff43d5d5a6b0e3ae26344c0f4fdda486f6b89d",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1777,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 5,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 16,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 14.890413045883179
+        },
+        "token_usage": {
+          "completion_tokens": 181,
+          "prompt_tokens": 1454,
+          "total_tokens": 1635
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0007255,
+          "provenance": "precise"
+        },
+        "document_ref": "1f95461826f20538e8dc7ea8a54511cb1f319367f296d99c867c5226d684a848",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2302,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 6,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 19,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 15.265509843826294
+        },
+        "token_usage": {
+          "completion_tokens": 181,
+          "prompt_tokens": 1454,
+          "total_tokens": 1635
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0007255,
+          "provenance": "precise"
+        },
+        "document_ref": "46c2d331504bdf137402b2f712fc33607e6de672a9370d6230ccc74c03fe616e",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1539,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 7,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 9.877043962478638
+        },
+        "token_usage": {
+          "completion_tokens": 181,
+          "prompt_tokens": 1454,
+          "total_tokens": 1635
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0007215,
+          "provenance": "precise"
+        },
+        "document_ref": "6eee71c8a71fce4f5bf28dab37974c37f80497046d5e14123b4b3015c8a5e424",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1703,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 8,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 14.410572052001953
+        },
+        "token_usage": {
+          "completion_tokens": 179,
+          "prompt_tokens": 1454,
+          "total_tokens": 1633
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0007675,
+          "provenance": "precise"
+        },
+        "document_ref": "4418abf6718252392436096e2889629c169dbbf6dcab3449af6583a9ed3f9748",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2000,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 9,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 12.192950010299683
+        },
+        "token_usage": {
+          "completion_tokens": 202,
+          "prompt_tokens": 1454,
+          "total_tokens": 1656
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0006695,
+          "provenance": "precise"
+        },
+        "document_ref": "0fb008880e9e443517e789b1050f02c2f635285cd07f3a8348a15f56a9ebeefe",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1523,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 10,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 18,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 13.24429702758789
+        },
+        "token_usage": {
+          "completion_tokens": 153,
+          "prompt_tokens": 1454,
+          "total_tokens": 1607
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0007875,
+          "provenance": "precise"
+        },
+        "document_ref": "344310773b6b5d508a705a08542cdb438337591a3139822c0e24946f8f2680ed",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1680,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 11,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 9,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 15.662149906158447
+        },
+        "token_usage": {
+          "completion_tokens": 212,
+          "prompt_tokens": 1454,
+          "total_tokens": 1666
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0006875,
+          "provenance": "precise"
+        },
+        "document_ref": "d5162201738bbe97f3ef1cfe17ff1c14e4acb116121c43a6bbea41a46bd76025",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1431,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 12,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 16,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 14.367045879364014
+        },
+        "token_usage": {
+          "completion_tokens": 162,
+          "prompt_tokens": 1454,
+          "total_tokens": 1616
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0007695,
+          "provenance": "precise"
+        },
+        "document_ref": "5f1c99ab7856d7cf142653b1c1c9f9c3063a0bd7b35a861af83e7012adbd2e7f",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1756,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 13,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 15,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 14.577948093414307
+        },
+        "token_usage": {
+          "completion_tokens": 203,
+          "prompt_tokens": 1454,
+          "total_tokens": 1657
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0006675,
+          "provenance": "precise"
+        },
+        "document_ref": "bc6fc9a3dc3d85441e0ed6e3ab7fec01b3696d69d2e17d344113b8db6a15bce1",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2221,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 14,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 14.71083688735962
+        },
+        "token_usage": {
+          "completion_tokens": 152,
+          "prompt_tokens": 1454,
+          "total_tokens": 1606
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0008475,
+          "provenance": "precise"
+        },
+        "document_ref": "b90782fa7429cc4f9e46863b80e5e7e91fa14b3177231fe00e00bffd807df906",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1558,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 15,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 9,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 13.887310981750488
+        },
+        "token_usage": {
+          "completion_tokens": 242,
+          "prompt_tokens": 1454,
+          "total_tokens": 1696
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0007775,
+          "provenance": "precise"
+        },
+        "document_ref": "e07f8b20b03f53b528747d83252fa49f2a6ebb9b74a625275cdb159f7f6cc130",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1501,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 16,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 15,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 14.661298990249634
+        },
+        "token_usage": {
+          "completion_tokens": 207,
+          "prompt_tokens": 1454,
+          "total_tokens": 1661
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0009415,
+          "provenance": "precise"
+        },
+        "document_ref": "0218a96e3f0ff344a72e7191ac2ff1a8389123eb8f5e19ca9c7e763ff4b3790f",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2122,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 17,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 10,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 14.678676128387451
+        },
+        "token_usage": {
+          "completion_tokens": 289,
+          "prompt_tokens": 1454,
+          "total_tokens": 1743
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0006915,
+          "provenance": "precise"
+        },
+        "document_ref": "c683214474a38bb78dcdeaf9c7fa7b384711aa98ad2829aa256c572c0f987b3b",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2602,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 18,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 15.333125114440918
+        },
+        "token_usage": {
+          "completion_tokens": 164,
+          "prompt_tokens": 1454,
+          "total_tokens": 1618
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0022415,
+          "provenance": "precise"
+        },
+        "document_ref": "2cb62345283acba6590c1f72049d8a5bf869e487c7744217821118340a5c052c",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2309,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 19,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 11,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 36.22069716453552
+        },
+        "token_usage": {
+          "completion_tokens": 939,
+          "prompt_tokens": 1454,
+          "total_tokens": 2393
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0006715,
+          "provenance": "precise"
+        },
+        "document_ref": "f14d25d4757bad3bac7a9050fe868d7bd69ea0758e7504d470d2ae0196b65a5a",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2131,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 20,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 8,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 14.610363006591797
+        },
+        "token_usage": {
+          "completion_tokens": 154,
+          "prompt_tokens": 1454,
+          "total_tokens": 1608
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0015715,
+          "provenance": "precise"
+        },
+        "document_ref": "2cec088b7dd31b4db44851491f61143a38e9a72a72038a1410d9f0b1da2a3653",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1512,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 21,
+        "response_fields": {
+          "section_number": {
+            "character_count": 0,
+            "present": false
+          },
+          "student_full_name": {
+            "character_count": 12,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 26.410614013671875
+        },
+        "token_usage": {
+          "completion_tokens": 604,
+          "prompt_tokens": 1454,
+          "total_tokens": 2058
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0013915,
+          "provenance": "precise"
+        },
+        "document_ref": "55b16f23b1463fc2a265b035991e7da1cc3acbcd3034e8fb703b8e1b572c859e",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1673,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 22,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 11,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 22.00590205192566
+        },
+        "token_usage": {
+          "completion_tokens": 514,
+          "prompt_tokens": 1454,
+          "total_tokens": 1968
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0007315,
+          "provenance": "precise"
+        },
+        "document_ref": "7d93274e105bd3d0753cd56696a0677af9b1c7e8c7a6dccaac80460359af4b3f",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1631,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 23,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 10,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 11.870807886123657
+        },
+        "token_usage": {
+          "completion_tokens": 184,
+          "prompt_tokens": 1454,
+          "total_tokens": 1638
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0010755,
+          "provenance": "precise"
+        },
+        "document_ref": "01575b94b95cfbd0f93746b6da5b999f8973d49b0012588ae79a3d4f9d344ce4",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1620,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 24,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 17.363404035568237
+        },
+        "token_usage": {
+          "completion_tokens": 356,
+          "prompt_tokens": 1454,
+          "total_tokens": 1810
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0009555,
+          "provenance": "precise"
+        },
+        "document_ref": "5742b225b0069637b134d76f7259e5e010a0ee8879083207600a1cb2fa40d183",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1547,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 25,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 15,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 14.047255039215088
+        },
+        "token_usage": {
+          "completion_tokens": 296,
+          "prompt_tokens": 1454,
+          "total_tokens": 1750
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0007575,
+          "provenance": "precise"
+        },
+        "document_ref": "9381dd1788306f236e02cc6fa1de74a556d649d8d8ce3454d763ae152e65a5f4",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1751,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 26,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 11,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 15.591591835021973
+        },
+        "token_usage": {
+          "completion_tokens": 197,
+          "prompt_tokens": 1454,
+          "total_tokens": 1651
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0008515,
+          "provenance": "precise"
+        },
+        "document_ref": "013cdfa99f91113d47e51845b705c635b48430c179b6fb970365ea3c147fb730",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1546,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 27,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 9,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 15.338515996932983
+        },
+        "token_usage": {
+          "completion_tokens": 244,
+          "prompt_tokens": 1454,
+          "total_tokens": 1698
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0010355,
+          "provenance": "precise"
+        },
+        "document_ref": "965013854eb56e6b1ef0ced4f42ec2f21a280e711312dd582be546b2d2b704e3",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1726,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 28,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 15,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 16.273120880126953
+        },
+        "token_usage": {
+          "completion_tokens": 336,
+          "prompt_tokens": 1454,
+          "total_tokens": 1790
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0006955,
+          "provenance": "precise"
+        },
+        "document_ref": "e08b84c7cdc6b0967751aa88de6adf06601a35d52daf89d644d1d7349c4a3d69",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1560,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 29,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 15,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 9.421521186828613
+        },
+        "token_usage": {
+          "completion_tokens": 166,
+          "prompt_tokens": 1454,
+          "total_tokens": 1620
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0006995,
+          "provenance": "precise"
+        },
+        "document_ref": "3a89ac1939efa8baadfe308c53530c60000854e4d31458b499ebfff7a51c03f9",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1830,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 30,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 8,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 13.67755913734436
+        },
+        "token_usage": {
+          "completion_tokens": 168,
+          "prompt_tokens": 1454,
+          "total_tokens": 1622
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0012215,
+          "provenance": "precise"
+        },
+        "document_ref": "ab1d8a212ba0f20ea7d3f7dee1ad723b96cd53d3c4ccf59852ff339fb00e3b88",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1734,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 31,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 8,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 19.25040102005005
+        },
+        "token_usage": {
+          "completion_tokens": 429,
+          "prompt_tokens": 1454,
+          "total_tokens": 1883
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0007875,
+          "provenance": "precise"
+        },
+        "document_ref": "627366f431e20fd36d6bcb015e85c2ba1aa6715e5db130b86e076d8993e4df6c",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1765,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 32,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 15.7340829372406
+        },
+        "token_usage": {
+          "completion_tokens": 212,
+          "prompt_tokens": 1454,
+          "total_tokens": 1666
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0012415,
+          "provenance": "precise"
+        },
+        "document_ref": "e046b73792ae1016a8d4e6b4e5cbc36e903f0593f58ee8f9c47461301c4dd009",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1616,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 33,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 16,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 20.91855001449585
+        },
+        "token_usage": {
+          "completion_tokens": 439,
+          "prompt_tokens": 1454,
+          "total_tokens": 1893
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0007835,
+          "provenance": "precise"
+        },
+        "document_ref": "fda526aebca14cf5e67bc2810b90e4af0b6330cad076a85e8229f958234e4f84",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2121,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 34,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 15,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 12.948649168014526
+        },
+        "token_usage": {
+          "completion_tokens": 210,
+          "prompt_tokens": 1454,
+          "total_tokens": 1664
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0013095,
+          "provenance": "precise"
+        },
+        "document_ref": "0d042b0f505b1d2a8f3da3f0fbff47fe6b8a8d9a28330145e5d7843f51621f40",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1609,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 35,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 10,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 21.15013599395752
+        },
+        "token_usage": {
+          "completion_tokens": 473,
+          "prompt_tokens": 1454,
+          "total_tokens": 1927
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0007675,
+          "provenance": "precise"
+        },
+        "document_ref": "4c4d300da2f560a7b75fa3ddee7abd93a4113d46a19abd6f9697011648cc6341",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1833,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 36,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 11.943260908126831
+        },
+        "token_usage": {
+          "completion_tokens": 202,
+          "prompt_tokens": 1454,
+          "total_tokens": 1656
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0008335,
+          "provenance": "precise"
+        },
+        "document_ref": "1e44e6953c7733b033a6e2b7e3a95da6494a154227eea4062f2541a1307ac4a4",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1647,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 37,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 10,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 13.771067142486572
+        },
+        "token_usage": {
+          "completion_tokens": 235,
+          "prompt_tokens": 1454,
+          "total_tokens": 1689
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0009195,
+          "provenance": "precise"
+        },
+        "document_ref": "7b72f690a62dccf9c9f895b8e77ae5253bb60e890ffe0b943cb0f22bec4cf3be",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2966,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 38,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 17,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 18.531193256378174
+        },
+        "token_usage": {
+          "completion_tokens": 278,
+          "prompt_tokens": 1454,
+          "total_tokens": 1732
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0006495,
+          "provenance": "precise"
+        },
+        "document_ref": "c5150fa35bcd2792fab4066b6ed1f02f6f311daca1539112ad3535b9b660d906",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2058,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 39,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 17,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 13.467660903930664
+        },
+        "token_usage": {
+          "completion_tokens": 143,
+          "prompt_tokens": 1454,
+          "total_tokens": 1597
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0008135,
+          "provenance": "precise"
+        },
+        "document_ref": "72b25d268e967f74858c459285347c45a925397920c86ff8cadb79ae62ceb470",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2173,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 40,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 12,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 16.110580921173096
+        },
+        "token_usage": {
+          "completion_tokens": 225,
+          "prompt_tokens": 1454,
+          "total_tokens": 1679
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0020135,
+          "provenance": "precise"
+        },
+        "document_ref": "3cd684ef9a19787c3bf17e0e62de2c6566554ace5a651a4c0555ef5479bbe4bd",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2104,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 41,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 12,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 36.40905809402466
+        },
+        "token_usage": {
+          "completion_tokens": 825,
+          "prompt_tokens": 1454,
+          "total_tokens": 2279
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0006555,
+          "provenance": "precise"
+        },
+        "document_ref": "c60ca8005c2c92e81b8744bc0339f700b7de3d2fe47cfb4b3139438208bd75a7",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1727,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 42,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 13,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 13.410094738006592
+        },
+        "token_usage": {
+          "completion_tokens": 146,
+          "prompt_tokens": 1454,
+          "total_tokens": 1600
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0009215,
+          "provenance": "precise"
+        },
+        "document_ref": "552a6c1864512f344f0356c6f7ca416f2b5c45421d5a2b0b0c566de2f04c0920",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2184,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 43,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 13,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 17.421040773391724
+        },
+        "token_usage": {
+          "completion_tokens": 279,
+          "prompt_tokens": 1454,
+          "total_tokens": 1733
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0007675,
+          "provenance": "precise"
+        },
+        "document_ref": "1c6d7abd88b356b7cc9f9c52c4016f7f0344719618640e63d00648aaa13b0601",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1746,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 44,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 16,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 14.73329210281372
+        },
+        "token_usage": {
+          "completion_tokens": 202,
+          "prompt_tokens": 1454,
+          "total_tokens": 1656
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0008855,
+          "provenance": "precise"
+        },
+        "document_ref": "f525b7ef4fd44daa3ef3e1793840ee9605038485309fb06d222cac2a5f049ffa",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1589,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 45,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 16,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 17.17572569847107
+        },
+        "token_usage": {
+          "completion_tokens": 261,
+          "prompt_tokens": 1454,
+          "total_tokens": 1715
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0010515,
+          "provenance": "precise"
+        },
+        "document_ref": "691e77bf025ede589ab7cb8ce6bd184547c7c72554f50379711b7a8eb2c19c37",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1831,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 46,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 15,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 18.078357934951782
+        },
+        "token_usage": {
+          "completion_tokens": 344,
+          "prompt_tokens": 1454,
+          "total_tokens": 1798
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0009295,
+          "provenance": "precise"
+        },
+        "document_ref": "fd94e71dfe8b938aeb9259e5943d72946cadbaf22d84be0dba13a406b0f3565e",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1553,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 47,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 10,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 12.985707998275757
+        },
+        "token_usage": {
+          "completion_tokens": 283,
+          "prompt_tokens": 1454,
+          "total_tokens": 1737
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0007155,
+          "provenance": "precise"
+        },
+        "document_ref": "81366d6f7775aa07b4f515b1ed5d84f139fa70b283ae6cd040a0adba690253c0",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1703,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 48,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 10,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 10.655242919921875
+        },
+        "token_usage": {
+          "completion_tokens": 176,
+          "prompt_tokens": 1454,
+          "total_tokens": 1630
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0007395,
+          "provenance": "precise"
+        },
+        "document_ref": "5d9a36ecbd290641ced797d3bc07bacccbf38decf03432a78fad760d042a42f9",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1572,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 49,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 10,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 13.798544883728027
+        },
+        "token_usage": {
+          "completion_tokens": 188,
+          "prompt_tokens": 1454,
+          "total_tokens": 1642
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0006615,
+          "provenance": "precise"
+        },
+        "document_ref": "df9ec83ce6eea7d039961b0c08af2a03da00897ee3da122a8d5318a12d41bb88",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1661,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 50,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 17,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 13.354387998580933
+        },
+        "token_usage": {
+          "completion_tokens": 149,
+          "prompt_tokens": 1454,
+          "total_tokens": 1603
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0006955,
+          "provenance": "precise"
+        },
+        "document_ref": "c0ce9e6fd9cc09f50984b4644cd386d031ef69a8f1c82cb8a96016ff95e234a7",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2094,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 51,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 17,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 14.71076488494873
+        },
+        "token_usage": {
+          "completion_tokens": 166,
+          "prompt_tokens": 1454,
+          "total_tokens": 1620
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0010975,
+          "provenance": "precise"
+        },
+        "document_ref": "2bf038f752f85cf75ca40d7b5d511e6cd90088c09dc31d42e815803797baf7d4",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1699,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 52,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 16,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 15.194885969161987
+        },
+        "token_usage": {
+          "completion_tokens": 367,
+          "prompt_tokens": 1454,
+          "total_tokens": 1821
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0008575,
+          "provenance": "precise"
+        },
+        "document_ref": "f6598bbb9ed0ecc4a01c7439a5a591244756491e334d1c09f971b464a9441f08",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1735,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 53,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 12,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 10.791917085647583
+        },
+        "token_usage": {
+          "completion_tokens": 247,
+          "prompt_tokens": 1454,
+          "total_tokens": 1701
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0006575,
+          "provenance": "precise"
+        },
+        "document_ref": "6172fd72818d6a61910bd77f1b90f2d6af9323e23cf86be06019cdefe062ff73",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1860,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 54,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 12.141512870788574
+        },
+        "token_usage": {
+          "completion_tokens": 147,
+          "prompt_tokens": 1454,
+          "total_tokens": 1601
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0011755,
+          "provenance": "precise"
+        },
+        "document_ref": "ce57efabe80f604138d8dfb4e52f79766bd97f70e354f4e7292464a09b290583",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1708,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 55,
+        "response_fields": {
+          "section_number": {
+            "character_count": 0,
+            "present": false
+          },
+          "student_full_name": {
+            "character_count": 9,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 19.03893518447876
+        },
+        "token_usage": {
+          "completion_tokens": 406,
+          "prompt_tokens": 1454,
+          "total_tokens": 1860
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0007875,
+          "provenance": "precise"
+        },
+        "document_ref": "a9afce19e7612e631fb7674f1ca998631d4059be07cb29bc20af50ae3ce086c5",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1776,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 56,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 8,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 13.399958848953247
+        },
+        "token_usage": {
+          "completion_tokens": 212,
+          "prompt_tokens": 1454,
+          "total_tokens": 1666
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0009035,
+          "provenance": "precise"
+        },
+        "document_ref": "91d0976b7b38e0870217b9c316261e8d875867ac8f6d84003b1b7957a2869821",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1524,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 57,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 8,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 13.195182085037231
+        },
+        "token_usage": {
+          "completion_tokens": 270,
+          "prompt_tokens": 1454,
+          "total_tokens": 1724
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.001363,
+          "provenance": "precise"
+        },
+        "document_ref": "b88f98206e1723bbe1c3fe4731b3743d58e50371db21a854765944a6934dc617",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1612,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 58,
+        "response_fields": {
+          "section_number": {
+            "character_count": 4,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 14,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 36.01474094390869
+        },
+        "token_usage": {
+          "completion_tokens": 483,
+          "prompt_tokens": 1588,
+          "total_tokens": 2071
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0014955,
+          "provenance": "precise"
+        },
+        "document_ref": "dec398b5a5660c06069bcc5752234bbfa37bd52c7a8388737dea5b55e9bf0ddc",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1872,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 59,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 13,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 23.805518865585327
+        },
+        "token_usage": {
+          "completion_tokens": 566,
+          "prompt_tokens": 1454,
+          "total_tokens": 2020
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0006915,
+          "provenance": "precise"
+        },
+        "document_ref": "4a32d5a3addc6936e8a764bd3a55292faf0b34f2a973d98f20bacd72accd4337",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 2026,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 60,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 16,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 12.812657356262207
+        },
+        "token_usage": {
+          "completion_tokens": 164,
+          "prompt_tokens": 1454,
+          "total_tokens": 1618
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0011015,
+          "provenance": "precise"
+        },
+        "document_ref": "adec18350c9eebe34267fce6efbf63da1fbce1a103b0be376cd4cbd162380c97",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1679,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 61,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 11,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 17.473989009857178
+        },
+        "token_usage": {
+          "completion_tokens": 369,
+          "prompt_tokens": 1454,
+          "total_tokens": 1823
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0006935,
+          "provenance": "precise"
+        },
+        "document_ref": "ef3b17e9edf2fda30f4804ac7081b0f3b696683dfc7efa54e44d3a0638c8e433",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1590,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 62,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 12,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 0,
+            "present": false
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 10.81873083114624
+        },
+        "token_usage": {
+          "completion_tokens": 165,
+          "prompt_tokens": 1454,
+          "total_tokens": 1619
+        }
+      },
+      {
+        "cost": {
+          "actual_cost": 0.0012675,
+          "provenance": "precise"
+        },
+        "document_ref": "9448053c87845599fa652c8d813334acf475af88561aa8e2e23a942fc2133539",
+        "failure_markers": [],
+        "generation": {
+          "finish_reason": "stop",
+          "latency": 1691,
+          "model": "bytedance-seed/seed-2.0-lite-20260309",
+          "native_finish_reason": "stop",
+          "service_tier": null
+        },
+        "request_index": 63,
+        "response_fields": {
+          "section_number": {
+            "character_count": 5,
+            "present": true
+          },
+          "student_full_name": {
+            "character_count": 17,
+            "present": true
+          },
+          "ufid": {
+            "character_count": null,
+            "present": false
+          },
+          "university_id": {
+            "character_count": 8,
+            "present": true
+          }
+        },
+        "timing": {
+          "elapsed_seconds": 21.22799777984619
+        },
+        "token_usage": {
+          "completion_tokens": 452,
+          "prompt_tokens": 1454,
+          "total_tokens": 1906
+        }
+      }
+    ],
+    "request_count": 64,
+    "schema_version": 1
+  },
+  "run_name": "bytedance-seed-seed-2.0-lite_20260428_185811",
+  "schema_version": 1,
+  "stats": {
+    "cost_complete": true,
+    "cost_per_image": 0.0009152734374999997,
+    "cost_status": "precise",
+    "costed_requests": 64,
+    "digit_top1": 97.265625,
+    "docs_detected": 100.0,
+    "docs_detected_count": 32,
+    "estimated_cost_requests": 0,
+    "expected_docs_count": 32,
+    "fully_parallelizable_runtime_available": true,
+    "fully_parallelizable_runtime_seconds": 36.40905809402466,
+    "id_avg_lev": 0.28125,
+    "id_top1": 93.75,
+    "lastname_avg_lev": 0.0,
+    "lastname_top1": 100.0,
+    "missing_cost_requests": 0,
+    "observed_total_cost": 0.058577499999999984,
+    "precise_cost_requests": 64,
+    "timed_images": 64,
+    "total_cost": 0.058577499999999984,
+    "total_images": 64,
+    "total_requests": 64,
+    "zero_cost_precise_requests": 0
+  }
+}
