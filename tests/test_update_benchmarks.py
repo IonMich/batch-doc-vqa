@@ -12,10 +12,17 @@ from batch_doc_vqa.update_benchmarks import _artifacts_match
 
 
 class UpdateBenchmarksTests(unittest.TestCase):
-    def _write_png(self, path: Path, *, color: str, fingerprint: str) -> None:
+    def _write_png(
+        self,
+        path: Path,
+        *,
+        color: str,
+        fingerprint: str,
+        size: tuple[int, int] = (4, 3),
+    ) -> None:
         metadata = PngImagePlugin.PngInfo()
         metadata.add_text(PARETO_FINGERPRINT_KEY, fingerprint)
-        Image.new("RGBA", (4, 3), color=color).save(path, pnginfo=metadata)
+        Image.new("RGBA", size, color=color).save(path, pnginfo=metadata)
 
     def test_png_comparison_uses_semantic_fingerprint(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -23,7 +30,9 @@ class UpdateBenchmarksTests(unittest.TestCase):
             generated = root / "generated.png"
             committed = root / "committed.png"
             self._write_png(generated, color="red", fingerprint="same-data")
-            self._write_png(committed, color="blue", fingerprint="same-data")
+            # Different image dimensions are expected when the same plot is
+            # rendered with different platform fonts or rasterizers.
+            self._write_png(committed, color="blue", fingerprint="same-data", size=(7, 5))
 
             self.assertTrue(_artifacts_match(generated, committed))
 

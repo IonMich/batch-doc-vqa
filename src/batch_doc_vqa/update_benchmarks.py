@@ -29,8 +29,6 @@ def _artifacts_match(generated: Path, committed: Path) -> bool:
             return (
                 isinstance(generated_fingerprint, str)
                 and generated_fingerprint == committed_fingerprint
-                and generated_image.size == committed_image.size
-                and generated_image.mode == committed_image.mode
             )
     except (OSError, ValueError):
         return False
