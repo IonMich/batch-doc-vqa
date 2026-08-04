@@ -113,8 +113,9 @@ _HTML_TEMPLATE = r"""<!doctype html>
     .axis, .grid { stroke: var(--grid); stroke-width: 1; }
     .axis { stroke: var(--border); }
     .tick { fill: var(--muted); font-size: 12px; }
-    .axis-label, .frontier-label { fill: var(--foreground); font-size: 13px; }
-    .frontier-label { font-size: 11px; font-weight: 600; }
+    .axis-label, .model-label { fill: var(--foreground); font-size: 13px; }
+    .model-label { font-size: 11px; pointer-events: none; }
+    .frontier-label { font-weight: 600; }
     .frontier-line { fill: none; stroke: var(--frontier); stroke-width: 2; }
     .point { cursor: pointer; opacity: 0.58; stroke: var(--background); stroke-width: 1.5; }
     .point.frontier-point { opacity: 1; stroke: var(--foreground); stroke-width: 1.5; }
@@ -134,6 +135,7 @@ _HTML_TEMPLATE = r"""<!doctype html>
     <section class="controls" aria-label="Plot controls">
       <label><input type="checkbox" id="pareto-only"> Pareto frontier only</label>
       <label><input type="checkbox" id="frontier-labels"> Label frontier points</label>
+      <label><input type="checkbox" id="all-labels"> Show all model labels</label>
       <button type="button" id="select-all">All organizations</button>
       <button type="button" id="clear-all">Clear organizations</button>
     </section>
@@ -159,6 +161,7 @@ _HTML_TEMPLATE = r"""<!doctype html>
     const organizations = document.getElementById("organizations");
     const paretoOnly = document.getElementById("pareto-only");
     const frontierLabels = document.getElementById("frontier-labels");
+    const allLabels = document.getElementById("all-labels");
     const status = document.getElementById("status");
     const tooltip = document.getElementById("tooltip");
     const inspectOrg = document.getElementById("inspect-org");
@@ -259,11 +262,13 @@ _HTML_TEMPLATE = r"""<!doctype html>
         marks.append(point);
       });
       chart.append(marks);
-      if (frontierLabels.checked && visible.length) {
+      const labelItems = allLabels.checked ? visible : frontierLabels.checked ? optimal : [];
+      if (labelItems.length) {
         const labels = svg("g");
-        optimal.forEach((item, index) => {
-          const last = index === optimal.length - 1;
-          const label = svg("text", { class: "frontier-label", x: x(item.cost) + (last ? -8 : 8), y: y(item.accuracy) + labelOffset(index), "text-anchor": last ? "end" : "start" });
+        labelItems.forEach((item, index) => {
+          const id = `${item.organization}/${item.model}`;
+          const last = index === labelItems.length - 1;
+          const label = svg("text", { class: `model-label${optimalIds.has(id) ? " frontier-label" : ""}`, x: x(item.cost) + (last ? -8 : 8), y: y(item.accuracy) + labelOffset(index), "text-anchor": last ? "end" : "start" });
           label.textContent = item.model; labels.append(label);
         });
         chart.append(labels);
@@ -283,6 +288,7 @@ _HTML_TEMPLATE = r"""<!doctype html>
     document.getElementById("clear-all").addEventListener("click", () => { selectedOrgs.clear(); organizations.querySelectorAll("input").forEach((input) => { input.checked = false; }); hideTooltip(); render(); });
     paretoOnly.addEventListener("change", () => { hideTooltip(); render(); });
     frontierLabels.addEventListener("change", render);
+    allLabels.addEventListener("change", render);
     inspectOrg.addEventListener("change", () => { syncModelSelector(); setDetail(null); render(); });
     inspectModel.addEventListener("change", () => { const item = data.find((candidate) => candidate.organization === inspectOrg.value && candidate.model === inspectModel.value); setDetail(item || null); hideTooltip(); render(); });
     syncModelSelector();

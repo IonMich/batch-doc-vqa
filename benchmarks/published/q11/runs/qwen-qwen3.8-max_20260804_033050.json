@@ -1,0 +1,276 @@
+{
+  "aggregation_fingerprint": "34ece463802b6e1ae747be3fb2783291b083c0494a50561ca1c82d3f90c7fbc7",
+  "aggregation_inputs": {
+    "api": {
+      "max_tokens": 32768,
+      "min_p": null,
+      "presence_penalty": 0.0,
+      "provider": "OpenRouter (Router)",
+      "repetition_penalty": null,
+      "temperature": 0.6,
+      "top_k": 20,
+      "top_p": 1.0
+    },
+    "dataset_content_hash": "f97fb2dc43ae470cbdd28c81fb9fcb7b8aee4f5e2db3daaf06d64a1fe0381645",
+    "extraction_mode": "default_student",
+    "features": {
+      "regex_patterns": false,
+      "structured_output": true
+    },
+    "generation_param_sources": {
+      "max_tokens": "cli",
+      "min_p": "global_default",
+      "presence_penalty": "cli",
+      "repetition_penalty": "global_default",
+      "temperature": "cli",
+      "top_k": "cli",
+      "top_p": "cli"
+    },
+    "generation_params": {
+      "max_tokens": 32768,
+      "min_p": null,
+      "presence_penalty": 0.0,
+      "reasoning": {
+        "effort": "high"
+      },
+      "repetition_penalty": null,
+      "temperature": 0.6,
+      "top_k": 20,
+      "top_p": 1.0
+    },
+    "model": {
+      "license_info": "Varies by provider",
+      "model": "qwen3.8-max",
+      "model_size": "Unknown",
+      "open_weights": false,
+      "org": "qwen",
+      "variant": null
+    },
+    "reproducibility": {
+      "git_commit": "35595fb62f090c8f4324f1c0c3ac9a255f8e9aff",
+      "inference_settings_hash": "d27e58d9b1333837143d386d19901a0ac5ba95bc9df1579449ee444066d7b024",
+      "parser_version": "v1",
+      "prompt_hash": "e03faa5c5a9f725c6307141a047b98bdcd6bda3d851ed2ff3d9784a311fa97ec",
+      "schema_version": "v1"
+    },
+    "request_pages": [
+      1,
+      3
+    ],
+    "response_format": "json",
+    "routing": {
+      "actual_model_providers": [
+        "Alibaba"
+      ],
+      "effective": {
+        "data_collection": "allow",
+        "zdr": false
+      },
+      "requested": {
+        "allow_fallbacks": null,
+        "data_collection": "allow",
+        "order": [],
+        "sort": null,
+        "zdr": false
+      }
+    },
+    "runtime_settings": {
+      "concurrency": 64,
+      "rate_limit": 64.0,
+      "retry_base_delay": 2.0,
+      "retry_max": 3,
+      "schema_retry_max": 2
+    },
+    "schema_hash": "06c021eff47d03c0c9c562a58afa0c2dd0c2b53ed3173987789c405c0dfdf0af",
+    "strict_schema": false,
+    "version": 2
+  },
+  "config": {
+    "additional": {
+      "actual_model_providers": [
+        "Alibaba"
+      ],
+      "concurrency": 64,
+      "cost_fetch_max_workers": 64,
+      "dataset_manifest_sha256": "fe264218b6dc292315fc0f4b8b1f9fc36107175f673dcc09d6e29d29fb6e05b1",
+      "endpoint_type": "chat_completions",
+      "extraction_mode": "default_student",
+      "generation_param_sources": {
+        "max_tokens": "cli",
+        "min_p": "global_default",
+        "presence_penalty": "cli",
+        "repetition_penalty": "global_default",
+        "temperature": "cli",
+        "top_k": "cli",
+        "top_p": "cli"
+      },
+      "generation_params_effective": {
+        "max_tokens": 32768,
+        "min_p": null,
+        "presence_penalty": 0.0,
+        "reasoning": {
+          "effort": "high"
+        },
+        "repetition_penalty": null,
+        "temperature": 0.6,
+        "top_k": 20,
+        "top_p": 1.0
+      },
+      "model_context_length": 1000000,
+      "model_name": "qwen/qwen3.8-max",
+      "model_pricing": {
+        "completion": "0.000006",
+        "input_cache_read": "0.00000025",
+        "input_cache_write": "0.0000025",
+        "prompt": "0.000002"
+      },
+      "pages": [
+        1,
+        3
+      ],
+      "preset_id": "default_student",
+      "provider_routing_effective": {
+        "data_collection": "allow",
+        "zdr": false
+      },
+      "provider_routing_requested": {
+        "allow_fallbacks": null,
+        "data_collection": "allow",
+        "order": [],
+        "sort": null,
+        "zdr": false
+      },
+      "rate_limit": 64.0,
+      "response_format": "json",
+      "retry_base_delay": 2.0,
+      "retry_max": 3,
+      "schema_hash": "06c021eff47d03c0c9c562a58afa0c2dd0c2b53ed3173987789c405c0dfdf0af",
+      "schema_retry_max": 2,
+      "strict_schema": false,
+      "token_escalation_repetition_threshold": 0.85
+    },
+    "api": {
+      "max_tokens": 32768,
+      "min_p": null,
+      "presence_penalty": 0.0,
+      "provider": "OpenRouter (Router)",
+      "repetition_penalty": null,
+      "temperature": 0.6,
+      "top_k": 20,
+      "top_p": 1.0
+    },
+    "environment": {
+      "runtime": "1.7 minutes"
+    },
+    "features": {
+      "regex_patterns": false,
+      "structured_output": true
+    },
+    "model": {
+      "license_info": "Varies by provider",
+      "model": "qwen3.8-max",
+      "model_size": "Unknown",
+      "open_weights": false,
+      "org": "qwen",
+      "variant": null
+    },
+    "run_info": {
+      "reproducibility": {
+        "git_commit": "35595fb62f090c8f4324f1c0c3ac9a255f8e9aff",
+        "inference_settings_hash": "d27e58d9b1333837143d386d19901a0ac5ba95bc9df1579449ee444066d7b024",
+        "manifest_version": "1",
+        "parser_version": "v1",
+        "prompt_hash": "e03faa5c5a9f725c6307141a047b98bdcd6bda3d851ed2ff3d9784a311fa97ec",
+        "schema_version": "v1"
+      },
+      "run_name": "qwen-qwen3.8-max_20260804_033050",
+      "timestamp": "20260804_033050",
+      "timestamp_iso": "2026-08-04T03:30:50.985458"
+    }
+  },
+  "dataset": {
+    "content_hash": "f97fb2dc43ae470cbdd28c81fb9fcb7b8aee4f5e2db3daaf06d64a1fe0381645",
+    "dataset_id": "q11",
+    "dataset_source_sha256": "4d28de4960cade1f7c5818c40183f12afe25ec3de767a3421e23def883d55b57",
+    "expected_docs": 32,
+    "identity_version": 2,
+    "manifest_content_sha256": "08998e0c9515cd1c3b98e29b249986c9f54c6936c0c27fc2ca9b7e8d75bb4afc",
+    "manifest_rows": 128,
+    "page_row_counts": {
+      "1": 32,
+      "2": 32,
+      "3": 32,
+      "4": 32
+    },
+    "pages": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "test_ids_sha256": "2108dda819e7ae85e2f6ef0af40003bb09df5b81f153ecd5ed6666405c5e8766"
+  },
+  "request_evidence": {
+    "cost": {
+      "observed_precise_cost_total": 0.4321059999999999,
+      "precise_requests": 64,
+      "zero_cost_precise_requests": 0
+    },
+    "failure_count": 0,
+    "failure_markers": {},
+    "invalid_entries": 0,
+    "request_count": 64,
+    "response_field_presence": {
+      "section_number": 62,
+      "student_full_name": 64,
+      "ufid": 0,
+      "university_id": 32
+    },
+    "schema_version": 2,
+    "timing": {
+      "max_elapsed_seconds": 103.73829698562622,
+      "timed_requests": 64
+    },
+    "token_usage": {
+      "complete_requests": 64,
+      "completion_tokens_total": 24551,
+      "prompt_tokens_total": 142400,
+      "total_tokens_total": 166951
+    }
+  },
+  "request_scope": {
+    "expected_requests": 64,
+    "observed_requests": 64,
+    "pages": [
+      1,
+      3
+    ]
+  },
+  "run_name": "qwen-qwen3.8-max_20260804_033050",
+  "schema_version": 2,
+  "stats": {
+    "cost_complete": true,
+    "cost_per_image": 0.00675165625,
+    "cost_status": "precise",
+    "costed_requests": 64,
+    "digit_top1": 99.609375,
+    "docs_detected": 100.0,
+    "docs_detected_count": 32,
+    "estimated_cost_requests": 0,
+    "expected_docs_count": 32,
+    "fully_parallelizable_runtime_available": true,
+    "fully_parallelizable_runtime_seconds": 103.73829698562622,
+    "id_avg_lev": 0.03125,
+    "id_top1": 96.875,
+    "lastname_avg_lev": 0.0,
+    "lastname_top1": 100.0,
+    "missing_cost_requests": 0,
+    "observed_total_cost": 0.432106,
+    "precise_cost_requests": 64,
+    "timed_images": 64,
+    "total_cost": 0.432106,
+    "total_images": 64,
+    "total_requests": 64,
+    "zero_cost_precise_requests": 0
+  }
+}

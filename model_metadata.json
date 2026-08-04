@@ -424,6 +424,7 @@
   "needs_review": [
     "stepfun/step-3.7-flash",
     "minimax/minimax-m3",
-    "qwen/qwen3.7-plus"
+    "qwen/qwen3.7-plus",
+    "qwen/qwen3.8-max"
   ]
 }

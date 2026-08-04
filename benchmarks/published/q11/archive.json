@@ -1,5 +1,5 @@
 {
-  "archive_sha256": "aeec9f4cb22feaf1a5b120cf96e7e83f884a60e6568ba7b3124f46cde5bfc489",
+  "archive_sha256": "b3e5f4a5dc097a831832326a78b35a4136fb5fc806432d04c5f761d0a94cf7b5",
   "dataset": {
     "content_hash": "f97fb2dc43ae470cbdd28c81fb9fcb7b8aee4f5e2db3daaf06d64a1fe0381645",
     "dataset_id": "q11",
@@ -23,7 +23,7 @@
     "test_ids_sha256": "2108dda819e7ae85e2f6ef0af40003bb09df5b81f153ecd5ed6666405c5e8766"
   },
   "publication_status": "complete",
-  "run_count": 121,
+  "run_count": 123,
   "runs": [
     {
       "aggregation_fingerprint": "c550ff39245ceb6b2ec480c765c38c3566833f9f0b9c27196e9c859cbb74d750",
@@ -599,6 +599,16 @@
       "aggregation_fingerprint": "6f5394927a2171353b509c1b281a33647c5348f28cfe7f3c052be452ec991fe2",
       "run_name": "qwen-qwen3.7-plus_20260603_220958",
       "summary_sha256": "69412026029241edcab211d67479e9f8cff2daeee4e6394a6a591d97be44924b"
+    },
+    {
+      "aggregation_fingerprint": "34ece463802b6e1ae747be3fb2783291b083c0494a50561ca1c82d3f90c7fbc7",
+      "run_name": "qwen-qwen3.8-max_20260804_033050",
+      "summary_sha256": "352039b66118288bb5c82631aea2dd42b931e80c2997d6822183e322b13c1561"
+    },
+    {
+      "aggregation_fingerprint": "e4db931c5f320adf5bd946354ff4aaef99af71aed281af6b3622114838578696",
+      "run_name": "qwen-qwen3.8-max_20260804_034544",
+      "summary_sha256": "a49f507b8e51a8f7bafdd1ef54424d0fa1dd2ef9c72666d2d920b5a6f2290652"
     },
     {
       "aggregation_fingerprint": "5f352d5aea4380393328b2c9a3cca1c5fca171f24615ac136c574208c373fa7c",

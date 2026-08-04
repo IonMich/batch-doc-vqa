@@ -16,9 +16,9 @@ The table below shows the top performing models by category. See [BENCHMARKS.md]
 
 <!-- BENCHMARK_TABLE_START -->
 
-| **Metric** | **OpenCV+CNN** | **qwen**<br>qwen3.6-35b-a3b | **qwen**<br>qwen3.5-flash-02-23 | **moonshotai**<br>kimi-k2.5 | **google**<br>gemini-3.5-flash |
+| **Metric** | **OpenCV+CNN** | **qwen**<br>qwen3.6-35b-a3b | **qwen**<br>qwen3.8-max [r=high] | **moonshotai**<br>kimi-k2.5 | **google**<br>gemini-3.5-flash |
 |:---|:---|:---|:---|:---|:---|
-| LLM model size | N/A | 35A3 | ?? | 1000A32 | ?? |
+| LLM model size | N/A | 35A3 | Unknown | 1000A32 | ?? |
 | Open-weights | N/A | Yes | No | Yes | No |
 | digit_top1 | 85.16% | **100.00%** | 99.61% | **100.00%** | 99.61% |
 | 8-digit id_top1 | ?? | **100.00%** | 96.88% | **100.00%** | 96.88% |
@@ -26,9 +26,9 @@ The table below shows the top performing models by category. See [BENCHMARKS.md]
 | ID Avg d_Lev | N/A | **0.0000** | 0.0312 | **0.0000** | 0.0312 |
 | Lastname Avg d_Lev | N/A | **0.0000** | **0.0000** | **0.0000** | **0.0000** |
 | Docs detected | 90.62% (29/32) | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** | **100.00% (32/32)** |
-| Runtime (p) | **~1 second** | 40 seconds | 7 seconds | N/A | 40 seconds |
-| Cost per image | **$0.00** | $0.001282 | $0.000333 | $0.004679 | $0.008997 |
-| Total cost | **$0.00** | $0.0820 | $0.0213 | $0.2995 | $0.5758 |
+| Runtime (p) | **~1 second** | 40 seconds | 1.7 minutes | N/A | 40 seconds |
+| Cost per image | **$0.00** | $0.001282 | $0.006752 | $0.004679 | $0.008997 |
+| Total cost | **$0.00** | $0.0820 | $0.4321 | $0.2995 | $0.5758 |
 
 
 
