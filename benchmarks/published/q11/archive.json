@@ -1,5 +1,5 @@
 {
-  "archive_sha256": "b230232a2770f83fa4df8ace7d3b34a70df3453a5a4b83cf00ced0a322f373cd",
+  "archive_sha256": "645b17dfe668d02045f2172a850d96bb2455a40e2949c4b2ccc3e58a0f6d8df9",
   "dataset": {
     "content_hash": "f97fb2dc43ae470cbdd28c81fb9fcb7b8aee4f5e2db3daaf06d64a1fe0381645",
     "dataset_id": "q11",
@@ -23,7 +23,7 @@
     "test_ids_sha256": "2108dda819e7ae85e2f6ef0af40003bb09df5b81f153ecd5ed6666405c5e8766"
   },
   "publication_status": "complete",
-  "run_count": 135,
+  "run_count": 143,
   "runs": [
     {
       "aggregation_fingerprint": "c550ff39245ceb6b2ec480c765c38c3566833f9f0b9c27196e9c859cbb74d750",
@@ -69,6 +69,11 @@
       "aggregation_fingerprint": "ed7b5fdac0f44c6da6e41979f5b879092795a1fa89fae16e310f85e4ba217f3a",
       "run_name": "anthropic-claude-opus-5.5_20261110_195826",
       "summary_sha256": "c60b91050721b234bed656e9ab41417b82bd3961a0f0bf3d14397d8571878947"
+    },
+    {
+      "aggregation_fingerprint": "9b66154aa9226f4fb8132439b684103c09456861d689eeed1d8ac8ac0c4a482d",
+      "run_name": "anthropic-claude-opus-5_20260804_041943",
+      "summary_sha256": "0913573b7d48623816c0611f4aff23b9cecd8c7ed480a0d917b23eb42ea8f0d4"
     },
     {
       "aggregation_fingerprint": "1fa5efbc03101d39ae08422986edb90b5db5585094a3f00f476b552655a1516c",
@@ -366,6 +371,11 @@
       "summary_sha256": "55fe4e71091fd3b7b78bd0ff2d1eff3a982037161fbd300484400f527b9e4c05"
     },
     {
+      "aggregation_fingerprint": "b8ed9f49ea14d6ad9a71133e38d91360b33afe16c984fd7ed7ceab29c77330d2",
+      "run_name": "meta-muse-spark-1.1_20260804_041943",
+      "summary_sha256": "115a4fbf4c7aa5837c03c78921dab6f7ba4812228732b4055bfe276f537cf97b"
+    },
+    {
       "aggregation_fingerprint": "b0c53105ec8d5bb34fd084e7222dbbe1a3ece6b356b8bbee7aa2657f1d584828",
       "run_name": "microsoft-phi-4-multimodal-instruct_20250814_052814",
       "summary_sha256": "bf8f8de107bbb6d306cbe07c3a42af5a6512a726d59beff88de52dd2b34c6268"
@@ -414,6 +424,11 @@
       "aggregation_fingerprint": "4db2a3d5849dab6bf9f4204d57f32bc0e276ed88cc0d6554f2972a69b2b41159",
       "run_name": "moonshotai-kimi-k2.6_20260422_172732",
       "summary_sha256": "b6ee6f56ff4e0a373e3461ce945d506eca0130b18553176c6a285d8356362a7b"
+    },
+    {
+      "aggregation_fingerprint": "bf94d7e7a0526872e836475bfeeec3d495e0304c8ed4ee413c51b30a17b50d1c",
+      "run_name": "moonshotai-kimi-k3_20260804_040845",
+      "summary_sha256": "df70471c0c4966063ca3d0ef01f02336623247245f860ff495c045c1068957b6"
     },
     {
       "aggregation_fingerprint": "2011eccf73989e1c7826f22c95b42bb9a9c1c4933a4784e63e0410d44f750ed5",
@@ -641,9 +656,24 @@
       "summary_sha256": "d19af5ce73d9a1c10946856494b5e5162ccc6e1d4bd0babfcbd63a6117a116c5"
     },
     {
+      "aggregation_fingerprint": "2ac5d6ef12e573a16fa41dce64485b745765d71c30c61f47c34fd50a847350ef",
+      "run_name": "qwen-qwen3.7-flash_20260804_040654",
+      "summary_sha256": "f2365883a76cea1de3e71c65834cef89c5f65231014c22ba93ab8fbc84cd9c71"
+    },
+    {
       "aggregation_fingerprint": "6f5394927a2171353b509c1b281a33647c5348f28cfe7f3c052be452ec991fe2",
       "run_name": "qwen-qwen3.7-plus_20260603_220958",
       "summary_sha256": "69412026029241edcab211d67479e9f8cff2daeee4e6394a6a591d97be44924b"
+    },
+    {
+      "aggregation_fingerprint": "dee277f139905ecbc3dfca0d1ade010e25ee8dc8dec9f7bf78999bcd15d76426",
+      "run_name": "qwen-qwen3.8-27b_20260815_161338",
+      "summary_sha256": "aa1ffbf81b68f9471b3906d4066f386a867aa3cef08b267fb2572ab88a469cc9"
+    },
+    {
+      "aggregation_fingerprint": "118f2235075a4874e1535bfb1f2876ffe3940f1950722b435b3c080693fadf2a",
+      "run_name": "qwen-qwen3.8-27b_20260815_161531",
+      "summary_sha256": "04aa5d3b0e0982c7fae091e0f1b0fbf1013298b67db3924343a5b9f35ac2f2f8"
     },
     {
       "aggregation_fingerprint": "c74536142274d39ac5a064da7cc50a87b8d2970e782305c5bc26ce07732493e8",
@@ -669,6 +699,16 @@
       "aggregation_fingerprint": "5f352d5aea4380393328b2c9a3cca1c5fca171f24615ac136c574208c373fa7c",
       "run_name": "stepfun-step-3.7-flash_20260603_221000",
       "summary_sha256": "dd0cc68230eb8c289bd2d60513d9bf5acfff3f7909152ef09daec5800fabccb8"
+    },
+    {
+      "aggregation_fingerprint": "d6823a126731f74ccd48a44d28db9780ac4496e19038575c333c8aa0385da8c0",
+      "run_name": "thinkingmachines-inkling-small_20260804_041943",
+      "summary_sha256": "2df63c76c18a9be783ce9f6c01a465ffbc0a8633f657f3629897a7c71ccd4a75"
+    },
+    {
+      "aggregation_fingerprint": "30c100aaa01bb85730685e63138a4740db3d0af786a9a5dd6312c5e87a45fc35",
+      "run_name": "thinkingmachines-inkling_20260804_041943",
+      "summary_sha256": "a0e211ce24b10ef6f7fdc7642a4902f1c010288ad56b4ef332973881df0f4aa1"
     },
     {
       "aggregation_fingerprint": "de26dcfb4e0b04accbf7c51c0bd3dadbf39cce2d44084c476e121ad8fb344dbb",

@@ -437,6 +437,13 @@
     "openai/gpt-6-luna",
     "qwen/qwen3.8-flash",
     "qwen/qwen3.8-max-0902",
-    "z-ai/glm-5.3-flash"
+    "z-ai/glm-5.3-flash",
+    "anthropic/claude-opus-5",
+    "meta/muse-spark-1.1",
+    "moonshotai/kimi-k3",
+    "qwen/qwen3.7-flash",
+    "qwen/qwen3.8-27b",
+    "thinkingmachines/inkling",
+    "thinkingmachines/inkling-small"
   ]
 }
