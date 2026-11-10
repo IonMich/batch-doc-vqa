@@ -1,5 +1,5 @@
 {
-  "archive_sha256": "b3e5f4a5dc097a831832326a78b35a4136fb5fc806432d04c5f761d0a94cf7b5",
+  "archive_sha256": "b230232a2770f83fa4df8ace7d3b34a70df3453a5a4b83cf00ced0a322f373cd",
   "dataset": {
     "content_hash": "f97fb2dc43ae470cbdd28c81fb9fcb7b8aee4f5e2db3daaf06d64a1fe0381645",
     "dataset_id": "q11",
@@ -23,7 +23,7 @@
     "test_ids_sha256": "2108dda819e7ae85e2f6ef0af40003bb09df5b81f153ecd5ed6666405c5e8766"
   },
   "publication_status": "complete",
-  "run_count": 123,
+  "run_count": 135,
   "runs": [
     {
       "aggregation_fingerprint": "c550ff39245ceb6b2ec480c765c38c3566833f9f0b9c27196e9c859cbb74d750",
@@ -59,6 +59,16 @@
       "aggregation_fingerprint": "c856f4167fab6023a814e6fd06c53a3709d4368e4bc70abfe2caa6271d06ae7e",
       "run_name": "anthropic-claude-haiku-4.5_20251016_024906",
       "summary_sha256": "3aee393d3b644136a610ee6fed34a4a26f13705bb253ad08a498e58de1609a7f"
+    },
+    {
+      "aggregation_fingerprint": "5b31862f9f14312959faf680b8941fc3569fce4e715ba93c7abb5436bb2ce027",
+      "run_name": "anthropic-claude-haiku-5.5_20261110_200503",
+      "summary_sha256": "0799b4c6f24101a467eb8580888f2efc266cd96fff855e21787b2252cb3c55b9"
+    },
+    {
+      "aggregation_fingerprint": "ed7b5fdac0f44c6da6e41979f5b879092795a1fa89fae16e310f85e4ba217f3a",
+      "run_name": "anthropic-claude-opus-5.5_20261110_195826",
+      "summary_sha256": "c60b91050721b234bed656e9ab41417b82bd3961a0f0bf3d14397d8571878947"
     },
     {
       "aggregation_fingerprint": "1fa5efbc03101d39ae08422986edb90b5db5585094a3f00f476b552655a1516c",
@@ -104,6 +114,11 @@
       "aggregation_fingerprint": "48171dc71298d8ca65386cf677eccb800283c375064ea6595b5f60b13c1f6895",
       "run_name": "bytedance-ui-tars-1.5-7b_20250814_043212",
       "summary_sha256": "c5d66211945c12e22ed8cab060110df184f5c4b6cd0fd1bf364623e48a8af75b"
+    },
+    {
+      "aggregation_fingerprint": "fe65f1ec7b0f68da4e298dbfb3e414d139e3aafca197912963889cdc5aca0b75",
+      "run_name": "deepseek-deepseek-v4.1-flash-1017_20261110_200034",
+      "summary_sha256": "a5d55b1de0d9f98f9286cbe29d91e49b658ddd1ffbb53e5b1b33daf507634ec4"
     },
     {
       "aggregation_fingerprint": "69dd69bf9384065ab1fb846b3c2e08733274654c4face691c499a05d2e216029",
@@ -194,6 +209,21 @@
       "aggregation_fingerprint": "3de52dd83786775f4c6fce1796ccc2605ab30a6e24f1632b5e55f30174586b7e",
       "run_name": "google-gemini-3.6-flash_20260721_193655",
       "summary_sha256": "268b49d07a3829fe100f032b5069b37d5043a5ac615ada1713a86e3e4e839030"
+    },
+    {
+      "aggregation_fingerprint": "c1b1c0d2d6b8fb45cffe5cd81e3e88b15a9d28b38d210bc54ab4155216c6aeff",
+      "run_name": "google-gemini-3.8-flash_20261110_200425",
+      "summary_sha256": "861d205716ee2013c1201b18869b81baeae8e6903a118a1257de30cb5cb7ab10"
+    },
+    {
+      "aggregation_fingerprint": "32e2940c2c5b89c2f050fd7a939c8499d16e3a94abb9846acd5bf195591cd68d",
+      "run_name": "google-gemini-4-argon_20261110_200614",
+      "summary_sha256": "fc7132758e3d13c31a6c36b1a67b9fd4a0b935e3d7bb40c8424b3639c4f5da89"
+    },
+    {
+      "aggregation_fingerprint": "47fa7a97b858949a33192dc0950682903f89b704eb84d0b84f83a50c9fcb39cf",
+      "run_name": "google-gemini-4-carbon_20261110_200655",
+      "summary_sha256": "7138451a7c5a42849ff42a628e4e037ed2e12d636a2f608c4f5695fe68f5921b"
     },
     {
       "aggregation_fingerprint": "cafcbc29a56c55c01418d78747b5ef8ee1f7078f70ddfe9bae81edc501a1aa2e",
@@ -321,9 +351,19 @@
       "summary_sha256": "0e36958c94658f241d628e80e445b8cb21618004d32c9a71a97f65b618a39c72"
     },
     {
+      "aggregation_fingerprint": "abf5e92a271696e9a83d797c335663718fdd5358b59cceaaee96dcd3751f5a67",
+      "run_name": "inclusionai-ling-3.0-flash-vl_20261110_200001",
+      "summary_sha256": "ab3db9aa81eb3a4fe9489a12a74b901eeca8e33b44aa99d2f0919703823a0aba"
+    },
+    {
       "aggregation_fingerprint": "49887f4a810e705444f1f759f38fe5fe74d7d48c0e47cf0baa989418004f4f26",
       "run_name": "meta-llama-llama-4-maverick_20250812_172519",
       "summary_sha256": "d2ff6f76ef681304587766fef627d4bfa4caf9ff1af2ee3345434da9b7b4499e"
+    },
+    {
+      "aggregation_fingerprint": "1c98a15a7411d157e9c934e5b1ac2f76252ae4cdc60640a7a52c900be4d8e431",
+      "run_name": "meta-muse-ember_20261110_200513",
+      "summary_sha256": "55fe4e71091fd3b7b78bd0ff2d1eff3a982037161fbd300484400f527b9e4c05"
     },
     {
       "aggregation_fingerprint": "b0c53105ec8d5bb34fd084e7222dbbe1a3ece6b356b8bbee7aa2657f1d584828",
@@ -454,6 +494,11 @@
       "aggregation_fingerprint": "a615ba1d82c564a80a73b3c82cc2039b3c3f449fb650f702c301bd1be7459dd2",
       "run_name": "openai-gpt-5.6-terra_20260711_160947",
       "summary_sha256": "9f8b0dde10dfe7ed475163b6d0b0a568fbcab8bab46169a503080f9c65fccaf4"
+    },
+    {
+      "aggregation_fingerprint": "3ac194758399150dffe12c976c39fe52379cb9a2a56c6bdf653e59b4911b2650",
+      "run_name": "openai-gpt-6-luna_20261110_200537",
+      "summary_sha256": "77efa4fb35f7089c1de55775e55d2e29b085d2664fa51dd873c9454f90257efe"
     },
     {
       "aggregation_fingerprint": "b326b882c040d85090e6998693e9c8e46b6e5964ac3ed7b422a22ab5c4c8743f",
@@ -601,6 +646,16 @@
       "summary_sha256": "69412026029241edcab211d67479e9f8cff2daeee4e6394a6a591d97be44924b"
     },
     {
+      "aggregation_fingerprint": "c74536142274d39ac5a064da7cc50a87b8d2970e782305c5bc26ce07732493e8",
+      "run_name": "qwen-qwen3.8-flash_20261110_200343",
+      "summary_sha256": "d67b23eb8adb115db30c9ff6ae60579d59c7bf0b733a3f462cff65af593ed36f"
+    },
+    {
+      "aggregation_fingerprint": "94a3cad6c5bbc9c56f1b54177d06211c79cf9a42e474394d702edfeb18099802",
+      "run_name": "qwen-qwen3.8-max-0902_20261110_200552",
+      "summary_sha256": "4b7b37a92e1b6d48456a02e51ba72d923f01dc039aff3808665a16d6f684d5ac"
+    },
+    {
       "aggregation_fingerprint": "34ece463802b6e1ae747be3fb2783291b083c0494a50561ca1c82d3f90c7fbc7",
       "run_name": "qwen-qwen3.8-max_20260804_033050",
       "summary_sha256": "352039b66118288bb5c82631aea2dd42b931e80c2997d6822183e322b13c1561"
@@ -634,6 +689,11 @@
       "aggregation_fingerprint": "1c5f278e5f8e6a42d134b236a3914bd3c4c04700d51d00c736a08af0dc8d3e7c",
       "run_name": "z-ai-glm-4.6v_20251215_070623",
       "summary_sha256": "991563e5a3c7e6ec4f96cd9a94235686803e8e60727c83ea22314111197e0fbf"
+    },
+    {
+      "aggregation_fingerprint": "551db4643d40583524357048fb27c1c255ab79203f32f7dad77b3bbc2021e016",
+      "run_name": "z-ai-glm-5.3-flash_20261110_200451",
+      "summary_sha256": "fccfc7d5579d41dd76c0983753f03230d9a4a5fa5e09d05c02e954103e5cdde0"
     },
     {
       "aggregation_fingerprint": "2fc57b5cb90dce9b86f05abda46926f69353f76dcdcd64c7a55e7616989093e9",
